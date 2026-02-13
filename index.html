@@ -10,32 +10,32 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --surface-raised: #1a1a1a;
-      --surface-hover: #222222;
-      --border: #2a2a2a;
-      --border-light: #333333;
-      --text: #f0f0f0;
-      --text-muted: #777777;
-      --text-dim: #555555;
+      --bg: #1a1a1e;
+      --surface: #242428;
+      --surface-raised: #2c2c31;
+      --surface-hover: #35353b;
+      --border: #3a3a40;
+      --border-light: #48484f;
+      --text: #e8e8ec;
+      --text-muted: #9a9aa3;
+      --text-dim: #6e6e78;
       --white: #ffffff;
       --accent: #ffffff;
       --accent-hover: #e0e0e0;
-      --danger: #ff4444;
-      --danger-hover: #ff6666;
-      --danger-dim: #331111;
-      --success: #22cc77;
-      --success-dim: #0d2e1a;
-      --warning: #ffaa00;
-      --warning-dim: #332a00;
-      --submitted-color: #66aaff;
-      --submitted-dim: #0d1a2e;
-      --draft-color: #888888;
+      --danger: #ff5555;
+      --danger-hover: #ff7777;
+      --danger-dim: #3d1a1a;
+      --success: #33dd88;
+      --success-dim: #1a3328;
+      --warning: #ffbb33;
+      --warning-dim: #3d3018;
+      --submitted-color: #77bbff;
+      --submitted-dim: #1a2840;
+      --draft-color: #9a9aa3;
       --radius: 4px;
       --radius-lg: 8px;
-      --shadow: 0 2px 8px rgba(0,0,0,0.4);
-      --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+      --shadow: 0 2px 8px rgba(0,0,0,0.3);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
     }
 
     body {
@@ -82,8 +82,8 @@
       flex-wrap: wrap;
     }
 
-    /* ---- Logo SVG ---- */
-    .logo-svg { display: block; }
+    /* ---- Logo ---- */
+    .header-logo { display: block; height: 44px; width: auto; }
 
     /* ---- Buttons ---- */
     .btn {
@@ -286,7 +286,7 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    .status-draft { background: #222; color: var(--draft-color); }
+    .status-draft { background: #33333a; color: var(--draft-color); }
     .status-submitted { background: var(--submitted-dim); color: var(--submitted-color); }
     .status-approved { background: var(--success-dim); color: var(--success); }
     .status-rejected { background: var(--danger-dim); color: var(--danger); }
@@ -326,7 +326,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.55);
       backdrop-filter: blur(4px);
       z-index: 1000;
       align-items: center;
@@ -463,22 +463,7 @@
 
 <div class="header">
   <div class="header-brand">
-    <!-- FOBD Logo -->
-    <svg class="logo-svg" width="120" height="44" viewBox="0 0 120 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Grid squares -->
-      <rect x="0" y="0" width="21" height="21" fill="#fff"/>
-      <rect x="23" y="0" width="21" height="21" fill="#fff"/>
-      <rect x="0" y="23" width="21" height="21" fill="#fff"/>
-      <rect x="23" y="23" width="21" height="21" fill="#fff"/>
-      <!-- Letters in grid -->
-      <text x="10.5" y="15" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" fill="#0a0a0a">F</text>
-      <text x="33.5" y="15" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" fill="#0a0a0a">O</text>
-      <text x="10.5" y="38" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" fill="#0a0a0a">B</text>
-      <text x="33.5" y="38" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" fill="#0a0a0a">D</text>
-      <!-- Text -->
-      <text x="52" y="17" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800" fill="#ffffff" letter-spacing="2">FIT OUT</text>
-      <text x="52" y="37" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800" fill="#ffffff" letter-spacing="2">BY DESIGN</text>
-    </svg>
+    <img src="logo.png" alt="Fit Out By Design" class="header-logo">
     <div class="divider"></div>
     <h1>Variation Register</h1>
   </div>
