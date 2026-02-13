@@ -10,32 +10,32 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #24242b;
-      --surface: #2c2c34;
-      --surface-raised: #34343d;
-      --surface-hover: #3d3d47;
-      --border: #474751;
-      --border-light: #565661;
+      --bg: #000000;
+      --surface: #1e1e24;
+      --surface-raised: #26262d;
+      --surface-hover: #2e2e36;
+      --border: #3a3a44;
+      --border-light: #4a4a55;
       --text: #eaeaee;
-      --text-muted: #a8a8b4;
-      --text-dim: #7e7e8c;
+      --text-muted: #b0b0bc;
+      --text-dim: #8a8a98;
       --white: #ffffff;
       --accent: #ffffff;
       --accent-hover: #e0e0e0;
       --danger: #ff5555;
       --danger-hover: #ff7777;
-      --danger-dim: #422020;
+      --danger-dim: #3d1a1a;
       --success: #33dd88;
-      --success-dim: #1e3a2c;
+      --success-dim: #1a3328;
       --warning: #ffbb33;
-      --warning-dim: #42351e;
+      --warning-dim: #3d3018;
       --submitted-color: #77bbff;
-      --submitted-dim: #1e2d45;
-      --draft-color: #a8a8b4;
+      --submitted-dim: #1a2840;
+      --draft-color: #b0b0bc;
       --radius: 4px;
       --radius-lg: 8px;
-      --shadow: 0 2px 8px rgba(0,0,0,0.25);
-      --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+      --shadow: 0 2px 10px rgba(0,0,0,0.5);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.7);
     }
 
     body {
@@ -293,7 +293,7 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    .status-draft { background: #3b3b44; color: var(--draft-color); }
+    .status-draft { background: #2a2a33; color: var(--draft-color); }
     .status-submitted { background: var(--submitted-dim); color: var(--submitted-color); }
     .status-approved { background: var(--success-dim); color: var(--success); }
     .status-rejected { background: var(--danger-dim); color: var(--danger); }
