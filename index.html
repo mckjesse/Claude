@@ -10,32 +10,32 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #1a1a1e;
-      --surface: #242428;
-      --surface-raised: #2c2c31;
-      --surface-hover: #35353b;
-      --border: #3a3a40;
-      --border-light: #48484f;
-      --text: #e8e8ec;
-      --text-muted: #9a9aa3;
-      --text-dim: #6e6e78;
+      --bg: #24242b;
+      --surface: #2c2c34;
+      --surface-raised: #34343d;
+      --surface-hover: #3d3d47;
+      --border: #474751;
+      --border-light: #565661;
+      --text: #eaeaee;
+      --text-muted: #a8a8b4;
+      --text-dim: #7e7e8c;
       --white: #ffffff;
       --accent: #ffffff;
       --accent-hover: #e0e0e0;
       --danger: #ff5555;
       --danger-hover: #ff7777;
-      --danger-dim: #3d1a1a;
+      --danger-dim: #422020;
       --success: #33dd88;
-      --success-dim: #1a3328;
+      --success-dim: #1e3a2c;
       --warning: #ffbb33;
-      --warning-dim: #3d3018;
+      --warning-dim: #42351e;
       --submitted-color: #77bbff;
-      --submitted-dim: #1a2840;
-      --draft-color: #9a9aa3;
+      --submitted-dim: #1e2d45;
+      --draft-color: #a8a8b4;
       --radius: 4px;
       --radius-lg: 8px;
-      --shadow: 0 2px 8px rgba(0,0,0,0.3);
-      --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+      --shadow: 0 2px 8px rgba(0,0,0,0.25);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
     }
 
     body {
@@ -84,6 +84,13 @@
 
     /* ---- Logo ---- */
     .header-logo { display: block; height: 44px; width: auto; }
+    .header-logo-fallback {
+      display: none;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: var(--white);
+    }
 
     /* ---- Buttons ---- */
     .btn {
@@ -286,35 +293,91 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    .status-draft { background: #33333a; color: var(--draft-color); }
+    .status-draft { background: #3b3b44; color: var(--draft-color); }
     .status-submitted { background: var(--submitted-dim); color: var(--submitted-color); }
     .status-approved { background: var(--success-dim); color: var(--success); }
     .status-rejected { background: var(--danger-dim); color: var(--danger); }
 
-    /* ---- Progress Bar ---- */
-    .progress-cell { min-width: 130px; }
-    .progress-bar-bg {
-      width: 100%;
+    /* ---- Progress Slider ---- */
+    .progress-cell { min-width: 180px; }
+    .progress-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .progress-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
       height: 6px;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
       background: var(--border);
-      border-radius: 3px;
-      overflow: hidden;
     }
-    .progress-bar-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.3s;
+    .progress-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--white);
+      cursor: pointer;
+      border: 2px solid var(--surface);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     }
-    .progress-bar-fill.low { background: var(--danger); }
-    .progress-bar-fill.mid { background: var(--warning); }
-    .progress-bar-fill.high { background: var(--success); }
-    .progress-text {
+    .progress-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--white);
+      cursor: pointer;
+      border: 2px solid var(--surface);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .progress-pct {
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-muted);
-      margin-top: 4px;
+      min-width: 34px;
+      text-align: right;
       font-variant-numeric: tabular-nums;
     }
+    .progress-dollar-row {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: 6px;
+    }
+    .dollar-prefix {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+    .progress-dollar-input {
+      width: 100px;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--bg);
+      font-family: inherit;
+      font-variant-numeric: tabular-nums;
+      transition: border-color 0.15s;
+    }
+    .progress-dollar-input:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
+    }
+    .progress-dollar-input::-webkit-inner-spin-button,
+    .progress-dollar-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .progress-dollar-input { -moz-appearance: textfield; }
 
     /* ---- Cost ---- */
     .cost-value { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 500; }
@@ -326,7 +389,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.55);
+      background: rgba(0,0,0,0.5);
       backdrop-filter: blur(4px);
       z-index: 1000;
       align-items: center;
@@ -463,7 +526,8 @@
 
 <div class="header">
   <div class="header-brand">
-    <img src="logo.png" alt="Fit Out By Design" class="header-logo">
+    <img src="logo.png" alt="Fit Out By Design" class="header-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+    <span class="header-logo-fallback">FOBD</span>
     <div class="divider"></div>
     <h1>Variation Register</h1>
   </div>
@@ -498,8 +562,8 @@
       <div class="sub">Completed work on unapproved variations</div>
     </div>
     <div class="summary-card total">
-      <div class="label">Total Claimed Value</div>
-      <div class="value" id="totalClaimed">$0.00</div>
+      <div class="label">Total Value Completed</div>
+      <div class="value" id="totalCompleted">$0.00</div>
       <div class="sub">Based on % complete across all variations</div>
     </div>
     <div class="summary-card count">
@@ -524,7 +588,7 @@
             <th>Cost</th>
             <th>Status</th>
             <th>% Complete</th>
-            <th>Claimed Value</th>
+            <th>Completed Value</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -734,9 +798,117 @@
     renderAll();
   }
 
+  // ---- Slider / Dollar Inline Controls ----
+  function updateSliderTrack(slider, percent) {
+    const color = percent < 33 ? 'var(--danger)' : percent < 66 ? 'var(--warning)' : 'var(--success)';
+    slider.style.background = 'linear-gradient(to right, ' + color + ' 0%, ' + color + ' ' + percent + '%, var(--border) ' + percent + '%, var(--border) 100%)';
+  }
+
+  function onSliderChange(slider) {
+    const id = slider.dataset.id;
+    const percent = parseInt(slider.value);
+    const list = getVariations();
+    const v = list.find(x => x.id === id);
+    if (!v) return;
+    v.percent = percent;
+    setVariations(list);
+
+    // Update percentage label
+    document.getElementById('pct-' + id).textContent = percent + '%';
+
+    // Update dollar input
+    const dollarInput = document.querySelector('.progress-dollar-input[data-id="' + id + '"]');
+    if (dollarInput) dollarInput.value = (v.cost * percent / 100).toFixed(2);
+
+    // Update completed value cell
+    updateCompletedCell(id, v);
+
+    // Update slider track color
+    updateSliderTrack(slider, percent);
+
+    // Update summary cards
+    renderSummary();
+  }
+
+  function onDollarChange(input) {
+    const id = input.dataset.id;
+    const cost = parseFloat(input.dataset.cost) || 0;
+    const dollarVal = parseFloat(input.value) || 0;
+    const percent = cost > 0 ? Math.min(100, Math.max(0, Math.round(dollarVal / cost * 100))) : 0;
+
+    const list = getVariations();
+    const v = list.find(x => x.id === id);
+    if (!v) return;
+    v.percent = percent;
+    setVariations(list);
+
+    // Update slider
+    const slider = document.querySelector('.progress-slider[data-id="' + id + '"]');
+    if (slider) {
+      slider.value = percent;
+      updateSliderTrack(slider, percent);
+    }
+
+    // Update percentage label
+    document.getElementById('pct-' + id).textContent = percent + '%';
+
+    // Update completed value cell
+    updateCompletedCell(id, v);
+
+    // Update summary cards
+    renderSummary();
+  }
+
+  function updateCompletedCell(id, v) {
+    const completed = v.cost * (v.percent / 100);
+    const isRisk = v.status !== 'approved' && v.percent > 0;
+    const cell = document.getElementById('completed-' + id);
+    if (cell) {
+      cell.textContent = formatCurrency(completed) + (isRisk ? ' *' : '');
+      cell.className = 'cost-value' + (isRisk ? ' risk-value' : '');
+    }
+  }
+
   // ---- Rendering ----
   function formatCurrency(val) {
     return '$' + val.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function renderSummary() {
+    const list = getVariations();
+    let approvedTotal = 0;
+    let approvedCount = 0;
+    let riskTotal = 0;
+    let totalCompleted = 0;
+    let statusCounts = { draft: 0, submitted: 0, approved: 0, rejected: 0 };
+
+    list.forEach(v => {
+      const completed = v.cost * (v.percent / 100);
+      totalCompleted += completed;
+      statusCounts[v.status] = (statusCounts[v.status] || 0) + 1;
+
+      if (v.status === 'approved') {
+        approvedTotal += v.cost;
+        approvedCount++;
+      } else {
+        if (v.percent > 0) {
+          riskTotal += completed;
+        }
+      }
+    });
+
+    document.getElementById('approvedValue').textContent = formatCurrency(approvedTotal);
+    document.getElementById('approvedCount').textContent = approvedCount + ' approved variation' + (approvedCount !== 1 ? 's' : '');
+    document.getElementById('riskValue').textContent = formatCurrency(riskTotal);
+    document.getElementById('totalCompleted').textContent = formatCurrency(totalCompleted);
+    document.getElementById('variationCount').textContent = list.length;
+
+    const parts = [];
+    if (statusCounts.draft) parts.push(statusCounts.draft + ' draft');
+    if (statusCounts.submitted) parts.push(statusCounts.submitted + ' submitted');
+    if (statusCounts.approved) parts.push(statusCounts.approved + ' approved');
+    if (statusCounts.rejected) parts.push(statusCounts.rejected + ' rejected');
+    document.getElementById('statusBreakdown').textContent = parts.join(' / ') || 'No variations';
   }
 
   function renderAll() {
@@ -748,42 +920,9 @@
 
     if (!hasProject) return;
 
+    renderSummary();
+
     const list = getVariations();
-
-    // Summary calculations
-    let approvedTotal = 0;
-    let approvedCount = 0;
-    let riskTotal = 0;
-    let totalClaimed = 0;
-    let statusCounts = { draft: 0, submitted: 0, approved: 0, rejected: 0 };
-
-    list.forEach(v => {
-      const claimed = v.cost * (v.percent / 100);
-      totalClaimed += claimed;
-      statusCounts[v.status] = (statusCounts[v.status] || 0) + 1;
-
-      if (v.status === 'approved') {
-        approvedTotal += v.cost;
-        approvedCount++;
-      } else {
-        if (v.percent > 0) {
-          riskTotal += claimed;
-        }
-      }
-    });
-
-    document.getElementById('approvedValue').textContent = formatCurrency(approvedTotal);
-    document.getElementById('approvedCount').textContent = approvedCount + ' approved variation' + (approvedCount !== 1 ? 's' : '');
-    document.getElementById('riskValue').textContent = formatCurrency(riskTotal);
-    document.getElementById('totalClaimed').textContent = formatCurrency(totalClaimed);
-    document.getElementById('variationCount').textContent = list.length;
-
-    const parts = [];
-    if (statusCounts.draft) parts.push(statusCounts.draft + ' draft');
-    if (statusCounts.submitted) parts.push(statusCounts.submitted + ' submitted');
-    if (statusCounts.approved) parts.push(statusCounts.approved + ' approved');
-    if (statusCounts.rejected) parts.push(statusCounts.rejected + ' rejected');
-    document.getElementById('statusBreakdown').textContent = parts.join(' / ') || 'No variations';
 
     // Table
     const tbody = document.getElementById('variationBody');
@@ -797,8 +936,7 @@
 
     emptyState.style.display = 'none';
     tbody.innerHTML = list.map(v => {
-      const claimed = v.cost * (v.percent / 100);
-      const barClass = v.percent < 33 ? 'low' : v.percent < 66 ? 'mid' : 'high';
+      const completed = v.cost * (v.percent / 100);
       const isRisk = v.status !== 'approved' && v.percent > 0;
 
       return '<tr>' +
@@ -807,16 +945,27 @@
         '<td class="cost-value">' + formatCurrency(v.cost) + '</td>' +
         '<td><span class="status-badge status-' + v.status + '">' + v.status + '</span></td>' +
         '<td class="progress-cell">' +
-          '<div class="progress-bar-bg"><div class="progress-bar-fill ' + barClass + '" style="width:' + v.percent + '%"></div></div>' +
-          '<div class="progress-text">' + v.percent + '%</div>' +
+          '<div class="progress-slider-row">' +
+            '<input type="range" class="progress-slider" min="0" max="100" value="' + v.percent + '" data-id="' + v.id + '" oninput="onSliderChange(this)">' +
+            '<span class="progress-pct" id="pct-' + v.id + '">' + v.percent + '%</span>' +
+          '</div>' +
+          '<div class="progress-dollar-row">' +
+            '<span class="dollar-prefix">$</span>' +
+            '<input type="number" class="progress-dollar-input" value="' + completed.toFixed(2) + '" data-id="' + v.id + '" data-cost="' + v.cost + '" step="0.01" min="0" oninput="onDollarChange(this)">' +
+          '</div>' +
         '</td>' +
-        '<td class="cost-value' + (isRisk ? ' risk-value' : '') + '">' + formatCurrency(claimed) + (isRisk ? ' *' : '') + '</td>' +
+        '<td class="cost-value' + (isRisk ? ' risk-value' : '') + '" id="completed-' + v.id + '">' + formatCurrency(completed) + (isRisk ? ' *' : '') + '</td>' +
         '<td class="actions-cell">' +
           '<button class="btn btn-ghost btn-sm" onclick="openModal(\'' + v.id + '\')">Edit</button>' +
           '<button class="btn btn-danger btn-sm" onclick="deleteVariation(\'' + v.id + '\')">Del</button>' +
         '</td>' +
       '</tr>';
     }).join('');
+
+    // Initialize slider track colors
+    document.querySelectorAll('.progress-slider').forEach(slider => {
+      updateSliderTrack(slider, parseInt(slider.value));
+    });
   }
 
   function escapeHtml(str) {
@@ -831,9 +980,9 @@
     const list = getVariations();
     if (list.length === 0) { alert('No variations to export.'); return; }
 
-    const headers = ['Project', 'Variation No.', 'Description', 'Cost', 'Status', '% Complete', 'Claimed Value', 'At Risk'];
+    const headers = ['Project', 'Variation No.', 'Description', 'Cost', 'Status', '% Complete', 'Completed Value', 'At Risk'];
     const rows = list.map(v => {
-      const claimed = v.cost * (v.percent / 100);
+      const completed = v.cost * (v.percent / 100);
       const isRisk = v.status !== 'approved' && v.percent > 0;
       return [
         appData.activeProject,
@@ -842,25 +991,25 @@
         v.cost.toFixed(2),
         v.status,
         v.percent,
-        claimed.toFixed(2),
+        completed.toFixed(2),
         isRisk ? 'Yes' : 'No'
       ];
     });
 
     // Summary rows
-    let approvedTotal = 0, riskTotal = 0, totalClaimed = 0;
+    let approvedTotal = 0, riskTotal = 0, totalCompleted = 0;
     list.forEach(v => {
-      const claimed = v.cost * (v.percent / 100);
-      totalClaimed += claimed;
+      const completed = v.cost * (v.percent / 100);
+      totalCompleted += completed;
       if (v.status === 'approved') approvedTotal += v.cost;
-      else if (v.percent > 0) riskTotal += claimed;
+      else if (v.percent > 0) riskTotal += completed;
     });
 
     rows.push([]);
     rows.push(['SUMMARY']);
     rows.push(['Total Approved Value', '', '', approvedTotal.toFixed(2)]);
     rows.push(['Total At-Risk Value', '', '', riskTotal.toFixed(2)]);
-    rows.push(['Total Claimed Value', '', '', totalClaimed.toFixed(2)]);
+    rows.push(['Total Value Completed', '', '', totalCompleted.toFixed(2)]);
     rows.push(['Total Variations', '', '', list.length]);
 
     const csvContent = [headers, ...rows]
