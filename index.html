@@ -3,55 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Variation Register</title>
+  <title>Variation Register | Fit Out By Design</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #f4f5f7;
-      --surface: #ffffff;
-      --border: #dfe1e6;
-      --text: #172b4d;
-      --text-muted: #5e6c84;
-      --primary: #0052cc;
-      --primary-hover: #0065ff;
-      --danger: #de350b;
-      --danger-hover: #ff5630;
-      --success: #00875a;
-      --warning: #ff991f;
-      --draft: #6b778c;
-      --submitted: #0065ff;
-      --approved: #00875a;
-      --rejected: #de350b;
-      --radius: 6px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
-      --shadow-lg: 0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface-raised: #1a1a1a;
+      --surface-hover: #222222;
+      --border: #2a2a2a;
+      --border-light: #333333;
+      --text: #f0f0f0;
+      --text-muted: #777777;
+      --text-dim: #555555;
+      --white: #ffffff;
+      --accent: #ffffff;
+      --accent-hover: #e0e0e0;
+      --danger: #ff4444;
+      --danger-hover: #ff6666;
+      --danger-dim: #331111;
+      --success: #22cc77;
+      --success-dim: #0d2e1a;
+      --warning: #ffaa00;
+      --warning-dim: #332a00;
+      --submitted-color: #66aaff;
+      --submitted-dim: #0d1a2e;
+      --draft-color: #888888;
+      --radius: 4px;
+      --radius-lg: 8px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
       min-height: 100vh;
     }
 
-    /* Header */
+    /* ---- Header ---- */
     .header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 16px 24px;
+      padding: 0 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 20px;
       flex-wrap: wrap;
+      height: 72px;
     }
-    .header h1 {
-      font-size: 20px;
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-brand .divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border-light);
+    }
+    .header-brand h1 {
+      font-size: 15px;
       font-weight: 700;
-      color: var(--text);
-      white-space: nowrap;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
     .header-actions {
       display: flex;
@@ -60,112 +82,151 @@
       flex-wrap: wrap;
     }
 
-    /* Buttons */
+    /* ---- Logo SVG ---- */
+    .logo-svg { display: block; }
+
+    /* ---- Buttons ---- */
     .btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 16px;
+      padding: 9px 18px;
       border: none;
       border-radius: var(--radius);
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
       cursor: pointer;
-      transition: background 0.15s, box-shadow 0.15s;
+      transition: all 0.15s ease;
       white-space: nowrap;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
     }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: var(--primary-hover); }
-    .btn-success { background: var(--success); color: #fff; }
-    .btn-success:hover { background: #006644; }
+    .btn-primary {
+      background: var(--white);
+      color: #000;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-success { background: var(--success); color: #000; }
+    .btn-success:hover { opacity: 0.85; }
     .btn-danger { background: var(--danger); color: #fff; }
     .btn-danger:hover { background: var(--danger-hover); }
     .btn-ghost {
       background: transparent;
       color: var(--text-muted);
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-light);
     }
-    .btn-ghost:hover { background: var(--bg); }
-    .btn-sm { padding: 5px 10px; font-size: 13px; }
+    .btn-ghost:hover { background: var(--surface-hover); color: var(--text); border-color: var(--text-dim); }
+    .btn-sm { padding: 6px 12px; font-size: 11px; }
 
-    /* Layout */
-    .container { max-width: 1280px; margin: 0 auto; padding: 24px; }
+    .btn-export {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-light);
+    }
+    .btn-export:hover { background: var(--surface-hover); border-color: var(--text-dim); }
+    .btn-export:disabled { opacity: 0.3; cursor: default; }
+    .btn-export:disabled:hover { background: transparent; border-color: var(--border-light); }
 
-    /* Project Selector */
+    /* ---- Layout ---- */
+    .container { max-width: 1320px; margin: 0 auto; padding: 28px 32px; }
+
+    /* ---- Project Selector ---- */
     .project-bar {
       background: var(--surface);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 16px 20px;
-      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 24px;
+      margin-bottom: 24px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
       flex-wrap: wrap;
     }
     .project-bar label {
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 700;
       color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
       white-space: nowrap;
     }
-    .project-bar select, .project-bar input {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
+    .project-bar select, .project-bar input[type="text"] {
+      padding: 9px 14px;
+      border: 1px solid var(--border-light);
       border-radius: var(--radius);
       font-size: 14px;
+      font-family: inherit;
       color: var(--text);
-      background: var(--surface);
+      background: var(--bg);
+      transition: border-color 0.15s;
     }
-    .project-bar select { min-width: 220px; }
-    .project-bar input { min-width: 180px; }
+    .project-bar select:focus, .project-bar input[type="text"]:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
+    }
+    .project-bar select { min-width: 240px; }
+    .project-bar input[type="text"] { min-width: 200px; }
 
-    /* Summary Cards */
+    /* ---- Summary Cards ---- */
     .summary-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
     .summary-card {
       background: var(--surface);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 20px;
-      border-left: 4px solid var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
     }
-    .summary-card.approved { border-left-color: var(--approved); }
-    .summary-card.risk { border-left-color: var(--warning); }
-    .summary-card.total { border-left-color: var(--primary); }
-    .summary-card.count { border-left-color: var(--draft); }
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+    .summary-card.approved::before { background: var(--success); }
+    .summary-card.risk::before { background: var(--warning); }
+    .summary-card.total::before { background: var(--white); }
+    .summary-card.count::before { background: var(--draft-color); }
     .summary-card .label {
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 10px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 1.5px;
       color: var(--text-muted);
-      margin-bottom: 4px;
+      margin-bottom: 8px;
     }
     .summary-card .value {
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--text);
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.5px;
     }
+    .summary-card.approved .value { color: var(--success); }
+    .summary-card.risk .value { color: var(--warning); }
     .summary-card .sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 4px;
     }
 
-    /* Table */
+    /* ---- Table ---- */
     .table-wrapper {
       background: var(--surface);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
     }
     .table-header {
-      padding: 16px 20px;
+      padding: 20px 24px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -173,7 +234,14 @@
       gap: 12px;
       flex-wrap: wrap;
     }
-    .table-header h2 { font-size: 16px; font-weight: 600; }
+    .table-header h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+    }
+    .table-scroll { overflow-x: auto; }
 
     table {
       width: 100%;
@@ -182,78 +250,84 @@
     }
     thead th {
       text-align: left;
-      padding: 12px 16px;
-      font-size: 12px;
-      font-weight: 600;
+      padding: 14px 20px;
+      font-size: 10px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
-      background: #fafbfc;
-      border-bottom: 2px solid var(--border);
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
       white-space: nowrap;
     }
     tbody td {
-      padding: 12px 16px;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
     tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover { background: #f8f9fa; }
+    tbody tr { transition: background 0.1s; }
+    tbody tr:hover { background: var(--surface-hover); }
 
     .empty-state {
       text-align: center;
-      padding: 60px 20px;
-      color: var(--text-muted);
+      padding: 72px 20px;
+      color: var(--text-dim);
     }
-    .empty-state p { font-size: 15px; margin-bottom: 16px; }
+    .empty-state p { font-size: 15px; margin-bottom: 20px; color: var(--text-muted); }
 
-    /* Status Badge */
+    /* ---- Status Badge ---- */
     .status-badge {
       display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: capitalize;
+      padding: 4px 12px;
+      border-radius: var(--radius);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .status-draft { background: #f4f5f7; color: var(--draft); }
-    .status-submitted { background: #deebff; color: var(--submitted); }
-    .status-approved { background: #e3fcef; color: var(--approved); }
-    .status-rejected { background: #ffebe6; color: var(--rejected); }
+    .status-draft { background: #222; color: var(--draft-color); }
+    .status-submitted { background: var(--submitted-dim); color: var(--submitted-color); }
+    .status-approved { background: var(--success-dim); color: var(--success); }
+    .status-rejected { background: var(--danger-dim); color: var(--danger); }
 
-    /* Progress Bar */
-    .progress-cell { min-width: 120px; }
+    /* ---- Progress Bar ---- */
+    .progress-cell { min-width: 130px; }
     .progress-bar-bg {
       width: 100%;
-      height: 8px;
-      background: #eee;
-      border-radius: 4px;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
       overflow: hidden;
     }
     .progress-bar-fill {
       height: 100%;
-      border-radius: 4px;
+      border-radius: 3px;
       transition: width 0.3s;
     }
     .progress-bar-fill.low { background: var(--danger); }
     .progress-bar-fill.mid { background: var(--warning); }
     .progress-bar-fill.high { background: var(--success); }
     .progress-text {
-      font-size: 12px;
+      font-size: 11px;
+      font-weight: 600;
       color: var(--text-muted);
-      margin-top: 2px;
+      margin-top: 4px;
+      font-variant-numeric: tabular-nums;
     }
 
-    /* Cost display */
-    .cost-value { font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .risk-value { color: var(--warning); font-weight: 600; }
+    /* ---- Cost ---- */
+    .cost-value { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 500; }
+    .risk-value { color: var(--warning); font-weight: 700; }
+    .var-number { font-weight: 700; color: var(--white); font-variant-numeric: tabular-nums; }
 
-    /* Modal */
+    /* ---- Modal ---- */
     .modal-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.45);
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
       z-index: 1000;
       align-items: center;
       justify-content: center;
@@ -261,92 +335,124 @@
     }
     .modal-overlay.active { display: flex; }
     .modal {
-      background: var(--surface);
-      border-radius: 8px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
       box-shadow: var(--shadow-lg);
       width: 100%;
-      max-width: 540px;
+      max-width: 560px;
       max-height: 90vh;
       overflow-y: auto;
     }
     .modal-head {
-      padding: 20px 24px 0;
+      padding: 24px 28px 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    .modal-head h3 { font-size: 18px; font-weight: 600; }
+    .modal-head h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--white);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
     .modal-close {
       background: none;
       border: none;
-      font-size: 22px;
-      color: var(--text-muted);
+      font-size: 24px;
+      color: var(--text-dim);
       cursor: pointer;
       padding: 4px;
       line-height: 1;
+      transition: color 0.15s;
     }
-    .modal-body { padding: 20px 24px; }
+    .modal-close:hover { color: var(--white); }
+    .modal-body { padding: 24px 28px; }
     .modal-foot {
-      padding: 16px 24px;
+      padding: 20px 28px;
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: flex-end;
       gap: 10px;
     }
 
-    .form-group { margin-bottom: 16px; }
+    .form-group { margin-bottom: 18px; }
     .form-group label {
       display: block;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
       color: var(--text-muted);
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
     .form-group input,
     .form-group select,
     .form-group textarea {
       width: 100%;
-      padding: 8px 12px;
-      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border: 1px solid var(--border-light);
       border-radius: var(--radius);
       font-size: 14px;
       color: var(--text);
-      background: var(--surface);
+      background: var(--bg);
       font-family: inherit;
+      transition: border-color 0.15s;
     }
-    .form-group textarea { resize: vertical; min-height: 70px; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus {
       outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(0,82,204,0.15);
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
     }
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 14px;
     }
 
-    /* Actions cell */
+    /* ---- Actions cell ---- */
     .actions-cell { white-space: nowrap; }
-    .actions-cell .btn { margin-left: 4px; }
+    .actions-cell .btn + .btn { margin-left: 6px; }
 
-    /* Delete project */
+    /* ---- Delete project ---- */
     .btn-delete-project {
       color: var(--danger);
-      border-color: var(--danger);
+      border-color: rgba(255,68,68,0.3);
     }
     .btn-delete-project:hover {
-      background: #ffebe6;
+      background: var(--danger-dim);
+      border-color: var(--danger);
+      color: var(--danger);
     }
 
-    /* Responsive */
+    /* ---- No-project state ---- */
+    .no-project-msg {
+      text-align: center;
+      padding: 100px 20px;
+    }
+    .no-project-msg p {
+      font-size: 16px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .no-project-msg .hint {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 1024px) {
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+    }
     @media (max-width: 768px) {
       .container { padding: 16px; }
-      .header { padding: 12px 16px; }
+      .header { padding: 0 16px; height: auto; padding-top: 12px; padding-bottom: 12px; }
       .form-row { grid-template-columns: 1fr; }
-      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .header-brand h1 { font-size: 12px; }
     }
     @media (max-width: 480px) {
       .summary-grid { grid-template-columns: 1fr; }
@@ -356,9 +462,28 @@
 <body>
 
 <div class="header">
-  <h1>Variation Register</h1>
+  <div class="header-brand">
+    <!-- FOBD Logo -->
+    <svg class="logo-svg" width="120" height="44" viewBox="0 0 120 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Grid squares -->
+      <rect x="0" y="0" width="21" height="21" fill="#fff"/>
+      <rect x="23" y="0" width="21" height="21" fill="#fff"/>
+      <rect x="0" y="23" width="21" height="21" fill="#fff"/>
+      <rect x="23" y="23" width="21" height="21" fill="#fff"/>
+      <!-- Letters in grid -->
+      <text x="10.5" y="15" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" fill="#0a0a0a">F</text>
+      <text x="33.5" y="15" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" fill="#0a0a0a">O</text>
+      <text x="10.5" y="38" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" fill="#0a0a0a">B</text>
+      <text x="33.5" y="38" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" fill="#0a0a0a">D</text>
+      <!-- Text -->
+      <text x="52" y="17" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800" fill="#ffffff" letter-spacing="2">FIT OUT</text>
+      <text x="52" y="37" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800" fill="#ffffff" letter-spacing="2">BY DESIGN</text>
+    </svg>
+    <div class="divider"></div>
+    <h1>Variation Register</h1>
+  </div>
   <div class="header-actions">
-    <button class="btn btn-ghost" onclick="exportCSV()" id="exportBtn" disabled>Export CSV</button>
+    <button class="btn btn-export btn-sm" onclick="exportCSV()" id="exportBtn" disabled>Export CSV</button>
   </div>
 </div>
 
@@ -366,7 +491,7 @@
 
   <!-- Project Selector -->
   <div class="project-bar">
-    <label for="projectSelect">Project:</label>
+    <label for="projectSelect">Project</label>
     <select id="projectSelect" onchange="switchProject()">
       <option value="">-- Select a project --</option>
     </select>
@@ -405,29 +530,32 @@
       <h2>Variations</h2>
       <button class="btn btn-primary btn-sm" onclick="openModal()">+ Add Variation</button>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th>No.</th>
-          <th>Description</th>
-          <th>Cost</th>
-          <th>Status</th>
-          <th>% Complete</th>
-          <th>Claimed Value</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="variationBody"></tbody>
-    </table>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>Description</th>
+            <th>Cost</th>
+            <th>Status</th>
+            <th>% Complete</th>
+            <th>Claimed Value</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="variationBody"></tbody>
+      </table>
+    </div>
     <div class="empty-state" id="emptyState" style="display:none;">
-      <p>No variations yet. Add your first variation to get started.</p>
+      <p>No variations yet.</p>
       <button class="btn btn-primary" onclick="openModal()">+ Add Variation</button>
     </div>
   </div>
 
   <!-- No Project Selected -->
-  <div id="noProjectMsg" style="text-align:center; padding:80px 20px; color:var(--text-muted);">
-    <p style="font-size:16px; margin-bottom:8px;">Select or create a project to begin tracking variations.</p>
+  <div class="no-project-msg" id="noProjectMsg">
+    <p>Select or create a project to begin tracking variations.</p>
+    <div class="hint">Use the project bar above to get started.</div>
   </div>
 </div>
 
@@ -653,7 +781,6 @@
         approvedTotal += v.cost;
         approvedCount++;
       } else {
-        // Unapproved but has work done = at risk
         if (v.percent > 0) {
           riskTotal += claimed;
         }
@@ -690,7 +817,7 @@
       const isRisk = v.status !== 'approved' && v.percent > 0;
 
       return '<tr>' +
-        '<td><strong>' + escapeHtml(v.number) + '</strong></td>' +
+        '<td class="var-number">' + escapeHtml(v.number) + '</td>' +
         '<td>' + escapeHtml(v.description) + '</td>' +
         '<td class="cost-value">' + formatCurrency(v.cost) + '</td>' +
         '<td><span class="status-badge status-' + v.status + '">' + v.status + '</span></td>' +
@@ -701,7 +828,7 @@
         '<td class="cost-value' + (isRisk ? ' risk-value' : '') + '">' + formatCurrency(claimed) + (isRisk ? ' *' : '') + '</td>' +
         '<td class="actions-cell">' +
           '<button class="btn btn-ghost btn-sm" onclick="openModal(\'' + v.id + '\')">Edit</button>' +
-          '<button class="btn btn-danger btn-sm" onclick="deleteVariation(\'' + v.id + '\')">Delete</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="deleteVariation(\'' + v.id + '\')">Del</button>' +
         '</td>' +
       '</tr>';
     }).join('');
