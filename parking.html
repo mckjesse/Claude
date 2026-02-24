@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parking Cost Tracker | Fit Out By Design</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #000000;
+      --surface: #1e1e24;
+      --surface-raised: #26262d;
+      --surface-hover: #2e2e36;
+      --border: #3a3a44;
+      --border-light: #4a4a55;
+      --text: #eaeaee;
+      --text-muted: #b0b0bc;
+      --text-dim: #8a8a98;
+      --white: #ffffff;
+      --accent: #ffffff;
+      --accent-hover: #e0e0e0;
+      --danger: #ff5555;
+      --danger-hover: #ff7777;
+      --danger-dim: #3d1a1a;
+      --success: #33dd88;
+      --success-dim: #1a3328;
+      --warning: #ffbb33;
+      --warning-dim: #3d3018;
+      --info: #77bbff;
+      --info-dim: #1a2840;
+      --radius: 4px;
+      --radius-lg: 8px;
+      --shadow: 0 2px 10px rgba(0,0,0,0.5);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.7);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      height: 72px;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-brand .divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border-light);
+    }
+    .header-brand h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .header-user {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .header-user strong {
+      color: var(--white);
+    }
+
+    /* ---- Logo ---- */
+    .header-logo { display: block; height: 44px; width: auto; }
+    .header-logo-fallback {
+      display: none;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: var(--white);
+    }
+
+    /* ---- Buttons ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .btn-primary { background: var(--white); color: #000; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-success { background: var(--success); color: #000; }
+    .btn-success:hover { opacity: 0.85; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-light);
+    }
+    .btn-ghost:hover { background: var(--surface-hover); color: var(--text); border-color: var(--text-dim); }
+    .btn-sm { padding: 6px 12px; font-size: 11px; }
+    .btn-export {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-light);
+    }
+    .btn-export:hover { background: var(--surface-hover); border-color: var(--text-dim); }
+    .btn-export:disabled { opacity: 0.3; cursor: default; }
+    .btn-export:disabled:hover { background: transparent; border-color: var(--border-light); }
+
+    /* ---- Layout ---- */
+    .container { max-width: 1320px; margin: 0 auto; padding: 28px 32px; }
+
+    /* ---- Login Screen ---- */
+    .login-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 72px);
+      padding: 20px;
+    }
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--shadow-lg);
+    }
+    .login-box h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--white);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .login-box .subtitle {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 13px;
+      margin-bottom: 32px;
+    }
+    .login-error {
+      background: var(--danger-dim);
+      color: var(--danger);
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* ---- Forms ---- */
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* ---- Week Navigation ---- */
+    .week-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .week-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .week-label {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--white);
+      min-width: 280px;
+      text-align: center;
+    }
+    .week-nav-btn {
+      background: var(--bg);
+      border: 1px solid var(--border-light);
+      color: var(--text-muted);
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.15s;
+    }
+    .week-nav-btn:hover {
+      background: var(--surface-hover);
+      color: var(--white);
+      border-color: var(--text-dim);
+    }
+
+    /* ---- Summary Cards ---- */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .summary-card.total::before { background: var(--white); }
+    .summary-card.entries-count::before { background: var(--info); }
+    .summary-card.jobs-count::before { background: var(--success); }
+    .summary-card .label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .summary-card .value {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.5px;
+    }
+    .summary-card.entries-count .value { color: var(--info); }
+    .summary-card.jobs-count .value { color: var(--success); }
+
+    /* ---- Weekly Grid Table ---- */
+    .table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .table-header h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+    }
+    .table-scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    thead th {
+      text-align: left;
+      padding: 14px 16px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    thead th.day-col {
+      text-align: center;
+      min-width: 100px;
+    }
+    thead th.today-col {
+      color: var(--info);
+    }
+    thead .day-date {
+      display: block;
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      margin-top: 2px;
+      font-weight: 600;
+    }
+    thead .today-col .day-date {
+      color: var(--info);
+    }
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background 0.1s; }
+    tbody tr:hover { background: var(--surface-hover); }
+    tbody td.day-cell {
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      position: relative;
+    }
+    tbody td.day-cell .cell-amount {
+      font-weight: 600;
+      color: var(--white);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: var(--radius);
+      transition: background 0.15s;
+    }
+    tbody td.day-cell .cell-amount:hover {
+      background: var(--surface-hover);
+    }
+    tbody td.day-cell .cell-empty {
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: var(--radius);
+      transition: background 0.15s;
+    }
+    tbody td.day-cell .cell-empty:hover {
+      background: var(--surface-hover);
+      color: var(--text-muted);
+    }
+    tbody td.total-cell {
+      font-weight: 700;
+      color: var(--white);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+    .job-number {
+      font-weight: 700;
+      color: var(--white);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 72px 20px;
+      color: var(--text-dim);
+    }
+    .empty-state p { font-size: 15px; margin-bottom: 20px; color: var(--text-muted); }
+
+    /* ---- Modal ---- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--surface-raised);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-head {
+      padding: 24px 28px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-head h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--white);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--white); }
+    .modal-body { padding: 24px 28px; }
+    .modal-foot {
+      padding: 20px 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* ---- Admin: User List ---- */
+    .admin-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .admin-section-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .admin-section-header h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+    }
+    .user-list { padding: 0; }
+    .user-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .user-item:last-child { border-bottom: none; }
+    .user-item-info .user-name {
+      font-weight: 600;
+      color: var(--white);
+    }
+    .user-item-info .user-username {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .user-item-info .user-role {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: var(--radius);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 8px;
+    }
+    .role-admin { background: var(--warning-dim); color: var(--warning); }
+    .role-employee { background: var(--info-dim); color: var(--info); }
+
+    /* ---- Tabs ---- */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 14px 20px;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      border-bottom: 2px solid transparent;
+    }
+    .tab-btn:hover {
+      color: var(--text-muted);
+      background: var(--surface-hover);
+    }
+    .tab-btn.active {
+      color: var(--white);
+      border-bottom-color: var(--white);
+      background: var(--surface-raised);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 1024px) {
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .container { padding: 16px; }
+      .header { padding: 0 16px; height: auto; padding-top: 12px; padding-bottom: 12px; }
+      .form-row { grid-template-columns: 1fr; }
+      .header-brand h1 { font-size: 12px; }
+      .week-label { min-width: auto; font-size: 14px; }
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<div class="header">
+  <div class="header-brand">
+    <img src="logo.png" alt="Fit Out By Design" class="header-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+    <span class="header-logo-fallback">FOBD</span>
+    <div class="divider"></div>
+    <h1>Parking Cost Tracker</h1>
+  </div>
+  <div class="header-actions" id="headerActions" style="display:none;">
+    <span class="header-user">Signed in as <strong id="headerUsername"></strong></span>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Sign Out</button>
+  </div>
+</div>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="loginScreen">
+  <div class="login-wrapper">
+    <div class="login-box">
+      <h2>Sign In</h2>
+      <p class="subtitle">Parking Cost Tracker</p>
+      <div class="login-error" id="loginError">Invalid username or password.</div>
+      <div class="form-group">
+        <label for="loginUser">Username</label>
+        <input type="text" id="loginUser" placeholder="Enter your username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label for="loginPass">Password</label>
+        <input type="password" id="loginPass" placeholder="Enter your password" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" style="width:100%; justify-content: center; margin-top: 8px;" onclick="login()">Sign In</button>
+      <p style="text-align: center; margin-top: 16px; font-size: 11px; color: var(--text-dim);">
+        Default admin: admin / admin
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP SCREEN ============ -->
+<div id="appScreen" style="display:none;">
+  <div class="container">
+
+    <!-- Tabs: admin gets both, employees only see Parking -->
+    <div class="tab-bar" id="tabBar">
+      <button class="tab-btn active" onclick="switchTab('parking')">Parking Costs</button>
+      <button class="tab-btn" onclick="switchTab('admin')" id="adminTabBtn" style="display:none;">Manage Users</button>
+    </div>
+
+    <!-- ======= PARKING TAB ======= -->
+    <div class="tab-content active" id="tab-parking">
+
+      <!-- Week Navigation -->
+      <div class="week-bar">
+        <div class="week-nav">
+          <button class="week-nav-btn" onclick="changeWeek(-1)">&larr;</button>
+          <div class="week-label" id="weekLabel"></div>
+          <button class="week-nav-btn" onclick="changeWeek(1)">&rarr;</button>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="goToCurrentWeek()">This Week</button>
+          <button class="btn btn-primary btn-sm" onclick="openEntryModal()">+ Add Entry</button>
+          <button class="btn btn-export btn-sm" onclick="exportCSV()" id="exportBtn">Export CSV</button>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-grid">
+        <div class="summary-card total">
+          <div class="label">Weekly Total</div>
+          <div class="value" id="weeklyTotal">$0.00</div>
+        </div>
+        <div class="summary-card entries-count">
+          <div class="label">Entries This Week</div>
+          <div class="value" id="weeklyEntries">0</div>
+        </div>
+        <div class="summary-card jobs-count">
+          <div class="label">Job Numbers</div>
+          <div class="value" id="weeklyJobs">0</div>
+        </div>
+      </div>
+
+      <!-- Weekly Table -->
+      <div class="table-wrapper">
+        <div class="table-header">
+          <h2>Weekly Parking Costs</h2>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead id="weekTableHead"></thead>
+            <tbody id="weekTableBody"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="emptyState" style="display:none;">
+          <p>No parking entries for this week.</p>
+          <button class="btn btn-primary" onclick="openEntryModal()">+ Add Entry</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======= ADMIN TAB ======= -->
+    <div class="tab-content" id="tab-admin">
+      <div class="admin-section">
+        <div class="admin-section-header">
+          <h2>Employee Accounts</h2>
+          <button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Add Employee</button>
+        </div>
+        <div class="user-list" id="userList"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ ENTRY MODAL ============ -->
+<div class="modal-overlay" id="entryModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="entryModalTitle">Add Parking Entry</h3>
+      <button class="modal-close" onclick="closeEntryModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="entryEditId">
+      <div class="form-group">
+        <label for="entryDate">Date</label>
+        <input type="date" id="entryDate">
+      </div>
+      <div class="form-group">
+        <label for="entryJob">Job Number</label>
+        <input type="text" id="entryJob" placeholder="e.g. JOB-1234" list="jobSuggestions">
+        <datalist id="jobSuggestions"></datalist>
+      </div>
+      <div class="form-group">
+        <label for="entryAmount">Amount ($)</label>
+        <input type="number" id="entryAmount" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label for="entryNotes">Notes (optional)</label>
+        <input type="text" id="entryNotes" placeholder="e.g. CBD parking, site visit">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="entryDeleteBtn" onclick="deleteEntry()" style="display:none; margin-right:auto;">Delete</button>
+      <button class="btn btn-ghost" onclick="closeEntryModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ USER MODAL ============ -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="userModalTitle">Add Employee</h3>
+      <button class="modal-close" onclick="closeUserModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="userEditId">
+      <div class="form-group">
+        <label for="userFullName">Full Name</label>
+        <input type="text" id="userFullName" placeholder="e.g. John Smith">
+      </div>
+      <div class="form-group">
+        <label for="userUsername">Username</label>
+        <input type="text" id="userUsername" placeholder="e.g. jsmith">
+      </div>
+      <div class="form-group">
+        <label for="userPassword">Password</label>
+        <input type="password" id="userPassword" placeholder="Enter password">
+      </div>
+      <div class="form-group">
+        <label for="userRole">Role</label>
+        <select id="userRole">
+          <option value="employee">Employee</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeUserModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ================================================================
+  //  DATA LAYER (localStorage)
+  // ================================================================
+  const STORAGE_KEY = 'parking_tracker_data';
+  const SESSION_KEY = 'parking_tracker_session';
+
+  function defaultData() {
+    return {
+      users: [
+        { id: 'u1', name: 'Admin', username: 'admin', password: 'admin', role: 'admin' }
+      ],
+      entries: []
+      // entry: { id, userId, date (YYYY-MM-DD), jobNumber, amount, notes }
+    };
+  }
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d.users && d.entries) return d;
+      }
+    } catch (e) { /* ignore */ }
+    return defaultData();
+  }
+
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+  }
+
+  let appData = loadData();
+  let currentUser = null;
+  let currentWeekStart = getMonday(new Date());
+
+  // ================================================================
+  //  DATE HELPERS
+  // ================================================================
+  function getMonday(d) {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    date.setDate(diff);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  function addDays(d, n) {
+    const r = new Date(d);
+    r.setDate(r.getDate() + n);
+    return r;
+  }
+
+  function formatDate(d) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return yyyy + '-' + mm + '-' + dd;
+  }
+
+  function formatDateShort(d) {
+    return d.getDate() + '/' + (d.getMonth() + 1);
+  }
+
+  function formatDateDisplay(d) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  function getWeekDates(monday) {
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      dates.push(addDays(monday, i));
+    }
+    return dates;
+  }
+
+  const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  // ================================================================
+  //  AUTH
+  // ================================================================
+  function login() {
+    const username = document.getElementById('loginUser').value.trim().toLowerCase();
+    const password = document.getElementById('loginPass').value;
+    const errorEl = document.getElementById('loginError');
+
+    const user = appData.users.find(u => u.username.toLowerCase() === username && u.password === password);
+    if (!user) {
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    errorEl.style.display = 'none';
+    currentUser = user;
+    localStorage.setItem(SESSION_KEY, user.id);
+    showApp();
+  }
+
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem(SESSION_KEY);
+    document.getElementById('loginScreen').style.display = '';
+    document.getElementById('appScreen').style.display = 'none';
+    document.getElementById('headerActions').style.display = 'none';
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
+    document.getElementById('loginError').style.display = 'none';
+  }
+
+  function restoreSession() {
+    const userId = localStorage.getItem(SESSION_KEY);
+    if (!userId) return;
+    const user = appData.users.find(u => u.id === userId);
+    if (user) {
+      currentUser = user;
+      showApp();
+    }
+  }
+
+  function showApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display = '';
+    document.getElementById('headerActions').style.display = 'flex';
+    document.getElementById('headerUsername').textContent = currentUser.name;
+
+    // Show admin tab only for admins
+    document.getElementById('adminTabBtn').style.display = currentUser.role === 'admin' ? '' : 'none';
+
+    switchTab('parking');
+    renderAll();
+  }
+
+  // Enter key on login form
+  document.getElementById('loginPass').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') login();
+  });
+  document.getElementById('loginUser').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('loginPass').focus();
+  });
+
+  // ================================================================
+  //  TABS
+  // ================================================================
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    // Highlight the correct tab button
+    const btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(b => {
+      if ((tab === 'parking' && b.textContent.includes('Parking')) ||
+          (tab === 'admin' && b.textContent.includes('Users'))) {
+        b.classList.add('active');
+      }
+    });
+
+    if (tab === 'admin') renderUserList();
+  }
+
+  // ================================================================
+  //  WEEK NAVIGATION
+  // ================================================================
+  function changeWeek(dir) {
+    currentWeekStart = addDays(currentWeekStart, dir * 7);
+    renderAll();
+  }
+
+  function goToCurrentWeek() {
+    currentWeekStart = getMonday(new Date());
+    renderAll();
+  }
+
+  // ================================================================
+  //  ENTRIES (current user context)
+  // ================================================================
+  function getUserEntries() {
+    if (!currentUser) return [];
+    // Admins see all entries; employees see only their own
+    if (currentUser.role === 'admin') return appData.entries;
+    return appData.entries.filter(e => e.userId === currentUser.id);
+  }
+
+  function getWeekEntries() {
+    const weekDates = getWeekDates(currentWeekStart).map(d => formatDate(d));
+    return getUserEntries().filter(e => weekDates.includes(e.date));
+  }
+
+  // ================================================================
+  //  RENDER
+  // ================================================================
+  function renderAll() {
+    renderWeekLabel();
+    renderSummary();
+    renderWeekTable();
+    populateJobSuggestions();
+  }
+
+  function renderWeekLabel() {
+    const sunday = addDays(currentWeekStart, 6);
+    document.getElementById('weekLabel').textContent =
+      formatDateDisplay(currentWeekStart) + '  \u2014  ' + formatDateDisplay(sunday);
+  }
+
+  function renderSummary() {
+    const entries = getWeekEntries();
+    const total = entries.reduce((sum, e) => sum + e.amount, 0);
+    const jobs = new Set(entries.map(e => e.jobNumber));
+
+    document.getElementById('weeklyTotal').textContent = '$' + total.toFixed(2);
+    document.getElementById('weeklyEntries').textContent = entries.length;
+    document.getElementById('weeklyJobs').textContent = jobs.size;
+  }
+
+  function renderWeekTable() {
+    const weekDates = getWeekDates(currentWeekStart);
+    const weekDateStrs = weekDates.map(d => formatDate(d));
+    const todayStr = formatDate(new Date());
+    const entries = getWeekEntries();
+
+    // Build header
+    const thead = document.getElementById('weekTableHead');
+    let headHtml = '<tr><th>Employee</th><th>Job #</th>';
+    for (let i = 0; i < 7; i++) {
+      const isToday = weekDateStrs[i] === todayStr;
+      headHtml += '<th class="day-col' + (isToday ? ' today-col' : '') + '">' +
+        DAY_NAMES[i] + '<span class="day-date">' + formatDateShort(weekDates[i]) + '</span></th>';
+    }
+    headHtml += '<th style="text-align:right;">Total</th></tr>';
+    thead.innerHTML = headHtml;
+
+    // Group entries by userId + jobNumber
+    const groups = {};
+    entries.forEach(e => {
+      const key = e.userId + '||' + e.jobNumber;
+      if (!groups[key]) {
+        const user = appData.users.find(u => u.id === e.userId);
+        groups[key] = {
+          userId: e.userId,
+          userName: user ? user.name : 'Unknown',
+          jobNumber: e.jobNumber,
+          days: {}
+        };
+      }
+      // A user can have multiple entries on same day for same job, accumulate
+      if (!groups[key].days[e.date]) {
+        groups[key].days[e.date] = { total: 0, entryIds: [] };
+      }
+      groups[key].days[e.date].total += e.amount;
+      groups[key].days[e.date].entryIds.push(e.id);
+    });
+
+    const tbody = document.getElementById('weekTableBody');
+    const emptyState = document.getElementById('emptyState');
+
+    const groupKeys = Object.keys(groups).sort((a, b) => {
+      const ga = groups[a], gb = groups[b];
+      if (ga.userName !== gb.userName) return ga.userName.localeCompare(gb.userName);
+      return ga.jobNumber.localeCompare(gb.jobNumber);
+    });
+
+    if (groupKeys.length === 0) {
+      tbody.innerHTML = '';
+      emptyState.style.display = '';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    let html = '';
+
+    groupKeys.forEach(key => {
+      const g = groups[key];
+      let rowTotal = 0;
+      html += '<tr>';
+      html += '<td>' + escapeHtml(g.userName) + '</td>';
+      html += '<td class="job-number">' + escapeHtml(g.jobNumber) + '</td>';
+
+      for (let i = 0; i < 7; i++) {
+        const dateStr = weekDateStrs[i];
+        const dayData = g.days[dateStr];
+        html += '<td class="day-cell">';
+        if (dayData) {
+          rowTotal += dayData.total;
+          // Click to edit the first entry for that day/job
+          html += '<span class="cell-amount" onclick="openEntryModal(\'' +
+            dayData.entryIds[0] + '\')">$' + dayData.total.toFixed(2) + '</span>';
+        } else {
+          // Click to add entry for that day
+          html += '<span class="cell-empty" onclick="openEntryModalForDay(\'' +
+            dateStr + '\', \'' + escapeHtml(g.jobNumber) + '\')">&mdash;</span>';
+        }
+        html += '</td>';
+      }
+
+      html += '<td class="total-cell">$' + rowTotal.toFixed(2) + '</td>';
+      html += '</tr>';
+    });
+
+    tbody.innerHTML = html;
+  }
+
+  function populateJobSuggestions() {
+    const allJobs = new Set(appData.entries.map(e => e.jobNumber));
+    const dl = document.getElementById('jobSuggestions');
+    dl.innerHTML = '';
+    allJobs.forEach(job => {
+      const opt = document.createElement('option');
+      opt.value = job;
+      dl.appendChild(opt);
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function formatCurrency(val) {
+    return '$' + val.toFixed(2);
+  }
+
+  // ================================================================
+  //  ENTRY MODAL
+  // ================================================================
+  function openEntryModal(editId) {
+    const modal = document.getElementById('entryModal');
+    document.getElementById('entryEditId').value = '';
+    document.getElementById('entryDate').value = formatDate(new Date());
+    document.getElementById('entryJob').value = '';
+    document.getElementById('entryAmount').value = '';
+    document.getElementById('entryNotes').value = '';
+    document.getElementById('entryDeleteBtn').style.display = 'none';
+    document.getElementById('entryModalTitle').textContent = 'Add Parking Entry';
+
+    if (editId) {
+      const entry = appData.entries.find(e => e.id === editId);
+      if (entry) {
+        document.getElementById('entryEditId').value = entry.id;
+        document.getElementById('entryDate').value = entry.date;
+        document.getElementById('entryJob').value = entry.jobNumber;
+        document.getElementById('entryAmount').value = entry.amount;
+        document.getElementById('entryNotes').value = entry.notes || '';
+        document.getElementById('entryDeleteBtn').style.display = '';
+        document.getElementById('entryModalTitle').textContent = 'Edit Parking Entry';
+      }
+    }
+
+    modal.classList.add('active');
+    document.getElementById('entryAmount').focus();
+  }
+
+  function openEntryModalForDay(dateStr, jobNumber) {
+    openEntryModal();
+    document.getElementById('entryDate').value = dateStr;
+    document.getElementById('entryJob').value = jobNumber;
+    document.getElementById('entryAmount').focus();
+  }
+
+  function closeEntryModal() {
+    document.getElementById('entryModal').classList.remove('active');
+  }
+
+  function saveEntry() {
+    const editId = document.getElementById('entryEditId').value;
+    const date = document.getElementById('entryDate').value;
+    const jobNumber = document.getElementById('entryJob').value.trim();
+    const amount = parseFloat(document.getElementById('entryAmount').value) || 0;
+    const notes = document.getElementById('entryNotes').value.trim();
+
+    if (!date) { alert('Date is required.'); return; }
+    if (!jobNumber) { alert('Job number is required.'); return; }
+    if (amount <= 0) { alert('Amount must be greater than zero.'); return; }
+
+    if (editId) {
+      const idx = appData.entries.findIndex(e => e.id === editId);
+      if (idx >= 0) {
+        appData.entries[idx].date = date;
+        appData.entries[idx].jobNumber = jobNumber;
+        appData.entries[idx].amount = amount;
+        appData.entries[idx].notes = notes;
+      }
+    } else {
+      appData.entries.push({
+        id: generateId(),
+        userId: currentUser.id,
+        date: date,
+        jobNumber: jobNumber,
+        amount: amount,
+        notes: notes
+      });
+    }
+
+    saveData();
+    closeEntryModal();
+    renderAll();
+  }
+
+  function deleteEntry() {
+    const editId = document.getElementById('entryEditId').value;
+    if (!editId) return;
+    if (!confirm('Delete this parking entry?')) return;
+    appData.entries = appData.entries.filter(e => e.id !== editId);
+    saveData();
+    closeEntryModal();
+    renderAll();
+  }
+
+  function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  // ================================================================
+  //  CSV EXPORT
+  // ================================================================
+  function exportCSV() {
+    const weekDates = getWeekDates(currentWeekStart);
+    const weekDateStrs = weekDates.map(d => formatDate(d));
+    const entries = getWeekEntries();
+
+    if (entries.length === 0) {
+      alert('No entries to export for this week.');
+      return;
+    }
+
+    // Build header row
+    const headers = ['Employee', 'Job Number'];
+    for (let i = 0; i < 7; i++) {
+      headers.push(DAY_NAMES[i] + ' ' + formatDateShort(weekDates[i]));
+    }
+    headers.push('Weekly Total');
+
+    // Group by userId + jobNumber
+    const groups = {};
+    entries.forEach(e => {
+      const key = e.userId + '||' + e.jobNumber;
+      if (!groups[key]) {
+        const user = appData.users.find(u => u.id === e.userId);
+        groups[key] = {
+          userName: user ? user.name : 'Unknown',
+          jobNumber: e.jobNumber,
+          days: {}
+        };
+      }
+      if (!groups[key].days[e.date]) {
+        groups[key].days[e.date] = 0;
+      }
+      groups[key].days[e.date] += e.amount;
+    });
+
+    const rows = [];
+    let grandTotal = 0;
+
+    Object.keys(groups).sort().forEach(key => {
+      const g = groups[key];
+      const row = [g.userName, g.jobNumber];
+      let rowTotal = 0;
+      for (let i = 0; i < 7; i++) {
+        const dayAmount = g.days[weekDateStrs[i]] || 0;
+        row.push(dayAmount > 0 ? dayAmount.toFixed(2) : '');
+        rowTotal += dayAmount;
+      }
+      row.push(rowTotal.toFixed(2));
+      grandTotal += rowTotal;
+      rows.push(row);
+    });
+
+    // Add blank line and grand total
+    rows.push([]);
+    rows.push(['GRAND TOTAL', '', '', '', '', '', '', '', grandTotal.toFixed(2)]);
+
+    // Week range label
+    const sunday = addDays(currentWeekStart, 6);
+    const weekRangeLabel = 'Week: ' + formatDateDisplay(currentWeekStart) + ' - ' + formatDateDisplay(sunday);
+    const titleRow = [weekRangeLabel];
+
+    const csvContent = [titleRow, [], headers, ...rows]
+      .map(row => row.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const weekStr = formatDate(currentWeekStart);
+    a.download = 'parking_costs_' + weekStr + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ================================================================
+  //  ADMIN: USER MANAGEMENT
+  // ================================================================
+  function renderUserList() {
+    const list = document.getElementById('userList');
+    if (appData.users.length === 0) {
+      list.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-dim);">No users.</div>';
+      return;
+    }
+
+    list.innerHTML = appData.users.map(u => {
+      const roleClass = u.role === 'admin' ? 'role-admin' : 'role-employee';
+      const isSelf = currentUser && u.id === currentUser.id;
+      return '<div class="user-item">' +
+        '<div class="user-item-info">' +
+          '<span class="user-name">' + escapeHtml(u.name) + '</span>' +
+          '<span class="user-role ' + roleClass + '">' + u.role + '</span><br>' +
+          '<span class="user-username">@' + escapeHtml(u.username) + '</span>' +
+        '</div>' +
+        '<div>' +
+          '<button class="btn btn-ghost btn-sm" onclick="openUserModal(\'' + u.id + '\')">Edit</button>' +
+          (isSelf ? '' : ' <button class="btn btn-danger btn-sm" onclick="deleteUser(\'' + u.id + '\')">Delete</button>') +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function openUserModal(editId) {
+    const modal = document.getElementById('userModal');
+    document.getElementById('userEditId').value = '';
+    document.getElementById('userFullName').value = '';
+    document.getElementById('userUsername').value = '';
+    document.getElementById('userPassword').value = '';
+    document.getElementById('userRole').value = 'employee';
+    document.getElementById('userModalTitle').textContent = 'Add Employee';
+
+    if (editId) {
+      const user = appData.users.find(u => u.id === editId);
+      if (user) {
+        document.getElementById('userEditId').value = user.id;
+        document.getElementById('userFullName').value = user.name;
+        document.getElementById('userUsername').value = user.username;
+        document.getElementById('userPassword').value = '';
+        document.getElementById('userRole').value = user.role;
+        document.getElementById('userModalTitle').textContent = 'Edit Employee';
+      }
+    }
+
+    modal.classList.add('active');
+  }
+
+  function closeUserModal() {
+    document.getElementById('userModal').classList.remove('active');
+  }
+
+  function saveUser() {
+    const editId = document.getElementById('userEditId').value;
+    const name = document.getElementById('userFullName').value.trim();
+    const username = document.getElementById('userUsername').value.trim().toLowerCase();
+    const password = document.getElementById('userPassword').value;
+    const role = document.getElementById('userRole').value;
+
+    if (!name) { alert('Full name is required.'); return; }
+    if (!username) { alert('Username is required.'); return; }
+
+    // Check duplicate username
+    const dup = appData.users.find(u => u.username.toLowerCase() === username && u.id !== editId);
+    if (dup) { alert('Username "' + username + '" is already taken.'); return; }
+
+    if (editId) {
+      const idx = appData.users.findIndex(u => u.id === editId);
+      if (idx >= 0) {
+        appData.users[idx].name = name;
+        appData.users[idx].username = username;
+        appData.users[idx].role = role;
+        if (password) appData.users[idx].password = password;
+
+        // Update current user display if editing self
+        if (currentUser && currentUser.id === editId) {
+          currentUser = appData.users[idx];
+          document.getElementById('headerUsername').textContent = currentUser.name;
+        }
+      }
+    } else {
+      if (!password) { alert('Password is required for new users.'); return; }
+      appData.users.push({
+        id: generateId(),
+        name: name,
+        username: username,
+        password: password,
+        role: role
+      });
+    }
+
+    saveData();
+    closeUserModal();
+    renderUserList();
+  }
+
+  function deleteUser(userId) {
+    if (currentUser && userId === currentUser.id) {
+      alert('You cannot delete your own account.');
+      return;
+    }
+    const user = appData.users.find(u => u.id === userId);
+    if (!user) return;
+    if (!confirm('Delete user "' + user.name + '"? Their parking entries will be kept.')) return;
+    appData.users = appData.users.filter(u => u.id !== userId);
+    saveData();
+    renderUserList();
+  }
+
+  // ================================================================
+  //  KEYBOARD SHORTCUTS
+  // ================================================================
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeEntryModal();
+      closeUserModal();
+    }
+  });
+
+  // ================================================================
+  //  INIT
+  // ================================================================
+  restoreSession();
+</script>
+
+</body>
+</html>
