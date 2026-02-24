@@ -420,6 +420,252 @@
     }
     .empty-state p { font-size: 15px; margin-bottom: 20px; color: var(--text-muted); }
 
+    /* ---- Entries List ---- */
+    .entries-list-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-top: 24px;
+    }
+    .entries-list-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .entries-list-header h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+    }
+    .entry-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+      transition: background 0.1s;
+    }
+    .entry-row:last-child { border-bottom: none; }
+    .entry-row:hover { background: var(--surface-hover); }
+    .entry-row-info { flex: 1; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .entry-row-date {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      min-width: 90px;
+    }
+    .entry-row-job {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--white);
+      min-width: 100px;
+    }
+    .entry-row-amount {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--white);
+      font-variant-numeric: tabular-nums;
+      min-width: 80px;
+    }
+    .entry-row-employee {
+      font-size: 12px;
+      color: var(--text-dim);
+      min-width: 80px;
+    }
+    .entry-row-notes {
+      font-size: 12px;
+      color: var(--text-dim);
+      flex: 1;
+      min-width: 80px;
+    }
+    .entry-row-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .btn-icon {
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-muted);
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .btn-icon:hover {
+      background: var(--surface-hover);
+      color: var(--white);
+      border-color: var(--text-dim);
+    }
+    .btn-icon-danger:hover {
+      background: var(--danger-dim);
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+    .entries-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+
+    /* ---- Custom Calendar Dropdown ---- */
+    .calendar-wrapper {
+      position: relative;
+    }
+    .calendar-input {
+      width: 100%;
+      padding: 10px 14px;
+      padding-right: 40px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      user-select: none;
+    }
+    .calendar-input:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
+    }
+    .calendar-icon {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 16px;
+      pointer-events: none;
+    }
+    .calendar-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 2000;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      padding: 16px;
+      width: 300px;
+    }
+    .calendar-dropdown.open {
+      display: block;
+    }
+    .calendar-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .calendar-nav-btn {
+      background: var(--bg);
+      border: 1px solid var(--border-light);
+      color: var(--text-muted);
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .calendar-nav-btn:hover {
+      background: var(--surface-hover);
+      color: var(--white);
+      border-color: var(--text-dim);
+    }
+    .calendar-month-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--white);
+      cursor: default;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+    .calendar-grid .cal-head {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      padding: 4px 0 8px;
+    }
+    .calendar-grid .cal-day {
+      text-align: center;
+      padding: 6px 0;
+      font-size: 13px;
+      color: var(--text-muted);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.1s;
+      font-weight: 500;
+    }
+    .calendar-grid .cal-day:hover {
+      background: var(--surface-hover);
+      color: var(--white);
+    }
+    .calendar-grid .cal-day.other-month {
+      color: var(--text-dim);
+      opacity: 0.4;
+    }
+    .calendar-grid .cal-day.today {
+      color: var(--info);
+      font-weight: 700;
+    }
+    .calendar-grid .cal-day.selected {
+      background: var(--white);
+      color: #000;
+      font-weight: 700;
+    }
+    .calendar-grid .cal-day.selected:hover {
+      background: var(--accent-hover);
+      color: #000;
+    }
+    .calendar-today-btn {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 6px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.15s;
+    }
+    .calendar-today-btn:hover {
+      background: var(--surface-hover);
+      color: var(--white);
+      border-color: var(--text-dim);
+    }
+
     /* ---- Modal ---- */
     .modal-overlay {
       display: none;
@@ -677,6 +923,14 @@
           <button class="btn btn-primary" onclick="openEntryModal()">+ Add Entry</button>
         </div>
       </div>
+
+      <!-- Individual Entries List -->
+      <div class="entries-list-wrapper">
+        <div class="entries-list-header">
+          <h2>All Entries This Week</h2>
+        </div>
+        <div id="entriesList"></div>
+      </div>
     </div>
 
     <!-- ======= ADMIN TAB ======= -->
@@ -703,8 +957,21 @@
     <div class="modal-body">
       <input type="hidden" id="entryEditId">
       <div class="form-group">
-        <label for="entryDate">Date</label>
-        <input type="date" id="entryDate">
+        <label>Date</label>
+        <div class="calendar-wrapper" id="calendarWrapper">
+          <input type="text" class="calendar-input" id="entryDateDisplay" readonly placeholder="Select a date">
+          <span class="calendar-icon">&#128197;</span>
+          <input type="hidden" id="entryDate">
+          <div class="calendar-dropdown" id="calendarDropdown">
+            <div class="calendar-nav">
+              <button type="button" class="calendar-nav-btn" onclick="calendarNav(-1)">&larr;</button>
+              <span class="calendar-month-label" id="calendarMonthLabel"></span>
+              <button type="button" class="calendar-nav-btn" onclick="calendarNav(1)">&rarr;</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+            <button type="button" class="calendar-today-btn" onclick="calendarSelectToday()">Today</button>
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label for="entryJob">Job Number</label>
@@ -960,6 +1227,7 @@
     renderWeekLabel();
     renderSummary();
     renderWeekTable();
+    renderEntriesList();
     populateJobSuggestions();
   }
 
@@ -1077,6 +1345,53 @@
     });
   }
 
+  function renderEntriesList() {
+    const entries = getWeekEntries();
+    const container = document.getElementById('entriesList');
+
+    if (entries.length === 0) {
+      container.innerHTML = '<div class="entries-empty">No entries this week.</div>';
+      return;
+    }
+
+    // Sort by date descending, then by job number
+    const sorted = [...entries].sort((a, b) => {
+      if (a.date !== b.date) return b.date.localeCompare(a.date);
+      return a.jobNumber.localeCompare(b.jobNumber);
+    });
+
+    container.innerHTML = sorted.map(e => {
+      const user = appData.users.find(u => u.id === e.userId);
+      const userName = user ? user.name : 'Unknown';
+      const dateParts = e.date.split('-');
+      const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+      const dayName = DAY_NAMES[(dateObj.getDay() + 6) % 7];
+      const dateDisplay = dayName + ' ' + dateObj.getDate() + '/' + (dateObj.getMonth() + 1);
+      const canDelete = currentUser.role === 'admin' || e.userId === currentUser.id;
+
+      return '<div class="entry-row">' +
+        '<div class="entry-row-info">' +
+          '<span class="entry-row-date">' + dateDisplay + '</span>' +
+          '<span class="entry-row-job">' + escapeHtml(e.jobNumber) + '</span>' +
+          '<span class="entry-row-amount">$' + e.amount.toFixed(2) + '</span>' +
+          (currentUser.role === 'admin' ? '<span class="entry-row-employee">' + escapeHtml(userName) + '</span>' : '') +
+          (e.notes ? '<span class="entry-row-notes">' + escapeHtml(e.notes) + '</span>' : '') +
+        '</div>' +
+        (canDelete ? '<div class="entry-row-actions">' +
+          '<button class="btn-icon" onclick="openEntryModal(\'' + e.id + '\')" title="Edit">&#9998;</button>' +
+          '<button class="btn-icon btn-icon-danger" onclick="deleteEntryDirect(\'' + e.id + '\')" title="Delete">&times;</button>' +
+        '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  function deleteEntryDirect(entryId) {
+    if (!confirm('Delete this parking entry?')) return;
+    appData.entries = appData.entries.filter(e => e.id !== entryId);
+    saveData();
+    renderAll();
+  }
+
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
@@ -1088,23 +1403,159 @@
   }
 
   // ================================================================
+  //  CUSTOM CALENDAR DROPDOWN
+  // ================================================================
+  let calendarViewDate = new Date(); // the month being viewed
+  let calendarSelectedDate = null;   // the selected date string (YYYY-MM-DD)
+  const MONTH_NAMES = ['January','February','March','April','May','June',
+                        'July','August','September','October','November','December'];
+
+  function toggleCalendar() {
+    const dropdown = document.getElementById('calendarDropdown');
+    if (dropdown.classList.contains('open')) {
+      dropdown.classList.remove('open');
+    } else {
+      // Set view to the selected date's month, or today
+      if (calendarSelectedDate) {
+        const parts = calendarSelectedDate.split('-');
+        calendarViewDate = new Date(parts[0], parts[1] - 1, 1);
+      } else {
+        calendarViewDate = new Date();
+        calendarViewDate.setDate(1);
+      }
+      renderCalendar();
+      dropdown.classList.add('open');
+    }
+  }
+
+  function calendarNav(dir) {
+    calendarViewDate.setMonth(calendarViewDate.getMonth() + dir);
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    const year = calendarViewDate.getFullYear();
+    const month = calendarViewDate.getMonth();
+
+    document.getElementById('calendarMonthLabel').textContent =
+      MONTH_NAMES[month] + ' ' + year;
+
+    const grid = document.getElementById('calendarGrid');
+    const todayStr = formatDate(new Date());
+
+    // Day headers (Mon-Sun)
+    let html = '';
+    const dayHeaders = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+    dayHeaders.forEach(d => {
+      html += '<div class="cal-head">' + d + '</div>';
+    });
+
+    // First day of month, and what weekday it is (Mon=0)
+    const firstDay = new Date(year, month, 1);
+    let startDow = firstDay.getDay() - 1; // convert Sun=0 to Mon=0
+    if (startDow < 0) startDow = 6;
+
+    // Days in this month
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // Days from previous month
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    for (let i = startDow - 1; i >= 0; i--) {
+      const d = prevMonthDays - i;
+      const prevMonth = month === 0 ? 11 : month - 1;
+      const prevYear = month === 0 ? year - 1 : year;
+      const dateStr = prevYear + '-' + String(prevMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      html += '<div class="cal-day other-month" onclick="calendarSelectDate(\'' + dateStr + '\')">' + d + '</div>';
+    }
+
+    // Days in current month
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      let cls = 'cal-day';
+      if (dateStr === todayStr) cls += ' today';
+      if (dateStr === calendarSelectedDate) cls += ' selected';
+      html += '<div class="' + cls + '" onclick="calendarSelectDate(\'' + dateStr + '\')">' + d + '</div>';
+    }
+
+    // Days from next month to fill the grid
+    const totalCells = startDow + daysInMonth;
+    const remaining = (7 - (totalCells % 7)) % 7;
+    for (let d = 1; d <= remaining; d++) {
+      const nextMonth = month === 11 ? 0 : month + 1;
+      const nextYear = month === 11 ? year + 1 : year;
+      const dateStr = nextYear + '-' + String(nextMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      html += '<div class="cal-day other-month" onclick="calendarSelectDate(\'' + dateStr + '\')">' + d + '</div>';
+    }
+
+    grid.innerHTML = html;
+  }
+
+  function calendarSelectDate(dateStr) {
+    calendarSelectedDate = dateStr;
+    document.getElementById('entryDate').value = dateStr;
+    // Format for display
+    const parts = dateStr.split('-');
+    const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+    const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dateObj.getDay()];
+    document.getElementById('entryDateDisplay').value =
+      dayName + ', ' + dateObj.getDate() + ' ' + MONTH_NAMES[dateObj.getMonth()] + ' ' + dateObj.getFullYear();
+    document.getElementById('calendarDropdown').classList.remove('open');
+  }
+
+  function calendarSelectToday() {
+    calendarSelectDate(formatDate(new Date()));
+  }
+
+  function setCalendarDate(dateStr) {
+    calendarSelectedDate = dateStr;
+    document.getElementById('entryDate').value = dateStr;
+    if (dateStr) {
+      const parts = dateStr.split('-');
+      const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+      const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dateObj.getDay()];
+      document.getElementById('entryDateDisplay').value =
+        dayName + ', ' + dateObj.getDate() + ' ' + MONTH_NAMES[dateObj.getMonth()] + ' ' + dateObj.getFullYear();
+    } else {
+      document.getElementById('entryDateDisplay').value = '';
+    }
+  }
+
+  // Open/close calendar on input click
+  document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById('calendarWrapper');
+    const dropdown = document.getElementById('calendarDropdown');
+    if (!wrapper || !dropdown) return;
+
+    if (wrapper.contains(e.target) && !dropdown.contains(e.target)) {
+      // Clicked on the input area but not inside the dropdown
+      if (!dropdown.classList.contains('open')) {
+        toggleCalendar();
+      }
+    } else if (!dropdown.contains(e.target)) {
+      // Clicked outside - close
+      dropdown.classList.remove('open');
+    }
+  });
+
+  // ================================================================
   //  ENTRY MODAL
   // ================================================================
   function openEntryModal(editId) {
     const modal = document.getElementById('entryModal');
     document.getElementById('entryEditId').value = '';
-    document.getElementById('entryDate').value = formatDate(new Date());
+    setCalendarDate(formatDate(new Date()));
     document.getElementById('entryJob').value = '';
     document.getElementById('entryAmount').value = '';
     document.getElementById('entryNotes').value = '';
     document.getElementById('entryDeleteBtn').style.display = 'none';
     document.getElementById('entryModalTitle').textContent = 'Add Parking Entry';
+    document.getElementById('calendarDropdown').classList.remove('open');
 
     if (editId) {
       const entry = appData.entries.find(e => e.id === editId);
       if (entry) {
         document.getElementById('entryEditId').value = entry.id;
-        document.getElementById('entryDate').value = entry.date;
+        setCalendarDate(entry.date);
         document.getElementById('entryJob').value = entry.jobNumber;
         document.getElementById('entryAmount').value = entry.amount;
         document.getElementById('entryNotes').value = entry.notes || '';
@@ -1119,7 +1570,7 @@
 
   function openEntryModalForDay(dateStr, jobNumber) {
     openEntryModal();
-    document.getElementById('entryDate').value = dateStr;
+    setCalendarDate(dateStr);
     document.getElementById('entryJob').value = jobNumber;
     document.getElementById('entryAmount').focus();
   }
