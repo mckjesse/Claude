@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quote Request Tracker | Fit Out By Design</title>
+  <title>Quote Request Tracker | FOXD</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
@@ -36,6 +36,10 @@
       --sent-dim: #2a1a40;
       --review-color: #ffbb33;
       --review-dim: #3d3018;
+      --overdue-orange: #ff9933;
+      --overdue-orange-bg: rgba(255, 153, 51, 0.12);
+      --overdue-red: #ff4444;
+      --overdue-red-bg: rgba(255, 68, 68, 0.18);
       --radius: 4px;
       --radius-lg: 8px;
       --shadow: 0 2px 10px rgba(0,0,0,0.5);
@@ -72,6 +76,13 @@
       height: 32px;
       background: var(--border-light);
     }
+    .header-brand .company-name {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
     .header-brand h1 {
       font-size: 15px;
       font-weight: 700;
@@ -84,16 +95,6 @@
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
-    }
-
-    /* ---- Logo ---- */
-    .header-logo { display: block; height: 44px; width: auto; }
-    .header-logo-fallback {
-      display: none;
-      font-weight: 900;
-      font-size: 18px;
-      letter-spacing: 2px;
-      color: var(--white);
     }
 
     /* ---- Buttons ---- */
@@ -136,54 +137,14 @@
       border: 1px solid var(--border-light);
     }
     .btn-export:hover { background: var(--surface-hover); border-color: var(--text-dim); }
-    .btn-export:disabled { opacity: 0.3; cursor: default; }
-    .btn-export:disabled:hover { background: transparent; border-color: var(--border-light); }
 
     /* ---- Layout ---- */
-    .container { max-width: 1320px; margin: 0 auto; padding: 28px 32px; }
-
-    /* ---- Project Selector ---- */
-    .project-bar {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 18px 24px;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-    .project-bar label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      white-space: nowrap;
-    }
-    .project-bar select, .project-bar input[type="text"] {
-      padding: 9px 14px;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      font-size: 14px;
-      font-family: inherit;
-      color: var(--text);
-      background: var(--bg);
-      transition: border-color 0.15s;
-    }
-    .project-bar select:focus, .project-bar input[type="text"]:focus {
-      outline: none;
-      border-color: var(--white);
-      box-shadow: 0 0 0 1px var(--white);
-    }
-    .project-bar select { min-width: 240px; }
-    .project-bar input[type="text"] { min-width: 200px; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 28px 32px; }
 
     /* ---- Summary Cards ---- */
     .summary-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 16px;
       margin-bottom: 28px;
     }
@@ -207,6 +168,7 @@
     .summary-card.pending-card::before { background: var(--warning); }
     .summary-card.total::before { background: var(--white); }
     .summary-card.count::before { background: var(--pending-color); }
+    .summary-card.overdue-card::before { background: var(--overdue-red); }
     .summary-card .label {
       font-size: 10px;
       font-weight: 700;
@@ -223,6 +185,7 @@
     }
     .summary-card.received .value { color: var(--received-color); }
     .summary-card.pending-card .value { color: var(--warning); }
+    .summary-card.overdue-card .value { color: var(--overdue-red); }
     .summary-card .sub {
       font-size: 11px;
       color: var(--text-dim);
@@ -330,6 +293,20 @@
     tbody tr { transition: background 0.1s; }
     tbody tr:hover { background: var(--surface-hover); }
 
+    /* ---- Overdue Row Highlighting ---- */
+    tbody tr.row-overdue-warning {
+      background: var(--overdue-orange-bg);
+    }
+    tbody tr.row-overdue-warning:hover {
+      background: rgba(255, 153, 51, 0.2);
+    }
+    tbody tr.row-overdue-critical {
+      background: var(--overdue-red-bg);
+    }
+    tbody tr.row-overdue-critical:hover {
+      background: rgba(255, 68, 68, 0.25);
+    }
+
     .empty-state {
       text-align: center;
       padding: 72px 20px;
@@ -380,6 +357,7 @@
     .cost-value { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 500; }
     .quote-number { font-weight: 700; color: var(--white); font-variant-numeric: tabular-nums; }
     .supplier-name { font-weight: 500; }
+    .date-cell { white-space: nowrap; font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 
     /* ---- Inline value input ---- */
     .inline-value-input {
@@ -506,6 +484,7 @@
       font-family: inherit;
       transition: border-color 0.15s;
     }
+    .form-group input[type="date"] { color-scheme: dark; }
     .form-group textarea { resize: vertical; min-height: 80px; }
     .form-group input:focus,
     .form-group select:focus,
@@ -524,33 +503,10 @@
     .actions-cell { white-space: nowrap; }
     .actions-cell .btn + .btn { margin-left: 6px; }
 
-    /* ---- Delete project ---- */
-    .btn-delete-project {
-      color: var(--danger);
-      border-color: rgba(255,68,68,0.3);
-    }
-    .btn-delete-project:hover {
-      background: var(--danger-dim);
-      border-color: var(--danger);
-      color: var(--danger);
-    }
-
-    /* ---- No-project state ---- */
-    .no-project-msg {
-      text-align: center;
-      padding: 100px 20px;
-    }
-    .no-project-msg p {
-      font-size: 16px;
-      color: var(--text-dim);
-      margin-bottom: 8px;
-    }
-    .no-project-msg .hint {
-      font-size: 13px;
-      color: var(--text-dim);
-    }
-
     /* ---- Responsive ---- */
+    @media (max-width: 1200px) {
+      .summary-grid { grid-template-columns: repeat(3, 1fr); }
+    }
     @media (max-width: 1024px) {
       .summary-grid { grid-template-columns: 1fr 1fr; }
     }
@@ -559,6 +515,7 @@
       .header { padding: 0 16px; height: auto; padding-top: 12px; padding-bottom: 12px; }
       .form-row { grid-template-columns: 1fr; }
       .header-brand h1 { font-size: 12px; }
+      .header-brand .company-name { font-size: 18px; }
       .table-search { flex-wrap: wrap; }
       .table-search input { min-width: 150px; }
     }
@@ -571,42 +528,19 @@
 
 <div class="header">
   <div class="header-brand">
-    <svg class="header-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="44" height="44">
-      <rect width="200" height="200" fill="#000"/>
-      <rect x="28" y="28" width="144" height="144" fill="none" stroke="#fff" stroke-width="10"/>
-      <!-- F -->
-      <polygon points="46,44 88,44 88,55 59,55 59,66 79,66 79,77 59,77 59,92 46,92" fill="#fff"/>
-      <!-- O -->
-      <circle cx="133" cy="67" r="20" fill="none" stroke="#fff" stroke-width="12"/>
-      <!-- X -->
-      <line x1="47" y1="114" x2="85" y2="152" stroke="#fff" stroke-width="14"/>
-      <line x1="85" y1="114" x2="47" y2="152" stroke="#fff" stroke-width="14"/>
-      <!-- D -->
-      <path d="M112,112 h16 a22 22 0 0 1 0 44 h-16 z M125,123 h3 a11 11 0 0 1 0 22 h-3 z" fill="#fff" fill-rule="evenodd"/>
-    </svg>
+    <span class="company-name">FOXD</span>
     <div class="divider"></div>
     <h1>Quote Request Tracker</h1>
   </div>
   <div class="header-actions">
-    <button class="btn btn-export btn-sm" onclick="exportCSV()" id="exportBtn" disabled>Export CSV</button>
+    <button class="btn btn-export btn-sm" onclick="exportCSV()" id="exportBtn">Export CSV</button>
   </div>
 </div>
 
 <div class="container">
 
-  <!-- Project Selector -->
-  <div class="project-bar">
-    <label for="projectSelect">Project</label>
-    <select id="projectSelect" onchange="switchProject()">
-      <option value="">-- Select a project --</option>
-    </select>
-    <input type="text" id="newProjectName" placeholder="New project name">
-    <button class="btn btn-primary btn-sm" onclick="addProject()">Add Project</button>
-    <button class="btn btn-ghost btn-sm btn-delete-project" onclick="deleteProject()" id="deleteProjectBtn" style="display:none;">Delete Project</button>
-  </div>
-
   <!-- Summary Cards -->
-  <div class="summary-grid" id="summaryGrid" style="display:none;">
+  <div class="summary-grid" id="summaryGrid">
     <div class="summary-card count">
       <div class="label">Total Requests</div>
       <div class="value" id="totalRequests">0</div>
@@ -616,6 +550,11 @@
       <div class="label">Awaiting Response</div>
       <div class="value" id="awaitingCount">0</div>
       <div class="sub">Pending + Sent requests</div>
+    </div>
+    <div class="summary-card overdue-card">
+      <div class="label">Overdue</div>
+      <div class="value" id="overdueCount">0</div>
+      <div class="sub" id="overdueSub">No overdue quotes</div>
     </div>
     <div class="summary-card received">
       <div class="label">Received Value</div>
@@ -630,7 +569,7 @@
   </div>
 
   <!-- Table -->
-  <div class="table-wrapper" id="tableWrapper" style="display:none;">
+  <div class="table-wrapper" id="tableWrapper">
     <div class="table-header">
       <h2>Quote Requests</h2>
       <div class="table-search">
@@ -653,6 +592,8 @@
             <th data-sort="quoteNumber" onclick="sortTable('quoteNumber')">Quote No. <span class="sort-arrow"></span></th>
             <th data-sort="supplier" onclick="sortTable('supplier')">Supplier <span class="sort-arrow"></span></th>
             <th data-sort="status" onclick="sortTable('status')">Status <span class="sort-arrow"></span></th>
+            <th data-sort="dateRequested" onclick="sortTable('dateRequested')">Date Requested <span class="sort-arrow"></span></th>
+            <th data-sort="dateDue" onclick="sortTable('dateDue')">Due Date <span class="sort-arrow"></span></th>
             <th data-sort="value" onclick="sortTable('value')">Quote Value <span class="sort-arrow"></span></th>
             <th data-sort="notes">Notes</th>
             <th>Actions</th>
@@ -665,12 +606,6 @@
       <p>No quote requests yet.</p>
       <button class="btn btn-primary" onclick="openModal()">+ Add Request</button>
     </div>
-  </div>
-
-  <!-- No Project Selected -->
-  <div class="no-project-msg" id="noProjectMsg">
-    <p>Select or create a project to begin tracking quote requests.</p>
-    <div class="hint">Use the project bar above to get started.</div>
   </div>
 </div>
 
@@ -709,6 +644,16 @@
           <input type="number" id="quoteValue" placeholder="0.00" min="0" step="0.01">
         </div>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="dateRequested">Date Requested</label>
+          <input type="date" id="dateRequested">
+        </div>
+        <div class="form-group">
+          <label for="dateDue">Final Due Date</label>
+          <input type="date" id="dateDue">
+        </div>
+      </div>
       <div class="form-group">
         <label for="notes">Notes</label>
         <textarea id="notes" placeholder="Any additional notes..."></textarea>
@@ -723,14 +668,30 @@
 
 <script>
   // ---- Data Layer ----
-  const STORAGE_KEY = 'quote_request_tracker_data';
+  const STORAGE_KEY = 'quote_tracker_v2';
 
   function loadData() {
     try {
+      // Try new flat format first
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) return JSON.parse(raw);
+
+      // Migrate from old project-based format
+      const oldRaw = localStorage.getItem('quote_request_tracker_data');
+      if (oldRaw) {
+        const old = JSON.parse(oldRaw);
+        const allQuotes = [];
+        if (old.projects) {
+          Object.values(old.projects).forEach(quotes => {
+            if (Array.isArray(quotes)) {
+              quotes.forEach(q => allQuotes.push(q));
+            }
+          });
+        }
+        return { quotes: allQuotes };
+      }
     } catch (e) { /* ignore */ }
-    return { projects: {}, activeProject: null };
+    return { quotes: [] };
   }
 
   function saveData(data) {
@@ -742,66 +703,46 @@
   // ---- Sorting state ----
   let currentSort = { field: null, asc: true };
 
-  // ---- Project Management ----
-  function renderProjectSelect() {
-    const sel = document.getElementById('projectSelect');
-    const names = Object.keys(appData.projects).sort((a, b) => a.localeCompare(b));
-    sel.innerHTML = '<option value="">-- Select a project --</option>';
-    names.forEach(name => {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      if (name === appData.activeProject) opt.selected = true;
-      sel.appendChild(opt);
-    });
-    document.getElementById('deleteProjectBtn').style.display = appData.activeProject ? '' : 'none';
-  }
-
-  function addProject() {
-    const input = document.getElementById('newProjectName');
-    const name = input.value.trim();
-    if (!name) return;
-    if (appData.projects[name]) { alert('A project with that name already exists.'); return; }
-    appData.projects[name] = [];
-    appData.activeProject = name;
-    saveData(appData);
-    input.value = '';
-    renderProjectSelect();
-    renderAll();
-  }
-
-  function switchProject() {
-    const sel = document.getElementById('projectSelect');
-    appData.activeProject = sel.value || null;
-    saveData(appData);
-    document.getElementById('deleteProjectBtn').style.display = appData.activeProject ? '' : 'none';
-    renderAll();
-  }
-
-  function deleteProject() {
-    if (!appData.activeProject) return;
-    if (!confirm('Delete project "' + appData.activeProject + '" and all its quote requests?')) return;
-    delete appData.projects[appData.activeProject];
-    appData.activeProject = null;
-    saveData(appData);
-    renderProjectSelect();
-    renderAll();
-  }
-
   // ---- Quote Requests ----
   function getRequests() {
-    if (!appData.activeProject) return [];
-    return appData.projects[appData.activeProject] || [];
+    return appData.quotes || [];
   }
 
   function setRequests(list) {
-    if (!appData.activeProject) return;
-    appData.projects[appData.activeProject] = list;
+    appData.quotes = list;
     saveData(appData);
   }
 
   function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  // ---- Date helpers ----
+  function todayStr() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function isOverdueWarning(r) {
+    // Past requested date but not past due date (or no due date)
+    if (!r.dateRequested) return false;
+    if (r.status === 'received' || r.status === 'accepted' || r.status === 'declined') return false;
+    const today = todayStr();
+    const pastRequested = r.dateRequested < today;
+    const pastDue = r.dateDue && r.dateDue < today;
+    return pastRequested && !pastDue;
+  }
+
+  function isOverdueCritical(r) {
+    // Past final due date
+    if (!r.dateDue) return false;
+    if (r.status === 'received' || r.status === 'accepted' || r.status === 'declined') return false;
+    return r.dateDue < todayStr();
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   // ---- Modal ----
@@ -812,6 +753,8 @@
     document.getElementById('supplier').value = '';
     document.getElementById('reqStatus').value = 'pending';
     document.getElementById('quoteValue').value = '';
+    document.getElementById('dateRequested').value = todayStr();
+    document.getElementById('dateDue').value = '';
     document.getElementById('notes').value = '';
     document.getElementById('modalTitle').textContent = 'Add Quote Request';
 
@@ -823,6 +766,8 @@
         document.getElementById('supplier').value = r.supplier;
         document.getElementById('reqStatus').value = r.status;
         document.getElementById('quoteValue').value = r.value || '';
+        document.getElementById('dateRequested').value = r.dateRequested || '';
+        document.getElementById('dateDue').value = r.dateDue || '';
         document.getElementById('notes').value = r.notes || '';
         document.getElementById('modalTitle').textContent = 'Edit Quote Request';
       }
@@ -841,6 +786,8 @@
     const supplier = document.getElementById('supplier').value.trim();
     const status = document.getElementById('reqStatus').value;
     const value = parseFloat(document.getElementById('quoteValue').value) || 0;
+    const dateRequested = document.getElementById('dateRequested').value || '';
+    const dateDue = document.getElementById('dateDue').value || '';
     const notes = document.getElementById('notes').value.trim();
 
     if (!quoteNumber) { alert('Quote number is required.'); return; }
@@ -851,10 +798,10 @@
     if (id) {
       const idx = list.findIndex(x => x.id === id);
       if (idx >= 0) {
-        list[idx] = { ...list[idx], quoteNumber, supplier, status, value, notes };
+        list[idx] = { ...list[idx], quoteNumber, supplier, status, value, dateRequested, dateDue, notes };
       }
     } else {
-      list.push({ id: generateId(), quoteNumber, supplier, status, value, notes, createdAt: new Date().toISOString() });
+      list.push({ id: generateId(), quoteNumber, supplier, status, value, dateRequested, dateDue, notes, createdAt: new Date().toISOString() });
     }
 
     setRequests(list);
@@ -878,11 +825,8 @@
     if (!r) return;
     r.status = newStatus;
     setRequests(list);
-
-    // Update select styling
     selectEl.className = 'inline-status-select status-' + newStatus;
-
-    renderSummary();
+    renderAll();
   }
 
   // ---- Inline Value Update ----
@@ -928,6 +872,14 @@
           va = order[a.status] || 0;
           vb = order[b.status] || 0;
           break;
+        case 'dateRequested':
+          va = a.dateRequested || '';
+          vb = b.dateRequested || '';
+          break;
+        case 'dateDue':
+          va = a.dateDue || '';
+          vb = b.dateDue || '';
+          break;
         case 'value':
           va = a.value || 0;
           vb = b.value || 0;
@@ -953,6 +905,8 @@
     let receivedCount = 0;
     let totalValue = 0;
     let awaitingCount = 0;
+    let overdueWarning = 0;
+    let overdueCritical = 0;
     let statusCounts = { pending: 0, sent: 0, received: 0, accepted: 0, declined: 0 };
 
     list.forEach(r => {
@@ -970,32 +924,39 @@
       if (r.value) {
         totalValue += r.value;
       }
+
+      if (isOverdueCritical(r)) overdueCritical++;
+      else if (isOverdueWarning(r)) overdueWarning++;
     });
+
+    const totalOverdue = overdueWarning + overdueCritical;
 
     document.getElementById('totalRequests').textContent = list.length;
     document.getElementById('awaitingCount').textContent = awaitingCount;
+    document.getElementById('overdueCount').textContent = totalOverdue;
     document.getElementById('receivedValue').textContent = formatCurrency(receivedTotal);
     document.getElementById('receivedCount').textContent = receivedCount + ' quote' + (receivedCount !== 1 ? 's' : '') + ' received';
     document.getElementById('totalValue').textContent = formatCurrency(totalValue);
 
-    const parts = [];
-    if (statusCounts.pending) parts.push(statusCounts.pending + ' pending');
-    if (statusCounts.sent) parts.push(statusCounts.sent + ' sent');
-    if (statusCounts.received) parts.push(statusCounts.received + ' received');
-    if (statusCounts.accepted) parts.push(statusCounts.accepted + ' accepted');
-    if (statusCounts.declined) parts.push(statusCounts.declined + ' declined');
-    document.getElementById('statusBreakdown').textContent = parts.join(' / ') || 'No requests';
+    if (totalOverdue === 0) {
+      document.getElementById('overdueSub').textContent = 'No overdue quotes';
+    } else {
+      const parts = [];
+      if (overdueWarning) parts.push(overdueWarning + ' past requested');
+      if (overdueCritical) parts.push(overdueCritical + ' past due');
+      document.getElementById('overdueSub').textContent = parts.join(', ');
+    }
+
+    const statusParts = [];
+    if (statusCounts.pending) statusParts.push(statusCounts.pending + ' pending');
+    if (statusCounts.sent) statusParts.push(statusCounts.sent + ' sent');
+    if (statusCounts.received) statusParts.push(statusCounts.received + ' received');
+    if (statusCounts.accepted) statusParts.push(statusCounts.accepted + ' accepted');
+    if (statusCounts.declined) statusParts.push(statusCounts.declined + ' declined');
+    document.getElementById('statusBreakdown').textContent = statusParts.join(' / ') || 'No requests';
   }
 
   function renderAll() {
-    const hasProject = !!appData.activeProject;
-    document.getElementById('noProjectMsg').style.display = hasProject ? 'none' : '';
-    document.getElementById('summaryGrid').style.display = hasProject ? '' : 'none';
-    document.getElementById('tableWrapper').style.display = hasProject ? '' : 'none';
-    document.getElementById('exportBtn').disabled = !hasProject;
-
-    if (!hasProject) return;
-
     renderSummary();
 
     let list = getRequests();
@@ -1051,7 +1012,14 @@
         '<option value="' + s + '"' + (r.status === s ? ' selected' : '') + '>' + s.charAt(0).toUpperCase() + s.slice(1) + '</option>'
       ).join('');
 
-      return '<tr>' +
+      let rowClass = '';
+      if (isOverdueCritical(r)) {
+        rowClass = ' class="row-overdue-critical"';
+      } else if (isOverdueWarning(r)) {
+        rowClass = ' class="row-overdue-warning"';
+      }
+
+      return '<tr' + rowClass + '>' +
         '<td class="quote-number">' + escapeHtml(r.quoteNumber) + '</td>' +
         '<td class="supplier-name">' + escapeHtml(r.supplier) + '</td>' +
         '<td>' +
@@ -1059,6 +1027,8 @@
             statusOptionsHtml +
           '</select>' +
         '</td>' +
+        '<td class="date-cell">' + formatDate(r.dateRequested) + '</td>' +
+        '<td class="date-cell">' + formatDate(r.dateDue) + '</td>' +
         '<td>' +
           '<div class="value-cell">' +
             '<span class="dollar-prefix">$</span>' +
@@ -1086,17 +1056,17 @@
 
   // ---- CSV Export ----
   function exportCSV() {
-    if (!appData.activeProject) return;
     const list = getRequests();
     if (list.length === 0) { alert('No quote requests to export.'); return; }
 
-    const headers = ['Project', 'Quote No.', 'Supplier', 'Status', 'Quote Value', 'Notes'];
+    const headers = ['Quote No.', 'Supplier', 'Status', 'Date Requested', 'Due Date', 'Quote Value', 'Notes'];
     const rows = list.map(r => {
       return [
-        appData.activeProject,
         r.quoteNumber,
         r.supplier,
         r.status,
+        r.dateRequested || '',
+        r.dateDue || '',
         (r.value || 0).toFixed(2),
         r.notes || ''
       ];
@@ -1112,10 +1082,10 @@
 
     rows.push([]);
     rows.push(['SUMMARY']);
-    rows.push(['Total Requests', '', '', '', list.length]);
-    rows.push(['Awaiting Response', '', '', '', awaitingCount]);
-    rows.push(['Total Received Value', '', '', '', receivedTotal.toFixed(2)]);
-    rows.push(['Total Quoted Value', '', '', '', totalValue.toFixed(2)]);
+    rows.push(['Total Requests', '', '', '', '', list.length]);
+    rows.push(['Awaiting Response', '', '', '', '', awaitingCount]);
+    rows.push(['Total Received Value', '', '', '', '', receivedTotal.toFixed(2)]);
+    rows.push(['Total Quoted Value', '', '', '', '', totalValue.toFixed(2)]);
 
     const csvContent = [headers, ...rows]
       .map(row => row.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(','))
@@ -1125,7 +1095,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = appData.activeProject.replace(/[^a-zA-Z0-9_-]/g, '_') + '_quote_requests.csv';
+    a.download = 'foxd_quote_requests.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1137,13 +1107,7 @@
     if (e.key === 'Escape') closeModal();
   });
 
-  // Enter key on project name input
-  document.getElementById('newProjectName').addEventListener('keydown', e => {
-    if (e.key === 'Enter') addProject();
-  });
-
   // ---- Init ----
-  renderProjectSelect();
   renderAll();
 </script>
 
