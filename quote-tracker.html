@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quote Request Tracker | Fit Out By Design</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #000000;
+      --surface: #1e1e24;
+      --surface-raised: #26262d;
+      --surface-hover: #2e2e36;
+      --border: #3a3a44;
+      --border-light: #4a4a55;
+      --text: #eaeaee;
+      --text-muted: #b0b0bc;
+      --text-dim: #8a8a98;
+      --white: #ffffff;
+      --accent: #ffffff;
+      --accent-hover: #e0e0e0;
+      --danger: #ff5555;
+      --danger-hover: #ff7777;
+      --danger-dim: #3d1a1a;
+      --success: #33dd88;
+      --success-dim: #1a3328;
+      --warning: #ffbb33;
+      --warning-dim: #3d3018;
+      --received-color: #77bbff;
+      --received-dim: #1a2840;
+      --pending-color: #b0b0bc;
+      --sent-color: #c4a0ff;
+      --sent-dim: #2a1a40;
+      --review-color: #ffbb33;
+      --review-dim: #3d3018;
+      --radius: 4px;
+      --radius-lg: 8px;
+      --shadow: 0 2px 10px rgba(0,0,0,0.5);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.7);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      height: 72px;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-brand .divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border-light);
+    }
+    .header-brand h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ---- Logo ---- */
+    .header-logo { display: block; height: 44px; width: auto; }
+    .header-logo-fallback {
+      display: none;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: var(--white);
+    }
+
+    /* ---- Buttons ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .btn-primary {
+      background: var(--white);
+      color: #000;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-success { background: var(--success); color: #000; }
+    .btn-success:hover { opacity: 0.85; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-light);
+    }
+    .btn-ghost:hover { background: var(--surface-hover); color: var(--text); border-color: var(--text-dim); }
+    .btn-sm { padding: 6px 12px; font-size: 11px; }
+
+    .btn-export {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-light);
+    }
+    .btn-export:hover { background: var(--surface-hover); border-color: var(--text-dim); }
+    .btn-export:disabled { opacity: 0.3; cursor: default; }
+    .btn-export:disabled:hover { background: transparent; border-color: var(--border-light); }
+
+    /* ---- Layout ---- */
+    .container { max-width: 1320px; margin: 0 auto; padding: 28px 32px; }
+
+    /* ---- Project Selector ---- */
+    .project-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .project-bar label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      white-space: nowrap;
+    }
+    .project-bar select, .project-bar input[type="text"] {
+      padding: 9px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      transition: border-color 0.15s;
+    }
+    .project-bar select:focus, .project-bar input[type="text"]:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
+    }
+    .project-bar select { min-width: 240px; }
+    .project-bar input[type="text"] { min-width: 200px; }
+
+    /* ---- Summary Cards ---- */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+    .summary-card.received::before { background: var(--received-color); }
+    .summary-card.pending-card::before { background: var(--warning); }
+    .summary-card.total::before { background: var(--white); }
+    .summary-card.count::before { background: var(--pending-color); }
+    .summary-card .label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .summary-card .value {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.5px;
+    }
+    .summary-card.received .value { color: var(--received-color); }
+    .summary-card.pending-card .value { color: var(--warning); }
+    .summary-card .sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* ---- Table ---- */
+    .table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .table-header h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+    }
+    .table-search {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .table-search input {
+      padding: 7px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      min-width: 200px;
+      transition: border-color 0.15s;
+    }
+    .table-search input:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
+    }
+    .table-search select {
+      padding: 7px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      transition: border-color 0.15s;
+    }
+    .table-search select:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
+    }
+    .table-scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    thead th {
+      text-align: left;
+      padding: 14px 20px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s;
+    }
+    thead th:hover { color: var(--text); }
+    thead th.sort-active { color: var(--white); }
+    thead th .sort-arrow {
+      font-size: 10px;
+      margin-left: 4px;
+      opacity: 0.4;
+    }
+    thead th.sort-active .sort-arrow { opacity: 1; }
+    thead th:last-child { cursor: default; }
+    thead th:last-child:hover { color: var(--text-dim); }
+
+    tbody td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background 0.1s; }
+    tbody tr:hover { background: var(--surface-hover); }
+
+    .empty-state {
+      text-align: center;
+      padding: 72px 20px;
+      color: var(--text-dim);
+    }
+    .empty-state p { font-size: 15px; margin-bottom: 20px; color: var(--text-muted); }
+
+    /* ---- Status Badge ---- */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: var(--radius);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-pending { background: #2a2a33; color: var(--pending-color); }
+    .status-sent { background: var(--sent-dim); color: var(--sent-color); }
+    .status-received { background: var(--received-dim); color: var(--received-color); }
+    .status-accepted { background: var(--success-dim); color: var(--success); }
+    .status-declined { background: var(--danger-dim); color: var(--danger); }
+
+    /* ---- Inline status select ---- */
+    .inline-status-select {
+      padding: 4px 10px;
+      border-radius: var(--radius);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .inline-status-select:focus {
+      outline: none;
+      border-color: var(--white);
+    }
+    .inline-status-select.status-pending { background: #2a2a33; color: var(--pending-color); }
+    .inline-status-select.status-sent { background: var(--sent-dim); color: var(--sent-color); }
+    .inline-status-select.status-received { background: var(--received-dim); color: var(--received-color); }
+    .inline-status-select.status-accepted { background: var(--success-dim); color: var(--success); }
+    .inline-status-select.status-declined { background: var(--danger-dim); color: var(--danger); }
+
+    /* ---- Cost ---- */
+    .cost-value { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 500; }
+    .quote-number { font-weight: 700; color: var(--white); font-variant-numeric: tabular-nums; }
+    .supplier-name { font-weight: 500; }
+
+    /* ---- Inline value input ---- */
+    .inline-value-input {
+      width: 120px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      background: var(--bg);
+      font-family: inherit;
+      font-variant-numeric: tabular-nums;
+      transition: border-color 0.15s;
+    }
+    .inline-value-input:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
+    }
+    .inline-value-input::-webkit-inner-spin-button,
+    .inline-value-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .inline-value-input { -moz-appearance: textfield; }
+    .value-cell {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .dollar-prefix {
+      font-size: 13px;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    /* ---- Notes column ---- */
+    .notes-cell {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    /* ---- Modal ---- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--surface-raised);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-head {
+      padding: 24px 28px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-head h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--white);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--white); }
+    .modal-body { padding: 24px 28px; }
+    .modal-foot {
+      padding: 20px 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* ---- Actions cell ---- */
+    .actions-cell { white-space: nowrap; }
+    .actions-cell .btn + .btn { margin-left: 6px; }
+
+    /* ---- Delete project ---- */
+    .btn-delete-project {
+      color: var(--danger);
+      border-color: rgba(255,68,68,0.3);
+    }
+    .btn-delete-project:hover {
+      background: var(--danger-dim);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* ---- No-project state ---- */
+    .no-project-msg {
+      text-align: center;
+      padding: 100px 20px;
+    }
+    .no-project-msg p {
+      font-size: 16px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .no-project-msg .hint {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 1024px) {
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .container { padding: 16px; }
+      .header { padding: 0 16px; height: auto; padding-top: 12px; padding-bottom: 12px; }
+      .form-row { grid-template-columns: 1fr; }
+      .header-brand h1 { font-size: 12px; }
+      .table-search { flex-wrap: wrap; }
+      .table-search input { min-width: 150px; }
+    }
+    @media (max-width: 480px) {
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <img src="logo.png" alt="Fit Out By Design" class="header-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+    <span class="header-logo-fallback">FOBD</span>
+    <div class="divider"></div>
+    <h1>Quote Request Tracker</h1>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-export btn-sm" onclick="exportCSV()" id="exportBtn" disabled>Export CSV</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Project Selector -->
+  <div class="project-bar">
+    <label for="projectSelect">Project</label>
+    <select id="projectSelect" onchange="switchProject()">
+      <option value="">-- Select a project --</option>
+    </select>
+    <input type="text" id="newProjectName" placeholder="New project name">
+    <button class="btn btn-primary btn-sm" onclick="addProject()">Add Project</button>
+    <button class="btn btn-ghost btn-sm btn-delete-project" onclick="deleteProject()" id="deleteProjectBtn" style="display:none;">Delete Project</button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-grid" id="summaryGrid" style="display:none;">
+    <div class="summary-card count">
+      <div class="label">Total Requests</div>
+      <div class="value" id="totalRequests">0</div>
+      <div class="sub" id="statusBreakdown">No requests</div>
+    </div>
+    <div class="summary-card pending-card">
+      <div class="label">Awaiting Response</div>
+      <div class="value" id="awaitingCount">0</div>
+      <div class="sub">Pending + Sent requests</div>
+    </div>
+    <div class="summary-card received">
+      <div class="label">Received Value</div>
+      <div class="value" id="receivedValue">$0.00</div>
+      <div class="sub" id="receivedCount">0 quotes received</div>
+    </div>
+    <div class="summary-card total">
+      <div class="label">Total Quoted Value</div>
+      <div class="value" id="totalValue">$0.00</div>
+      <div class="sub">Across all received quotes</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper" id="tableWrapper" style="display:none;">
+    <div class="table-header">
+      <h2>Quote Requests</h2>
+      <div class="table-search">
+        <input type="text" id="searchInput" placeholder="Search quotes..." oninput="renderAll()">
+        <select id="filterStatus" onchange="renderAll()">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="sent">Sent</option>
+          <option value="received">Received</option>
+          <option value="accepted">Accepted</option>
+          <option value="declined">Declined</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="openModal()">+ Add Request</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th data-sort="quoteNumber" onclick="sortTable('quoteNumber')">Quote No. <span class="sort-arrow"></span></th>
+            <th data-sort="supplier" onclick="sortTable('supplier')">Supplier <span class="sort-arrow"></span></th>
+            <th data-sort="status" onclick="sortTable('status')">Status <span class="sort-arrow"></span></th>
+            <th data-sort="value" onclick="sortTable('value')">Quote Value <span class="sort-arrow"></span></th>
+            <th data-sort="notes">Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="requestBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <p>No quote requests yet.</p>
+      <button class="btn btn-primary" onclick="openModal()">+ Add Request</button>
+    </div>
+  </div>
+
+  <!-- No Project Selected -->
+  <div class="no-project-msg" id="noProjectMsg">
+    <p>Select or create a project to begin tracking quote requests.</p>
+    <div class="hint">Use the project bar above to get started.</div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Add Quote Request</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="quoteNumber">Quote Number</label>
+          <input type="text" id="quoteNumber" placeholder="e.g. Q-001">
+        </div>
+        <div class="form-group">
+          <label for="supplier">Supplier</label>
+          <input type="text" id="supplier" placeholder="Supplier name">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="reqStatus">Status</label>
+          <select id="reqStatus">
+            <option value="pending">Pending</option>
+            <option value="sent">Sent</option>
+            <option value="received">Received</option>
+            <option value="accepted">Accepted</option>
+            <option value="declined">Declined</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="quoteValue">Quote Value ($)</label>
+          <input type="number" id="quoteValue" placeholder="0.00" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="notes">Notes</label>
+        <textarea id="notes" placeholder="Any additional notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRequest()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- Data Layer ----
+  const STORAGE_KEY = 'quote_request_tracker_data';
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+    return { projects: {}, activeProject: null };
+  }
+
+  function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  let appData = loadData();
+
+  // ---- Sorting state ----
+  let currentSort = { field: null, asc: true };
+
+  // ---- Project Management ----
+  function renderProjectSelect() {
+    const sel = document.getElementById('projectSelect');
+    const names = Object.keys(appData.projects).sort((a, b) => a.localeCompare(b));
+    sel.innerHTML = '<option value="">-- Select a project --</option>';
+    names.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      if (name === appData.activeProject) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    document.getElementById('deleteProjectBtn').style.display = appData.activeProject ? '' : 'none';
+  }
+
+  function addProject() {
+    const input = document.getElementById('newProjectName');
+    const name = input.value.trim();
+    if (!name) return;
+    if (appData.projects[name]) { alert('A project with that name already exists.'); return; }
+    appData.projects[name] = [];
+    appData.activeProject = name;
+    saveData(appData);
+    input.value = '';
+    renderProjectSelect();
+    renderAll();
+  }
+
+  function switchProject() {
+    const sel = document.getElementById('projectSelect');
+    appData.activeProject = sel.value || null;
+    saveData(appData);
+    document.getElementById('deleteProjectBtn').style.display = appData.activeProject ? '' : 'none';
+    renderAll();
+  }
+
+  function deleteProject() {
+    if (!appData.activeProject) return;
+    if (!confirm('Delete project "' + appData.activeProject + '" and all its quote requests?')) return;
+    delete appData.projects[appData.activeProject];
+    appData.activeProject = null;
+    saveData(appData);
+    renderProjectSelect();
+    renderAll();
+  }
+
+  // ---- Quote Requests ----
+  function getRequests() {
+    if (!appData.activeProject) return [];
+    return appData.projects[appData.activeProject] || [];
+  }
+
+  function setRequests(list) {
+    if (!appData.activeProject) return;
+    appData.projects[appData.activeProject] = list;
+    saveData(appData);
+  }
+
+  function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  // ---- Modal ----
+  function openModal(id) {
+    const overlay = document.getElementById('modalOverlay');
+    document.getElementById('editId').value = '';
+    document.getElementById('quoteNumber').value = '';
+    document.getElementById('supplier').value = '';
+    document.getElementById('reqStatus').value = 'pending';
+    document.getElementById('quoteValue').value = '';
+    document.getElementById('notes').value = '';
+    document.getElementById('modalTitle').textContent = 'Add Quote Request';
+
+    if (id) {
+      const r = getRequests().find(x => x.id === id);
+      if (r) {
+        document.getElementById('editId').value = r.id;
+        document.getElementById('quoteNumber').value = r.quoteNumber;
+        document.getElementById('supplier').value = r.supplier;
+        document.getElementById('reqStatus').value = r.status;
+        document.getElementById('quoteValue').value = r.value || '';
+        document.getElementById('notes').value = r.notes || '';
+        document.getElementById('modalTitle').textContent = 'Edit Quote Request';
+      }
+    }
+    overlay.classList.add('active');
+    document.getElementById('quoteNumber').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+  }
+
+  function saveRequest() {
+    const id = document.getElementById('editId').value;
+    const quoteNumber = document.getElementById('quoteNumber').value.trim();
+    const supplier = document.getElementById('supplier').value.trim();
+    const status = document.getElementById('reqStatus').value;
+    const value = parseFloat(document.getElementById('quoteValue').value) || 0;
+    const notes = document.getElementById('notes').value.trim();
+
+    if (!quoteNumber) { alert('Quote number is required.'); return; }
+    if (!supplier) { alert('Supplier name is required.'); return; }
+
+    const list = getRequests();
+
+    if (id) {
+      const idx = list.findIndex(x => x.id === id);
+      if (idx >= 0) {
+        list[idx] = { ...list[idx], quoteNumber, supplier, status, value, notes };
+      }
+    } else {
+      list.push({ id: generateId(), quoteNumber, supplier, status, value, notes, createdAt: new Date().toISOString() });
+    }
+
+    setRequests(list);
+    closeModal();
+    renderAll();
+  }
+
+  function deleteRequest(id) {
+    if (!confirm('Delete this quote request?')) return;
+    const list = getRequests().filter(x => x.id !== id);
+    setRequests(list);
+    renderAll();
+  }
+
+  // ---- Inline Status Update ----
+  function onStatusChange(selectEl) {
+    const id = selectEl.dataset.id;
+    const newStatus = selectEl.value;
+    const list = getRequests();
+    const r = list.find(x => x.id === id);
+    if (!r) return;
+    r.status = newStatus;
+    setRequests(list);
+
+    // Update select styling
+    selectEl.className = 'inline-status-select status-' + newStatus;
+
+    renderSummary();
+  }
+
+  // ---- Inline Value Update ----
+  function onValueChange(input) {
+    const id = input.dataset.id;
+    const newValue = parseFloat(input.value) || 0;
+    const list = getRequests();
+    const r = list.find(x => x.id === id);
+    if (!r) return;
+    r.value = newValue;
+    setRequests(list);
+    renderSummary();
+  }
+
+  // ---- Sorting ----
+  function sortTable(field) {
+    if (currentSort.field === field) {
+      currentSort.asc = !currentSort.asc;
+    } else {
+      currentSort.field = field;
+      currentSort.asc = true;
+    }
+    renderAll();
+  }
+
+  function applySorting(list) {
+    if (!currentSort.field) return list;
+    const sorted = [...list];
+    const dir = currentSort.asc ? 1 : -1;
+    sorted.sort((a, b) => {
+      let va, vb;
+      switch (currentSort.field) {
+        case 'quoteNumber':
+          va = a.quoteNumber.toLowerCase();
+          vb = b.quoteNumber.toLowerCase();
+          break;
+        case 'supplier':
+          va = a.supplier.toLowerCase();
+          vb = b.supplier.toLowerCase();
+          break;
+        case 'status':
+          const order = { pending: 0, sent: 1, received: 2, accepted: 3, declined: 4 };
+          va = order[a.status] || 0;
+          vb = order[b.status] || 0;
+          break;
+        case 'value':
+          va = a.value || 0;
+          vb = b.value || 0;
+          break;
+        default:
+          return 0;
+      }
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
+    });
+    return sorted;
+  }
+
+  // ---- Rendering ----
+  function formatCurrency(val) {
+    return '$' + val.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function renderSummary() {
+    const list = getRequests();
+    let receivedTotal = 0;
+    let receivedCount = 0;
+    let totalValue = 0;
+    let awaitingCount = 0;
+    let statusCounts = { pending: 0, sent: 0, received: 0, accepted: 0, declined: 0 };
+
+    list.forEach(r => {
+      statusCounts[r.status] = (statusCounts[r.status] || 0) + 1;
+
+      if (r.status === 'pending' || r.status === 'sent') {
+        awaitingCount++;
+      }
+
+      if (r.status === 'received' || r.status === 'accepted') {
+        receivedTotal += r.value || 0;
+        receivedCount++;
+      }
+
+      if (r.value) {
+        totalValue += r.value;
+      }
+    });
+
+    document.getElementById('totalRequests').textContent = list.length;
+    document.getElementById('awaitingCount').textContent = awaitingCount;
+    document.getElementById('receivedValue').textContent = formatCurrency(receivedTotal);
+    document.getElementById('receivedCount').textContent = receivedCount + ' quote' + (receivedCount !== 1 ? 's' : '') + ' received';
+    document.getElementById('totalValue').textContent = formatCurrency(totalValue);
+
+    const parts = [];
+    if (statusCounts.pending) parts.push(statusCounts.pending + ' pending');
+    if (statusCounts.sent) parts.push(statusCounts.sent + ' sent');
+    if (statusCounts.received) parts.push(statusCounts.received + ' received');
+    if (statusCounts.accepted) parts.push(statusCounts.accepted + ' accepted');
+    if (statusCounts.declined) parts.push(statusCounts.declined + ' declined');
+    document.getElementById('statusBreakdown').textContent = parts.join(' / ') || 'No requests';
+  }
+
+  function renderAll() {
+    const hasProject = !!appData.activeProject;
+    document.getElementById('noProjectMsg').style.display = hasProject ? 'none' : '';
+    document.getElementById('summaryGrid').style.display = hasProject ? '' : 'none';
+    document.getElementById('tableWrapper').style.display = hasProject ? '' : 'none';
+    document.getElementById('exportBtn').disabled = !hasProject;
+
+    if (!hasProject) return;
+
+    renderSummary();
+
+    let list = getRequests();
+
+    // Filter by search
+    const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+    if (search) {
+      list = list.filter(r =>
+        r.quoteNumber.toLowerCase().includes(search) ||
+        r.supplier.toLowerCase().includes(search) ||
+        (r.notes || '').toLowerCase().includes(search)
+      );
+    }
+
+    // Filter by status
+    const filterStatus = document.getElementById('filterStatus').value;
+    if (filterStatus) {
+      list = list.filter(r => r.status === filterStatus);
+    }
+
+    // Sort
+    list = applySorting(list);
+
+    // Update sort arrows
+    document.querySelectorAll('thead th[data-sort]').forEach(th => {
+      const field = th.dataset.sort;
+      const arrow = th.querySelector('.sort-arrow');
+      if (field === currentSort.field) {
+        th.classList.add('sort-active');
+        if (arrow) arrow.textContent = currentSort.asc ? '\u25B2' : '\u25BC';
+      } else {
+        th.classList.remove('sort-active');
+        if (arrow) arrow.textContent = '';
+      }
+    });
+
+    // Table
+    const tbody = document.getElementById('requestBody');
+    const emptyState = document.getElementById('emptyState');
+
+    if (list.length === 0) {
+      tbody.innerHTML = '';
+      emptyState.style.display = '';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+
+    const statusOptions = ['pending', 'sent', 'received', 'accepted', 'declined'];
+
+    tbody.innerHTML = list.map(r => {
+      const statusOptionsHtml = statusOptions.map(s =>
+        '<option value="' + s + '"' + (r.status === s ? ' selected' : '') + '>' + s.charAt(0).toUpperCase() + s.slice(1) + '</option>'
+      ).join('');
+
+      return '<tr>' +
+        '<td class="quote-number">' + escapeHtml(r.quoteNumber) + '</td>' +
+        '<td class="supplier-name">' + escapeHtml(r.supplier) + '</td>' +
+        '<td>' +
+          '<select class="inline-status-select status-' + r.status + '" data-id="' + r.id + '" onchange="onStatusChange(this)">' +
+            statusOptionsHtml +
+          '</select>' +
+        '</td>' +
+        '<td>' +
+          '<div class="value-cell">' +
+            '<span class="dollar-prefix">$</span>' +
+            '<input type="number" class="inline-value-input" value="' + (r.value || '') + '" data-id="' + r.id + '" step="0.01" min="0" placeholder="0.00" onchange="onValueChange(this)">' +
+          '</div>' +
+        '</td>' +
+        '<td class="notes-cell" title="' + escapeAttr(r.notes || '') + '">' + escapeHtml(r.notes || '-') + '</td>' +
+        '<td class="actions-cell">' +
+          '<button class="btn btn-ghost btn-sm" onclick="openModal(\'' + r.id + '\')">Edit</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="deleteRequest(\'' + r.id + '\')">Del</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function escapeAttr(str) {
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // ---- CSV Export ----
+  function exportCSV() {
+    if (!appData.activeProject) return;
+    const list = getRequests();
+    if (list.length === 0) { alert('No quote requests to export.'); return; }
+
+    const headers = ['Project', 'Quote No.', 'Supplier', 'Status', 'Quote Value', 'Notes'];
+    const rows = list.map(r => {
+      return [
+        appData.activeProject,
+        r.quoteNumber,
+        r.supplier,
+        r.status,
+        (r.value || 0).toFixed(2),
+        r.notes || ''
+      ];
+    });
+
+    // Summary rows
+    let receivedTotal = 0, totalValue = 0, awaitingCount = 0;
+    list.forEach(r => {
+      if (r.status === 'pending' || r.status === 'sent') awaitingCount++;
+      if (r.status === 'received' || r.status === 'accepted') receivedTotal += r.value || 0;
+      if (r.value) totalValue += r.value;
+    });
+
+    rows.push([]);
+    rows.push(['SUMMARY']);
+    rows.push(['Total Requests', '', '', '', list.length]);
+    rows.push(['Awaiting Response', '', '', '', awaitingCount]);
+    rows.push(['Total Received Value', '', '', '', receivedTotal.toFixed(2)]);
+    rows.push(['Total Quoted Value', '', '', '', totalValue.toFixed(2)]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = appData.activeProject.replace(/[^a-zA-Z0-9_-]/g, '_') + '_quote_requests.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ---- Keyboard shortcuts ----
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // Enter key on project name input
+  document.getElementById('newProjectName').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addProject();
+  });
+
+  // ---- Init ----
+  renderProjectSelect();
+  renderAll();
+</script>
+
+</body>
+</html>
