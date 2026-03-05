@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tender Tracker CRM | Fit Out By Design</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #000000;
+      --surface: #1e1e24;
+      --surface-raised: #26262d;
+      --surface-hover: #2e2e36;
+      --border: #3a3a44;
+      --border-light: #4a4a55;
+      --text: #eaeaee;
+      --text-muted: #b0b0bc;
+      --text-dim: #8a8a98;
+      --white: #ffffff;
+      --accent: #ffffff;
+      --accent-hover: #e0e0e0;
+      --danger: #ff5555;
+      --danger-hover: #ff7777;
+      --danger-dim: #3d1a1a;
+      --success: #33dd88;
+      --success-dim: #1a3328;
+      --warning: #ffbb33;
+      --warning-dim: #3d3018;
+      --blue: #77bbff;
+      --blue-dim: #1a2840;
+      --purple: #bb88ff;
+      --purple-dim: #2a1a40;
+      --radius: 4px;
+      --radius-lg: 8px;
+      --shadow: 0 2px 10px rgba(0,0,0,0.5);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.7);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      height: 72px;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-brand .divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border-light);
+    }
+    .header-brand h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ---- Logo ---- */
+    .header-logo { display: block; height: 44px; width: auto; }
+    .header-logo-fallback {
+      display: none;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: var(--white);
+    }
+
+    /* ---- Buttons ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .btn-primary { background: var(--white); color: #000; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-success { background: var(--success); color: #000; }
+    .btn-success:hover { opacity: 0.85; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-light);
+    }
+    .btn-ghost:hover { background: var(--surface-hover); color: var(--text); border-color: var(--text-dim); }
+    .btn-sm { padding: 6px 12px; font-size: 11px; }
+    .btn-export {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-light);
+    }
+    .btn-export:hover { background: var(--surface-hover); border-color: var(--text-dim); }
+    .btn-export:disabled { opacity: 0.3; cursor: default; }
+    .btn-export:disabled:hover { background: transparent; border-color: var(--border-light); }
+
+    /* ---- Layout ---- */
+    .container { max-width: 1400px; margin: 0 auto; padding: 28px 32px; }
+
+    /* ---- View Toggle ---- */
+    .view-toggle {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3px;
+    }
+    .view-toggle button {
+      padding: 6px 14px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-dim);
+      transition: all 0.15s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .view-toggle button.active {
+      background: var(--white);
+      color: #000;
+    }
+    .view-toggle button:not(.active):hover {
+      color: var(--text);
+    }
+
+    /* ---- Filter Bar ---- */
+    .filter-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .filter-bar label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      white-space: nowrap;
+    }
+    .filter-bar select, .filter-bar input[type="text"] {
+      padding: 9px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      transition: border-color 0.15s;
+    }
+    .filter-bar select:focus, .filter-bar input[type="text"]:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
+    }
+    .filter-bar select { min-width: 180px; }
+    .filter-bar input[type="text"] { min-width: 220px; flex: 1; max-width: 360px; }
+    .filter-spacer { flex: 1; }
+
+    /* ---- Summary Cards ---- */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .summary-card.total::before { background: var(--white); }
+    .summary-card.active-card::before { background: var(--blue); }
+    .summary-card.won::before { background: var(--success); }
+    .summary-card.pipeline::before { background: var(--purple); }
+    .summary-card.avg-rating::before { background: var(--warning); }
+    .summary-card .label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .summary-card .value {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.5px;
+    }
+    .summary-card.won .value { color: var(--success); }
+    .summary-card.active-card .value { color: var(--blue); }
+    .summary-card.pipeline .value { color: var(--purple); }
+    .summary-card.avg-rating .value { color: var(--warning); }
+    .summary-card .sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* ---- Table ---- */
+    .table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .table-header h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+    }
+    .table-scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    thead th {
+      text-align: left;
+      padding: 14px 18px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s;
+    }
+    thead th:hover { color: var(--text); }
+    thead th .sort-arrow { font-size: 10px; margin-left: 4px; opacity: 0.5; }
+    thead th.sorted .sort-arrow { opacity: 1; }
+    tbody td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background 0.1s; cursor: pointer; }
+    tbody tr:hover { background: var(--surface-hover); }
+
+    .empty-state {
+      text-align: center;
+      padding: 72px 20px;
+      color: var(--text-dim);
+    }
+    .empty-state p { font-size: 15px; margin-bottom: 20px; color: var(--text-muted); }
+
+    /* ---- Stage Badge ---- */
+    .stage-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: var(--radius);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stage-lead { background: #2a2a33; color: var(--text-muted); }
+    .stage-qualification { background: var(--blue-dim); color: var(--blue); }
+    .stage-proposal { background: var(--purple-dim); color: var(--purple); }
+    .stage-negotiation { background: var(--warning-dim); color: var(--warning); }
+    .stage-won { background: var(--success-dim); color: var(--success); }
+    .stage-lost { background: var(--danger-dim); color: var(--danger); }
+
+    /* ---- Star Rating ---- */
+    .star-rating {
+      display: inline-flex;
+      gap: 2px;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .star-rating .star { color: var(--border-light); }
+    .star-rating .star.filled { color: var(--warning); }
+    .star-rating-small { font-size: 13px; }
+
+    /* Interactive star rating in forms */
+    .star-input {
+      display: inline-flex;
+      gap: 4px;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .star-input .star {
+      color: var(--border-light);
+      transition: color 0.1s, transform 0.1s;
+      cursor: pointer;
+    }
+    .star-input .star:hover { transform: scale(1.15); }
+    .star-input .star.filled { color: var(--warning); }
+    .star-input .star.hovered { color: var(--warning); opacity: 0.7; }
+
+    /* ---- Rating Labels ---- */
+    .rating-cell {
+      white-space: nowrap;
+    }
+    .rating-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    /* ---- Pipeline Progress ---- */
+    .pipeline-bar {
+      display: flex;
+      gap: 3px;
+      margin-top: 2px;
+    }
+    .pipeline-step {
+      width: 28px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+    }
+    .pipeline-step.filled { background: var(--blue); }
+    .pipeline-step.won { background: var(--success); }
+    .pipeline-step.lost { background: var(--danger); }
+
+    /* ---- Value ---- */
+    .cost-value { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 500; }
+    .tender-ref { font-weight: 700; color: var(--white); font-variant-numeric: tabular-nums; }
+
+    /* ---- Kanban Board ---- */
+    .kanban-container {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+      min-height: 500px;
+    }
+    .kanban-column {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      min-height: 400px;
+    }
+    .kanban-column-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kanban-column-header h3 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+    }
+    .kanban-count {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      background: var(--bg);
+      padding: 2px 8px;
+      border-radius: var(--radius);
+    }
+    .kanban-cards {
+      padding: 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+    .kanban-card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .kanban-card:hover {
+      border-color: var(--border-light);
+      background: var(--surface-hover);
+    }
+    .kanban-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 6px;
+    }
+    .kanban-card-client {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .kanban-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .kanban-card-value {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .kanban-card-date {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+    .kanban-card-ratings {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    .kanban-rating {
+      font-size: 10px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .kanban-rating .star { color: var(--warning); font-size: 10px; }
+
+    /* ---- Modal ---- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--surface-raised);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 640px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-head {
+      padding: 24px 28px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-head h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--white);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--white); }
+    .modal-body { padding: 24px 28px; }
+    .modal-foot {
+      padding: 20px 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* ---- Actions cell ---- */
+    .actions-cell { white-space: nowrap; }
+    .actions-cell .btn + .btn { margin-left: 6px; }
+
+    /* ---- Overdue indicator ---- */
+    .overdue { color: var(--danger); }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 1280px) {
+      .summary-grid { grid-template-columns: repeat(3, 1fr); }
+      .kanban-container { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 1024px) {
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .kanban-container { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .container { padding: 16px; }
+      .header { padding: 0 16px; height: auto; padding-top: 12px; padding-bottom: 12px; }
+      .form-row, .form-row-3 { grid-template-columns: 1fr; }
+      .header-brand h1 { font-size: 12px; }
+      .kanban-container { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <img src="logo.png" alt="Fit Out By Design" class="header-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+    <span class="header-logo-fallback">FOBD</span>
+    <div class="divider"></div>
+    <h1>Tender Tracker</h1>
+  </div>
+  <div class="header-actions">
+    <div class="view-toggle">
+      <button class="active" onclick="setView('table')" id="viewTableBtn">Table</button>
+      <button onclick="setView('board')" id="viewBoardBtn">Board</button>
+    </div>
+    <button class="btn btn-export btn-sm" onclick="exportCSV()" id="exportBtn">Export CSV</button>
+    <button class="btn btn-primary btn-sm" onclick="openModal()">+ New Tender</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <label for="searchInput">Search</label>
+    <input type="text" id="searchInput" placeholder="Search tenders..." oninput="renderAll()">
+    <label for="stageFilter">Stage</label>
+    <select id="stageFilter" onchange="renderAll()">
+      <option value="">All Stages</option>
+      <option value="lead">Lead</option>
+      <option value="qualification">Qualification</option>
+      <option value="proposal">Proposal</option>
+      <option value="negotiation">Negotiation</option>
+      <option value="won">Won</option>
+      <option value="lost">Lost</option>
+    </select>
+    <label for="sortSelect">Sort</label>
+    <select id="sortSelect" onchange="renderAll()">
+      <option value="created-desc">Newest First</option>
+      <option value="created-asc">Oldest First</option>
+      <option value="value-desc">Highest Value</option>
+      <option value="value-asc">Lowest Value</option>
+      <option value="interest-desc">Highest Interest</option>
+      <option value="opportunity-desc">Highest Opportunity</option>
+      <option value="due-asc">Due Soonest</option>
+    </select>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-grid" id="summaryGrid">
+    <div class="summary-card total">
+      <div class="label">Total Tenders</div>
+      <div class="value" id="totalCount">0</div>
+      <div class="sub" id="stageBreakdown"></div>
+    </div>
+    <div class="summary-card active-card">
+      <div class="label">Active Pipeline</div>
+      <div class="value" id="activeCount">0</div>
+      <div class="sub">In progress tenders</div>
+    </div>
+    <div class="summary-card pipeline">
+      <div class="label">Pipeline Value</div>
+      <div class="value" id="pipelineValue">$0</div>
+      <div class="sub">Total value of active tenders</div>
+    </div>
+    <div class="summary-card won">
+      <div class="label">Won Value</div>
+      <div class="value" id="wonValue">$0</div>
+      <div class="sub" id="wonCount">0 tenders won</div>
+    </div>
+    <div class="summary-card avg-rating">
+      <div class="label">Avg Opportunity</div>
+      <div class="value" id="avgOpportunity">-</div>
+      <div class="sub">Across active tenders</div>
+    </div>
+  </div>
+
+  <!-- Table View -->
+  <div id="tableView">
+    <div class="table-wrapper">
+      <div class="table-header">
+        <h2>Tenders</h2>
+        <div class="sub" id="resultCount" style="font-size:12px; color: var(--text-dim);"></div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Ref</th>
+              <th>Tender Name</th>
+              <th>Client</th>
+              <th>Value</th>
+              <th>Stage</th>
+              <th>Due Date</th>
+              <th>Interest</th>
+              <th>Opportunity</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tenderBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <p>No tenders yet. Start building your pipeline.</p>
+        <button class="btn btn-primary" onclick="openModal()">+ New Tender</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kanban Board View -->
+  <div id="boardView" style="display:none;">
+    <div class="kanban-container" id="kanbanContainer"></div>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">New Tender</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="tenderRef">Reference</label>
+          <input type="text" id="tenderRef" placeholder="e.g. T-2026-001">
+        </div>
+        <div class="form-group">
+          <label for="tenderStage">Stage</label>
+          <select id="tenderStage">
+            <option value="lead">Lead</option>
+            <option value="qualification">Qualification</option>
+            <option value="proposal">Proposal</option>
+            <option value="negotiation">Negotiation</option>
+            <option value="won">Won</option>
+            <option value="lost">Lost</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="tenderName">Tender Name</label>
+        <input type="text" id="tenderName" placeholder="Name of the tender / project">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="tenderClient">Client</label>
+          <input type="text" id="tenderClient" placeholder="Client / organisation name">
+        </div>
+        <div class="form-group">
+          <label for="tenderValue">Estimated Value ($)</label>
+          <input type="number" id="tenderValue" placeholder="0.00" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="tenderDueDate">Due / Submission Date</label>
+          <input type="date" id="tenderDueDate">
+        </div>
+        <div class="form-group">
+          <label for="tenderContact">Contact Person</label>
+          <input type="text" id="tenderContact" placeholder="Key contact name">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Interest Rating</label>
+          <div class="star-input" id="interestStars" data-field="interest">
+            <span class="star" data-value="1" onclick="setStarRating('interest', 1)">&#9733;</span>
+            <span class="star" data-value="2" onclick="setStarRating('interest', 2)">&#9733;</span>
+            <span class="star" data-value="3" onclick="setStarRating('interest', 3)">&#9733;</span>
+            <span class="star" data-value="4" onclick="setStarRating('interest', 4)">&#9733;</span>
+            <span class="star" data-value="5" onclick="setStarRating('interest', 5)">&#9733;</span>
+          </div>
+          <input type="hidden" id="tenderInterest" value="0">
+          <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">How much does this tender interest you?</div>
+        </div>
+        <div class="form-group">
+          <label>Opportunity Rating</label>
+          <div class="star-input" id="opportunityStars" data-field="opportunity">
+            <span class="star" data-value="1" onclick="setStarRating('opportunity', 1)">&#9733;</span>
+            <span class="star" data-value="2" onclick="setStarRating('opportunity', 2)">&#9733;</span>
+            <span class="star" data-value="3" onclick="setStarRating('opportunity', 3)">&#9733;</span>
+            <span class="star" data-value="4" onclick="setStarRating('opportunity', 4)">&#9733;</span>
+            <span class="star" data-value="5" onclick="setStarRating('opportunity', 5)">&#9733;</span>
+          </div>
+          <input type="hidden" id="tenderOpportunity" value="0">
+          <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">How strong is this opportunity?</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="tenderDescription">Description / Scope</label>
+        <textarea id="tenderDescription" placeholder="Brief description of the tender scope..."></textarea>
+      </div>
+      <div class="form-group">
+        <label for="tenderNotes">Notes</label>
+        <textarea id="tenderNotes" placeholder="Any additional notes, requirements, key dates..." style="min-height:60px;"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTender()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- Constants ----
+  const STORAGE_KEY = 'tender_crm_data';
+  const STAGES = ['lead', 'qualification', 'proposal', 'negotiation', 'won', 'lost'];
+  const STAGE_LABELS = {
+    lead: 'Lead',
+    qualification: 'Qualification',
+    proposal: 'Proposal',
+    negotiation: 'Negotiation',
+    won: 'Won',
+    lost: 'Lost'
+  };
+  const STAGE_INDEX = { lead: 0, qualification: 1, proposal: 2, negotiation: 3, won: 4, lost: 5 };
+
+  // ---- Data Layer ----
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+    return { tenders: [], view: 'table' };
+  }
+
+  function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  let appData = loadData();
+
+  function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  // ---- View Toggle ----
+  function setView(view) {
+    appData.view = view;
+    saveData(appData);
+    document.getElementById('viewTableBtn').classList.toggle('active', view === 'table');
+    document.getElementById('viewBoardBtn').classList.toggle('active', view === 'board');
+    document.getElementById('tableView').style.display = view === 'table' ? '' : 'none';
+    document.getElementById('boardView').style.display = view === 'board' ? '' : 'none';
+    renderAll();
+  }
+
+  // ---- Star Rating (Form) ----
+  let formRatings = { interest: 0, opportunity: 0 };
+
+  function setStarRating(field, value) {
+    // Toggle off if clicking the same value
+    if (formRatings[field] === value) {
+      formRatings[field] = 0;
+    } else {
+      formRatings[field] = value;
+    }
+    document.getElementById('tender' + capitalize(field)).value = formRatings[field];
+    renderFormStars(field);
+  }
+
+  function renderFormStars(field) {
+    const container = document.getElementById(field + 'Stars');
+    const stars = container.querySelectorAll('.star');
+    stars.forEach((star, i) => {
+      star.classList.toggle('filled', i < formRatings[field]);
+    });
+  }
+
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  // Add hover effects to star inputs
+  document.querySelectorAll('.star-input').forEach(container => {
+    const stars = container.querySelectorAll('.star');
+    stars.forEach((star, idx) => {
+      star.addEventListener('mouseenter', () => {
+        stars.forEach((s, i) => {
+          s.classList.toggle('hovered', i <= idx);
+        });
+      });
+    });
+    container.addEventListener('mouseleave', () => {
+      stars.forEach(s => s.classList.remove('hovered'));
+    });
+  });
+
+  // ---- Filtering & Sorting ----
+  function getFilteredTenders() {
+    let list = [...appData.tenders];
+    const search = document.getElementById('searchInput').value.toLowerCase().trim();
+    const stageFilter = document.getElementById('stageFilter').value;
+
+    if (search) {
+      list = list.filter(t =>
+        t.name.toLowerCase().includes(search) ||
+        t.ref.toLowerCase().includes(search) ||
+        t.client.toLowerCase().includes(search) ||
+        (t.description || '').toLowerCase().includes(search)
+      );
+    }
+    if (stageFilter) {
+      list = list.filter(t => t.stage === stageFilter);
+    }
+
+    const sort = document.getElementById('sortSelect').value;
+    switch (sort) {
+      case 'created-desc': list.sort((a, b) => b.createdAt - a.createdAt); break;
+      case 'created-asc': list.sort((a, b) => a.createdAt - b.createdAt); break;
+      case 'value-desc': list.sort((a, b) => b.value - a.value); break;
+      case 'value-asc': list.sort((a, b) => a.value - b.value); break;
+      case 'interest-desc': list.sort((a, b) => b.interest - a.interest); break;
+      case 'opportunity-desc': list.sort((a, b) => b.opportunity - a.opportunity); break;
+      case 'due-asc': list.sort((a, b) => {
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return new Date(a.dueDate) - new Date(b.dueDate);
+      }); break;
+    }
+
+    return list;
+  }
+
+  // ---- Modal ----
+  function openModal(id) {
+    const overlay = document.getElementById('modalOverlay');
+    document.getElementById('editId').value = '';
+    document.getElementById('tenderRef').value = '';
+    document.getElementById('tenderName').value = '';
+    document.getElementById('tenderClient').value = '';
+    document.getElementById('tenderValue').value = '';
+    document.getElementById('tenderStage').value = 'lead';
+    document.getElementById('tenderDueDate').value = '';
+    document.getElementById('tenderContact').value = '';
+    document.getElementById('tenderDescription').value = '';
+    document.getElementById('tenderNotes').value = '';
+    formRatings = { interest: 0, opportunity: 0 };
+    document.getElementById('tenderInterest').value = '0';
+    document.getElementById('tenderOpportunity').value = '0';
+    document.getElementById('modalTitle').textContent = 'New Tender';
+
+    if (id) {
+      const t = appData.tenders.find(x => x.id === id);
+      if (t) {
+        document.getElementById('editId').value = t.id;
+        document.getElementById('tenderRef').value = t.ref;
+        document.getElementById('tenderName').value = t.name;
+        document.getElementById('tenderClient').value = t.client;
+        document.getElementById('tenderValue').value = t.value;
+        document.getElementById('tenderStage').value = t.stage;
+        document.getElementById('tenderDueDate').value = t.dueDate || '';
+        document.getElementById('tenderContact').value = t.contact || '';
+        document.getElementById('tenderDescription').value = t.description || '';
+        document.getElementById('tenderNotes').value = t.notes || '';
+        formRatings.interest = t.interest || 0;
+        formRatings.opportunity = t.opportunity || 0;
+        document.getElementById('tenderInterest').value = formRatings.interest;
+        document.getElementById('tenderOpportunity').value = formRatings.opportunity;
+        document.getElementById('modalTitle').textContent = 'Edit Tender';
+      }
+    }
+
+    renderFormStars('interest');
+    renderFormStars('opportunity');
+    overlay.classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+  }
+
+  function saveTender() {
+    const id = document.getElementById('editId').value;
+    const ref = document.getElementById('tenderRef').value.trim();
+    const name = document.getElementById('tenderName').value.trim();
+    const client = document.getElementById('tenderClient').value.trim();
+    const value = parseFloat(document.getElementById('tenderValue').value) || 0;
+    const stage = document.getElementById('tenderStage').value;
+    const dueDate = document.getElementById('tenderDueDate').value;
+    const contact = document.getElementById('tenderContact').value.trim();
+    const interest = parseInt(document.getElementById('tenderInterest').value) || 0;
+    const opportunity = parseInt(document.getElementById('tenderOpportunity').value) || 0;
+    const description = document.getElementById('tenderDescription').value.trim();
+    const notes = document.getElementById('tenderNotes').value.trim();
+
+    if (!ref) { alert('Reference is required.'); return; }
+    if (!name) { alert('Tender name is required.'); return; }
+
+    if (id) {
+      const idx = appData.tenders.findIndex(x => x.id === id);
+      if (idx >= 0) {
+        appData.tenders[idx] = {
+          ...appData.tenders[idx],
+          ref, name, client, value, stage, dueDate, contact,
+          interest, opportunity, description, notes,
+          updatedAt: Date.now()
+        };
+      }
+    } else {
+      appData.tenders.push({
+        id: generateId(),
+        ref, name, client, value, stage, dueDate, contact,
+        interest, opportunity, description, notes,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    }
+
+    saveData(appData);
+    closeModal();
+    renderAll();
+  }
+
+  function deleteTender(id, e) {
+    if (e) e.stopPropagation();
+    if (!confirm('Delete this tender?')) return;
+    appData.tenders = appData.tenders.filter(x => x.id !== id);
+    saveData(appData);
+    renderAll();
+  }
+
+  // ---- Rendering ----
+  function formatCurrency(val) {
+    if (val >= 1000000) {
+      return '$' + (val / 1000000).toFixed(1) + 'M';
+    }
+    if (val >= 1000) {
+      return '$' + (val / 1000).toFixed(0) + 'K';
+    }
+    return '$' + val.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function formatCurrencyFull(val) {
+    return '$' + val.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function renderStars(count, max) {
+    max = max || 5;
+    let html = '<div class="star-rating star-rating-small">';
+    for (let i = 0; i < max; i++) {
+      html += '<span class="star' + (i < count ? ' filled' : '') + '">&#9733;</span>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function renderPipelineBar(stage) {
+    const activeStages = ['lead', 'qualification', 'proposal', 'negotiation'];
+    const idx = activeStages.indexOf(stage);
+    let html = '<div class="pipeline-bar">';
+    for (let i = 0; i < 4; i++) {
+      if (stage === 'won') {
+        html += '<div class="pipeline-step won"></div>';
+      } else if (stage === 'lost') {
+        html += '<div class="pipeline-step lost"></div>';
+      } else {
+        html += '<div class="pipeline-step' + (i <= idx ? ' filled' : '') + '"></div>';
+      }
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function isOverdue(dueDate) {
+    if (!dueDate) return false;
+    return new Date(dueDate) < new Date(new Date().toDateString());
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function renderSummary() {
+    const all = appData.tenders;
+    const active = all.filter(t => !['won', 'lost'].includes(t.stage));
+    const won = all.filter(t => t.stage === 'won');
+
+    document.getElementById('totalCount').textContent = all.length;
+    document.getElementById('activeCount').textContent = active.length;
+
+    const pipelineVal = active.reduce((s, t) => s + t.value, 0);
+    document.getElementById('pipelineValue').textContent = formatCurrency(pipelineVal);
+
+    const wonVal = won.reduce((s, t) => s + t.value, 0);
+    document.getElementById('wonValue').textContent = formatCurrency(wonVal);
+    document.getElementById('wonCount').textContent = won.length + ' tender' + (won.length !== 1 ? 's' : '') + ' won';
+
+    // Average opportunity rating for active tenders
+    const rated = active.filter(t => t.opportunity > 0);
+    if (rated.length > 0) {
+      const avg = rated.reduce((s, t) => s + t.opportunity, 0) / rated.length;
+      document.getElementById('avgOpportunity').textContent = avg.toFixed(1) + ' / 5';
+    } else {
+      document.getElementById('avgOpportunity').textContent = '-';
+    }
+
+    // Stage breakdown
+    const counts = {};
+    STAGES.forEach(s => counts[s] = 0);
+    all.forEach(t => counts[t.stage] = (counts[t.stage] || 0) + 1);
+    const parts = STAGES.filter(s => counts[s] > 0).map(s => counts[s] + ' ' + STAGE_LABELS[s].toLowerCase());
+    document.getElementById('stageBreakdown').textContent = parts.join(' / ') || 'No tenders';
+  }
+
+  function renderTable() {
+    const list = getFilteredTenders();
+    const tbody = document.getElementById('tenderBody');
+    const emptyState = document.getElementById('emptyState');
+
+    document.getElementById('resultCount').textContent =
+      list.length !== appData.tenders.length
+        ? list.length + ' of ' + appData.tenders.length + ' tenders'
+        : list.length + ' tender' + (list.length !== 1 ? 's' : '');
+
+    if (list.length === 0 && appData.tenders.length === 0) {
+      tbody.innerHTML = '';
+      emptyState.style.display = '';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:40px; color:var(--text-dim);">No tenders match your filters.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = list.map(t => {
+      const overdue = isOverdue(t.dueDate) && !['won', 'lost'].includes(t.stage);
+      return '<tr onclick="openModal(\'' + t.id + '\')">' +
+        '<td class="tender-ref">' + escapeHtml(t.ref) + '</td>' +
+        '<td>' + escapeHtml(t.name) + '</td>' +
+        '<td>' + escapeHtml(t.client || '-') + '</td>' +
+        '<td class="cost-value">' + formatCurrencyFull(t.value) + '</td>' +
+        '<td>' +
+          '<span class="stage-badge stage-' + t.stage + '">' + STAGE_LABELS[t.stage] + '</span>' +
+          renderPipelineBar(t.stage) +
+        '</td>' +
+        '<td class="' + (overdue ? 'overdue' : '') + '">' + formatDate(t.dueDate) + (overdue ? ' (overdue)' : '') + '</td>' +
+        '<td class="rating-cell">' + renderStars(t.interest) + '</td>' +
+        '<td class="rating-cell">' + renderStars(t.opportunity) + '</td>' +
+        '<td class="actions-cell">' +
+          '<button class="btn btn-ghost btn-sm" onclick="openModal(\'' + t.id + '\'); event.stopPropagation();">Edit</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="deleteTender(\'' + t.id + '\', event)">Del</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function renderKanban() {
+    const container = document.getElementById('kanbanContainer');
+    const list = getFilteredTenders();
+
+    container.innerHTML = STAGES.map(stage => {
+      const cards = list.filter(t => t.stage === stage);
+      const stageValue = cards.reduce((s, t) => s + t.value, 0);
+
+      return '<div class="kanban-column">' +
+        '<div class="kanban-column-header">' +
+          '<h3>' + STAGE_LABELS[stage] + '</h3>' +
+          '<span class="kanban-count">' + cards.length + '</span>' +
+        '</div>' +
+        '<div class="kanban-cards">' +
+          (cards.length === 0
+            ? '<div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">No tenders</div>'
+            : cards.map(t => {
+                const overdue = isOverdue(t.dueDate) && !['won', 'lost'].includes(t.stage);
+                return '<div class="kanban-card" onclick="openModal(\'' + t.id + '\')">' +
+                  '<div class="kanban-card-title">' + escapeHtml(t.name) + '</div>' +
+                  '<div class="kanban-card-client">' + escapeHtml(t.client || 'No client') + '</div>' +
+                  '<div class="kanban-card-footer">' +
+                    '<span class="kanban-card-value">' + formatCurrency(t.value) + '</span>' +
+                    '<span class="kanban-card-date ' + (overdue ? 'overdue' : '') + '">' +
+                      (t.dueDate ? formatDate(t.dueDate) : 'No date') +
+                      (overdue ? ' !' : '') +
+                    '</span>' +
+                  '</div>' +
+                  (t.interest || t.opportunity
+                    ? '<div class="kanban-card-ratings">' +
+                        (t.interest ? '<span class="kanban-rating"><span class="star">&#9733;</span> ' + t.interest + ' Int</span>' : '') +
+                        (t.opportunity ? '<span class="kanban-rating"><span class="star">&#9733;</span> ' + t.opportunity + ' Opp</span>' : '') +
+                      '</div>'
+                    : '') +
+                '</div>';
+              }).join('')) +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderAll() {
+    renderSummary();
+    if (appData.view === 'board') {
+      renderKanban();
+    } else {
+      renderTable();
+    }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ---- CSV Export ----
+  function exportCSV() {
+    const list = getFilteredTenders();
+    if (list.length === 0) { alert('No tenders to export.'); return; }
+
+    const headers = ['Reference', 'Tender Name', 'Client', 'Value', 'Stage', 'Due Date', 'Contact', 'Interest (1-5)', 'Opportunity (1-5)', 'Description', 'Notes'];
+    const rows = list.map(t => [
+      t.ref, t.name, t.client, t.value.toFixed(2),
+      STAGE_LABELS[t.stage], t.dueDate || '', t.contact || '',
+      t.interest || 0, t.opportunity || 0,
+      t.description || '', t.notes || ''
+    ]);
+
+    // Summary
+    const active = list.filter(t => !['won', 'lost'].includes(t.stage));
+    const won = list.filter(t => t.stage === 'won');
+    rows.push([]);
+    rows.push(['SUMMARY']);
+    rows.push(['Total Tenders', '', '', list.length]);
+    rows.push(['Active Pipeline Value', '', '', active.reduce((s, t) => s + t.value, 0).toFixed(2)]);
+    rows.push(['Won Value', '', '', won.reduce((s, t) => s + t.value, 0).toFixed(2)]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tender_tracker_' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ---- Keyboard shortcut ----
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // ---- Init ----
+  if (appData.view === 'board') setView('board');
+  renderAll();
+</script>
+
+</body>
+</html>
