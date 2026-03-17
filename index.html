@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Variation Register | Fit Out By Design</title>
+  <title>Ceiling Grid Calculator | Fit Out By Design</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
@@ -23,1019 +23,1444 @@
       --accent: #ffffff;
       --accent-hover: #e0e0e0;
       --danger: #ff5555;
-      --danger-hover: #ff7777;
-      --danger-dim: #3d1a1a;
       --success: #33dd88;
       --success-dim: #1a3328;
       --warning: #ffbb33;
-      --warning-dim: #3d3018;
-      --submitted-color: #77bbff;
-      --submitted-dim: #1a2840;
-      --draft-color: #b0b0bc;
-      --radius: 4px;
-      --radius-lg: 8px;
-      --shadow: 0 2px 10px rgba(0,0,0,0.5);
-      --shadow-lg: 0 8px 32px rgba(0,0,0,0.7);
+      --warning-dim: #3d2e0a;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.5;
       min-height: 100vh;
+      line-height: 1.5;
     }
 
-    /* ---- Header ---- */
+    /* Header */
     .header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 0 32px;
+      padding: 20px 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 20px;
-      flex-wrap: wrap;
-      height: 72px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
+
     .header-brand {
       display: flex;
       align-items: center;
       gap: 16px;
     }
-    .header-brand .divider {
-      width: 1px;
-      height: 32px;
-      background: var(--border-light);
-    }
-    .header-brand h1 {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text-muted);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-    .header-actions {
+
+    .header-logo {
+      width: 40px;
+      height: 40px;
+      background: var(--white);
+      border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    /* ---- Logo ---- */
-    .header-logo { display: block; height: 44px; width: auto; }
-    .header-logo-fallback {
-      display: none;
+      justify-content: center;
       font-weight: 900;
       font-size: 18px;
-      letter-spacing: 2px;
-      color: var(--white);
-    }
-
-    /* ---- Buttons ---- */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 9px 18px;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 13px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      white-space: nowrap;
-      letter-spacing: 0.3px;
-      text-transform: uppercase;
-    }
-    .btn-primary {
-      background: var(--white);
       color: #000;
     }
-    .btn-primary:hover { background: var(--accent-hover); }
-    .btn-success { background: var(--success); color: #000; }
-    .btn-success:hover { opacity: 0.85; }
-    .btn-danger { background: var(--danger); color: #fff; }
-    .btn-danger:hover { background: var(--danger-hover); }
-    .btn-ghost {
-      background: transparent;
-      color: var(--text-muted);
-      border: 1px solid var(--border-light);
-    }
-    .btn-ghost:hover { background: var(--surface-hover); color: var(--text); border-color: var(--text-dim); }
-    .btn-sm { padding: 6px 12px; font-size: 11px; }
 
-    .btn-export {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border-light);
-    }
-    .btn-export:hover { background: var(--surface-hover); border-color: var(--text-dim); }
-    .btn-export:disabled { opacity: 0.3; cursor: default; }
-    .btn-export:disabled:hover { background: transparent; border-color: var(--border-light); }
-
-    /* ---- Layout ---- */
-    .container { max-width: 1320px; margin: 0 auto; padding: 28px 32px; }
-
-    /* ---- Project Selector ---- */
-    .project-bar {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 18px 24px;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-    .project-bar label {
-      font-size: 11px;
+    .header-title {
+      font-size: 20px;
       font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      white-space: nowrap;
-    }
-    .project-bar select, .project-bar input[type="text"] {
-      padding: 9px 14px;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      font-size: 14px;
-      font-family: inherit;
-      color: var(--text);
-      background: var(--bg);
-      transition: border-color 0.15s;
-    }
-    .project-bar select:focus, .project-bar input[type="text"]:focus {
-      outline: none;
-      border-color: var(--white);
-      box-shadow: 0 0 0 1px var(--white);
-    }
-    .project-bar select { min-width: 240px; }
-    .project-bar input[type="text"] { min-width: 200px; }
-
-    /* ---- Summary Cards ---- */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-    .summary-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      position: relative;
-      overflow: hidden;
-    }
-    .summary-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-    }
-    .summary-card.approved::before { background: var(--success); }
-    .summary-card.risk::before { background: var(--warning); }
-    .summary-card.total::before { background: var(--white); }
-    .summary-card.count::before { background: var(--draft-color); }
-    .summary-card .label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
-    .summary-card .value {
-      font-size: 30px;
-      font-weight: 800;
       color: var(--white);
-      letter-spacing: -0.5px;
-    }
-    .summary-card.approved .value { color: var(--success); }
-    .summary-card.risk .value { color: var(--warning); }
-    .summary-card .sub {
-      font-size: 11px;
-      color: var(--text-dim);
-      margin-top: 4px;
     }
 
-    /* ---- Table ---- */
-    .table-wrapper {
+    .header-subtitle {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Main Layout */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px;
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 32px;
+    }
+
+    @media (max-width: 1024px) {
+      .main {
+        grid-template-columns: 1fr;
+        padding: 20px;
+      }
+    }
+
+    /* Cards */
+    .card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
+      border-radius: var(--radius);
       overflow: hidden;
     }
-    .table-header {
+
+    .card-header {
       padding: 20px 24px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
     }
-    .table-header h2 {
-      font-size: 14px;
+
+    .card-title {
+      font-size: 16px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--text-muted);
+      color: var(--white);
     }
-    .table-scroll { overflow-x: auto; }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    thead th {
-      text-align: left;
-      padding: 14px 20px;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--text-dim);
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-    }
-    tbody td {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-    tbody tr:last-child td { border-bottom: none; }
-    tbody tr { transition: background 0.1s; }
-    tbody tr:hover { background: var(--surface-hover); }
-
-    .empty-state {
-      text-align: center;
-      padding: 72px 20px;
-      color: var(--text-dim);
-    }
-    .empty-state p { font-size: 15px; margin-bottom: 20px; color: var(--text-muted); }
-
-    /* ---- Status Badge ---- */
-    .status-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: var(--radius);
+    .card-badge {
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--surface-hover);
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    .status-draft { background: #2a2a33; color: var(--draft-color); }
-    .status-submitted { background: var(--submitted-dim); color: var(--submitted-color); }
-    .status-approved { background: var(--success-dim); color: var(--success); }
-    .status-rejected { background: var(--danger-dim); color: var(--danger); }
 
-    /* ---- Progress Slider ---- */
-    .progress-cell { min-width: 180px; }
-    .progress-slider-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .card-body {
+      padding: 24px;
     }
-    .progress-slider {
-      -webkit-appearance: none;
-      appearance: none;
-      flex: 1;
-      height: 6px;
-      border-radius: 3px;
-      outline: none;
-      cursor: pointer;
-      background: var(--border);
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 20px;
     }
-    .progress-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: var(--white);
-      cursor: pointer;
-      border: 2px solid var(--surface);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+
+    .form-group:last-child {
+      margin-bottom: 0;
     }
-    .progress-slider::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: var(--white);
-      cursor: pointer;
-      border: 2px solid var(--surface);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-    }
-    .progress-pct {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      min-width: 34px;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
-    .progress-dollar-row {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      margin-top: 6px;
-    }
-    .dollar-prefix {
-      font-size: 11px;
-      color: var(--text-dim);
+
+    .form-label {
+      display: block;
+      font-size: 13px;
       font-weight: 600;
-    }
-    .progress-dollar-input {
-      width: 100px;
-      padding: 3px 8px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 11px;
-      font-weight: 500;
       color: var(--text-muted);
-      background: var(--bg);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-label .unit {
+      color: var(--text-dim);
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--white);
+      font-size: 15px;
       font-family: inherit;
-      font-variant-numeric: tabular-nums;
-      transition: border-color 0.15s;
+      font-weight: 500;
+      transition: border-color 0.2s;
+      -moz-appearance: textfield;
     }
-    .progress-dollar-input:focus {
-      outline: none;
-      border-color: var(--white);
-      box-shadow: 0 0 0 1px var(--white);
-    }
-    .progress-dollar-input::-webkit-inner-spin-button,
-    .progress-dollar-input::-webkit-outer-spin-button {
+
+    .form-input::-webkit-outer-spin-button,
+    .form-input::-webkit-inner-spin-button {
       -webkit-appearance: none;
       margin: 0;
     }
-    .progress-dollar-input { -moz-appearance: textfield; }
 
-    /* ---- Cost ---- */
-    .cost-value { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 500; }
-    .risk-value { color: var(--warning); font-weight: 700; }
-    .var-number { font-weight: 700; color: var(--white); font-variant-numeric: tabular-nums; }
-
-    /* ---- Modal ---- */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(4px);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .modal-overlay.active { display: flex; }
-    .modal {
-      background: var(--surface-raised);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
-      width: 100%;
-      max-width: 560px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal-head {
-      padding: 24px 28px 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .modal-head h3 {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--white);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 24px;
-      color: var(--text-dim);
-      cursor: pointer;
-      padding: 4px;
-      line-height: 1;
-      transition: color 0.15s;
-    }
-    .modal-close:hover { color: var(--white); }
-    .modal-body { padding: 24px 28px; }
-    .modal-foot {
-      padding: 20px 28px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    .form-group { margin-bottom: 18px; }
-    .form-group label {
-      display: block;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      font-size: 14px;
-      color: var(--text);
-      background: var(--bg);
-      font-family: inherit;
-      transition: border-color 0.15s;
-    }
-    .form-group textarea { resize: vertical; min-height: 80px; }
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
+    .form-input:focus, .form-select:focus {
       outline: none;
       border-color: var(--white);
-      box-shadow: 0 0 0 1px var(--white);
     }
+
+    .form-select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8a98' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      padding-right: 40px;
+    }
+
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      gap: 16px;
     }
 
-    /* ---- Actions cell ---- */
-    .actions-cell { white-space: nowrap; }
-    .actions-cell .btn + .btn { margin-left: 6px; }
-
-    /* ---- Delete project ---- */
-    .btn-delete-project {
-      color: var(--danger);
-      border-color: rgba(255,68,68,0.3);
-    }
-    .btn-delete-project:hover {
-      background: var(--danger-dim);
-      border-color: var(--danger);
-      color: var(--danger);
-    }
-
-    /* ---- No-project state ---- */
-    .no-project-msg {
-      text-align: center;
-      padding: 100px 20px;
-    }
-    .no-project-msg p {
-      font-size: 16px;
+    .form-hint {
+      font-size: 12px;
       color: var(--text-dim);
+      margin-top: 6px;
+    }
+
+    /* Toggle Group */
+    .toggle-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .toggle-group.three-col {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .toggle-option {
+      padding: 10px 12px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .toggle-option:hover {
+      border-color: var(--border-light);
+      color: var(--text);
+    }
+
+    .toggle-option.active {
+      background: var(--white);
+      border-color: var(--white);
+      color: #000;
+      font-weight: 600;
+    }
+
+    .toggle-option small {
+      display: block;
+      font-size: 11px;
+      font-weight: 400;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--white);
+      color: #000;
+      width: 100%;
+      justify-content: center;
+      padding: 14px 24px;
+      font-size: 15px;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--surface-raised);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-light);
+    }
+
+    /* Divider */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 24px 0;
+    }
+
+    /* Results */
+    .results-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .result-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 40px;
+      text-align: center;
+    }
+
+    .result-empty-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--surface-raised);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .result-empty h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
       margin-bottom: 8px;
     }
-    .no-project-msg .hint {
-      font-size: 13px;
+
+    .result-empty p {
+      font-size: 14px;
       color: var(--text-dim);
+      max-width: 300px;
     }
 
-    /* ---- Responsive ---- */
-    @media (max-width: 1024px) {
-      .summary-grid { grid-template-columns: 1fr 1fr; }
+    /* Summary Banner */
+    .summary-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 20px;
     }
-    @media (max-width: 768px) {
-      .container { padding: 16px; }
-      .header { padding: 0 16px; height: auto; padding-top: 12px; padding-bottom: 12px; }
-      .form-row { grid-template-columns: 1fr; }
-      .header-brand h1 { font-size: 12px; }
+
+    .summary-stat {
+      text-align: center;
     }
-    @media (max-width: 480px) {
-      .summary-grid { grid-template-columns: 1fr; }
+
+    .summary-stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.2;
+    }
+
+    .summary-stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    /* Material Table */
+    .material-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .material-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .material-table th:last-child {
+      text-align: right;
+    }
+
+    .material-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .material-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .material-table td:last-child {
+      text-align: right;
+      font-weight: 700;
+      color: var(--white);
+      font-size: 16px;
+    }
+
+    .material-name {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .material-desc {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .material-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--surface-hover);
+      border-radius: 6px;
+      margin-right: 12px;
+      font-size: 16px;
+      vertical-align: middle;
+    }
+
+    /* Visual Grid Preview */
+    .grid-preview {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .grid-preview-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+
+    .grid-canvas-container {
+      width: 100%;
+      aspect-ratio: 16/10;
+      position: relative;
+    }
+
+    .grid-canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    /* Waste indicator */
+    .waste-bar {
+      height: 6px;
+      background: var(--surface-hover);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .waste-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    .waste-low { background: var(--success); }
+    .waste-medium { background: var(--warning); }
+    .waste-high { background: var(--danger); }
+
+    /* Notes section */
+    .notes-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .notes-list li {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .notes-list li:last-child {
+      border-bottom: none;
+    }
+
+    .note-bullet {
+      width: 6px;
+      height: 6px;
+      background: var(--text-dim);
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 7px;
+    }
+
+    /* Print styles */
+    @media print {
+      body { background: #fff; color: #000; }
+      .header { position: static; background: #fff; border-bottom: 2px solid #000; }
+      .main { grid-template-columns: 1fr; }
+      .card { border: 1px solid #ccc; break-inside: avoid; }
+      .btn, .input-panel { display: none; }
+      .material-table td, .material-table th { color: #000; }
+      .summary-stat-value { color: #000; }
+    }
+
+    /* Sections divider label */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    /* Room list */
+    .room-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .room-tabs::-webkit-scrollbar { display: none; }
+
+    .room-tab {
+      padding: 6px 14px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .room-tab:hover {
+      border-color: var(--border-light);
+      color: var(--text);
+    }
+
+    .room-tab.active {
+      background: var(--white);
+      border-color: var(--white);
+      color: #000;
+      font-weight: 600;
+    }
+
+    .room-tab-add {
+      padding: 6px 12px;
+      background: none;
+      border: 1px dashed var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .room-tab-add:hover {
+      border-color: var(--border-light);
+      color: var(--text);
+    }
+
+    .room-tab-remove {
+      margin-left: 6px;
+      cursor: pointer;
+      opacity: 0.5;
+      font-size: 11px;
+    }
+
+    .room-tab-remove:hover {
+      opacity: 1;
+    }
+
+    /* Unit Toggle */
+    .unit-toggle {
+      display: flex;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .unit-toggle button {
+      padding: 6px 14px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .unit-toggle button.active {
+      background: var(--white);
+      color: #000;
+    }
+
+    /* Totals row */
+    .material-table .total-row td {
+      border-top: 2px solid var(--border-light);
+      font-weight: 700;
+      color: var(--white);
+      font-size: 15px;
+      padding-top: 16px;
     }
   </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-brand">
-    <img src="logo.png" alt="Fit Out By Design" class="header-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
-    <span class="header-logo-fallback">FOBD</span>
-    <div class="divider"></div>
-    <h1>Variation Register</h1>
-  </div>
-  <div class="header-actions">
-    <button class="btn btn-export btn-sm" onclick="exportCSV()" id="exportBtn" disabled>Export CSV</button>
-  </div>
-</div>
-
-<div class="container">
-
-  <!-- Project Selector -->
-  <div class="project-bar">
-    <label for="projectSelect">Project</label>
-    <select id="projectSelect" onchange="switchProject()">
-      <option value="">-- Select a project --</option>
-    </select>
-    <input type="text" id="newProjectName" placeholder="New project name">
-    <button class="btn btn-primary btn-sm" onclick="addProject()">Add Project</button>
-    <button class="btn btn-ghost btn-sm btn-delete-project" onclick="deleteProject()" id="deleteProjectBtn" style="display:none;">Delete Project</button>
-  </div>
-
-  <!-- Summary Cards -->
-  <div class="summary-grid" id="summaryGrid" style="display:none;">
-    <div class="summary-card approved">
-      <div class="label">Approved Value</div>
-      <div class="value" id="approvedValue">$0.00</div>
-      <div class="sub" id="approvedCount">0 approved variations</div>
-    </div>
-    <div class="summary-card risk">
-      <div class="label">At-Risk Value</div>
-      <div class="value" id="riskValue">$0.00</div>
-      <div class="sub">Completed work on unapproved variations</div>
-    </div>
-    <div class="summary-card total">
-      <div class="label">Total Value Completed</div>
-      <div class="value" id="totalCompleted">$0.00</div>
-      <div class="sub">Based on % complete across all variations</div>
-    </div>
-    <div class="summary-card count">
-      <div class="label">Variations</div>
-      <div class="value" id="variationCount">0</div>
-      <div class="sub" id="statusBreakdown"></div>
-    </div>
-  </div>
-
-  <!-- Table -->
-  <div class="table-wrapper" id="tableWrapper" style="display:none;">
-    <div class="table-header">
-      <h2>Variations</h2>
-      <button class="btn btn-primary btn-sm" onclick="openModal()">+ Add Variation</button>
-    </div>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>No.</th>
-            <th>Description</th>
-            <th>Cost</th>
-            <th>Status</th>
-            <th>% Complete</th>
-            <th>Completed Value</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="variationBody"></tbody>
-      </table>
-    </div>
-    <div class="empty-state" id="emptyState" style="display:none;">
-      <p>No variations yet.</p>
-      <button class="btn btn-primary" onclick="openModal()">+ Add Variation</button>
-    </div>
-  </div>
-
-  <!-- No Project Selected -->
-  <div class="no-project-msg" id="noProjectMsg">
-    <p>Select or create a project to begin tracking variations.</p>
-    <div class="hint">Use the project bar above to get started.</div>
-  </div>
-</div>
-
-<!-- Modal -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <div class="modal-head">
-      <h3 id="modalTitle">Add Variation</h3>
-      <button class="modal-close" onclick="closeModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="editId">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="varNumber">Variation Number</label>
-          <input type="text" id="varNumber" placeholder="e.g. V001">
-        </div>
-        <div class="form-group">
-          <label for="varStatus">Status</label>
-          <select id="varStatus">
-            <option value="draft">Draft</option>
-            <option value="submitted">Submitted</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="varDescription">Description</label>
-        <textarea id="varDescription" placeholder="Describe the variation..."></textarea>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="varCost">Cost ($)</label>
-          <input type="number" id="varCost" placeholder="0.00" min="0" step="0.01">
-        </div>
-        <div class="form-group">
-          <label for="varPercent">% Complete</label>
-          <input type="number" id="varPercent" placeholder="0" min="0" max="100" step="1">
-        </div>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="header-logo">FD</div>
+      <div>
+        <div class="header-title">Ceiling Grid Calculator</div>
+        <div class="header-subtitle">Fit Out By Design</div>
       </div>
     </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveVariation()">Save</button>
+    <div class="header-actions">
+      <div class="unit-toggle">
+        <button class="active" onclick="setUnit('mm')" id="unit-mm">MM</button>
+        <button onclick="setUnit('ft')" id="unit-ft">FT</button>
+      </div>
+      <button class="btn btn-secondary" onclick="printResults()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
+      <button class="btn btn-secondary" onclick="exportCSV()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Input Panel -->
+    <div class="input-panel">
+      <div class="card">
+        <div class="room-tabs" id="roomTabs">
+          <button class="room-tab active" data-room="0">Room 1</button>
+          <button class="room-tab-add" onclick="addRoom()">+ Add Room</button>
+        </div>
+
+        <div class="card-body" id="inputForm">
+          <!-- Room Name -->
+          <div class="form-group">
+            <label class="form-label">Room Name</label>
+            <input type="text" class="form-input" id="roomName" value="Room 1" placeholder="e.g. Main Office">
+          </div>
+
+          <!-- Dimensions -->
+          <div class="section-label">Room Dimensions</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Length <span class="unit dim-unit">(mm)</span></label>
+              <input type="number" class="form-input" id="roomLength" value="6000" min="1" step="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Width <span class="unit dim-unit">(mm)</span></label>
+              <input type="number" class="form-input" id="roomWidth" value="4000" min="1" step="1">
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <!-- Tile Size -->
+          <div class="section-label">Tile Configuration</div>
+          <div class="form-group">
+            <label class="form-label">Tile Size</label>
+            <div class="toggle-group" id="tileSizeGroup">
+              <div class="toggle-option active" data-value="600x600" onclick="setTileSize(this)">
+                600 x 600
+                <small>Standard</small>
+              </div>
+              <div class="toggle-option" data-value="600x1200" onclick="setTileSize(this)">
+                600 x 1200
+                <small>Rectangular</small>
+              </div>
+              <div class="toggle-option" data-value="610x610" onclick="setTileSize(this)">
+                610 x 610
+                <small>2' x 2'</small>
+              </div>
+              <div class="toggle-option" data-value="610x1220" onclick="setTileSize(this)">
+                610 x 1220
+                <small>2' x 4'</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grid Type -->
+          <div class="form-group">
+            <label class="form-label">Grid System</label>
+            <div class="toggle-group" id="gridTypeGroup">
+              <div class="toggle-option active" data-value="exposed" onclick="setGridType(this)">
+                Exposed
+                <small>Standard T-bar</small>
+              </div>
+              <div class="toggle-option" data-value="concealed" onclick="setGridType(this)">
+                Concealed
+                <small>Hidden grid</small>
+              </div>
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <!-- Extras -->
+          <div class="section-label">Additional Options</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Waste Factor</label>
+              <select class="form-select" id="wasteFactor">
+                <option value="5">5% - Simple rooms</option>
+                <option value="10" selected>10% - Standard</option>
+                <option value="15">15% - Complex shapes</option>
+                <option value="20">20% - Very complex</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Wire Spacing <span class="unit dim-unit">(mm)</span></label>
+              <input type="number" class="form-input" id="wireSpacing" value="1200" min="600" step="100">
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <button class="btn btn-primary" onclick="calculate()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="12" y1="10" x2="14" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="12" y1="14" x2="14" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="14" y2="18"/><line x1="16" y1="18" x2="16" y2="18"/></svg>
+            Calculate Materials
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results-container" id="resultsContainer">
+      <div class="result-empty" id="emptyState">
+        <div class="result-empty-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </div>
+        <h3>Enter Room Details</h3>
+        <p>Input your room dimensions and tile configuration, then click Calculate to see the required materials.</p>
+      </div>
+
+      <div id="resultsContent" style="display:none" class="fade-in">
+        <!-- Summary Banner -->
+        <div class="summary-banner" id="summaryBanner"></div>
+
+        <!-- Grid Preview -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Grid Layout Preview</span>
+            <span class="card-badge" id="layoutBadge">600 x 600</span>
+          </div>
+          <div class="card-body">
+            <div class="grid-canvas-container">
+              <canvas class="grid-canvas" id="gridCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Materials List -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Materials Required</span>
+            <span class="card-badge" id="materialsBadge">Including waste</span>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table class="material-table" id="materialsTable"></table>
+          </div>
+        </div>
+
+        <!-- Border Tiles -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Border Tile Details</span>
+            <span class="card-badge">Cut tiles</span>
+          </div>
+          <div class="card-body" id="borderDetails"></div>
+        </div>
+
+        <!-- Notes -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Installation Notes</span>
+          </div>
+          <div class="card-body">
+            <ul class="notes-list" id="notesList"></ul>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
 <script>
-  // ---- Data Layer ----
-  const STORAGE_KEY = 'variation_register_data';
+// State
+let currentUnit = 'mm';
+let rooms = [{ id: 0, name: 'Room 1', length: 6000, width: 4000, tileSize: '600x600', gridType: 'exposed', waste: 10, wireSpacing: 1200 }];
+let activeRoom = 0;
+let roomCounter = 1;
 
-  function loadData() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (e) { /* ignore */ }
-    return { projects: {}, activeProject: null };
-  }
+// Unit conversion
+const MM_PER_FT = 304.8;
+function toDisplay(mm) {
+  return currentUnit === 'ft' ? (mm / MM_PER_FT).toFixed(2) : mm;
+}
+function fromDisplay(val) {
+  return currentUnit === 'ft' ? Math.round(val * MM_PER_FT) : Number(val);
+}
 
-  function saveData(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
+function setUnit(unit) {
+  // Save current values in mm
+  saveCurrentRoom();
+  currentUnit = unit;
+  document.getElementById('unit-mm').classList.toggle('active', unit === 'mm');
+  document.getElementById('unit-ft').classList.toggle('active', unit === 'ft');
+  document.querySelectorAll('.dim-unit').forEach(el => {
+    el.textContent = unit === 'mm' ? '(mm)' : '(ft)';
+  });
+  loadRoomToForm(rooms[activeRoom]);
+}
 
-  let appData = loadData();
+// Tile size
+function setTileSize(el) {
+  el.parentElement.querySelectorAll('.toggle-option').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+}
 
-  // ---- Project Management ----
-  function renderProjectSelect() {
-    const sel = document.getElementById('projectSelect');
-    const names = Object.keys(appData.projects).sort((a, b) => a.localeCompare(b));
-    sel.innerHTML = '<option value="">-- Select a project --</option>';
-    names.forEach(name => {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      if (name === appData.activeProject) opt.selected = true;
-      sel.appendChild(opt);
-    });
-    document.getElementById('deleteProjectBtn').style.display = appData.activeProject ? '' : 'none';
-  }
+function setGridType(el) {
+  el.parentElement.querySelectorAll('.toggle-option').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+}
 
-  function addProject() {
-    const input = document.getElementById('newProjectName');
-    const name = input.value.trim();
-    if (!name) return;
-    if (appData.projects[name]) { alert('A project with that name already exists.'); return; }
-    appData.projects[name] = [];
-    appData.activeProject = name;
-    saveData(appData);
-    input.value = '';
-    renderProjectSelect();
-    renderAll();
-  }
+// Room management
+function addRoom() {
+  saveCurrentRoom();
+  roomCounter++;
+  const newRoom = {
+    id: roomCounter,
+    name: 'Room ' + roomCounter,
+    length: currentUnit === 'ft' ? 6096 : 6000,
+    width: currentUnit === 'ft' ? 3962 : 4000,
+    tileSize: '600x600',
+    gridType: 'exposed',
+    waste: 10,
+    wireSpacing: 1200
+  };
+  rooms.push(newRoom);
+  activeRoom = rooms.length - 1;
+  renderTabs();
+  loadRoomToForm(newRoom);
+}
 
-  function switchProject() {
-    const sel = document.getElementById('projectSelect');
-    appData.activeProject = sel.value || null;
-    saveData(appData);
-    document.getElementById('deleteProjectBtn').style.display = appData.activeProject ? '' : 'none';
-    renderAll();
-  }
+function switchRoom(index) {
+  saveCurrentRoom();
+  activeRoom = index;
+  renderTabs();
+  loadRoomToForm(rooms[index]);
+}
 
-  function deleteProject() {
-    if (!appData.activeProject) return;
-    if (!confirm('Delete project "' + appData.activeProject + '" and all its variations?')) return;
-    delete appData.projects[appData.activeProject];
-    appData.activeProject = null;
-    saveData(appData);
-    renderProjectSelect();
-    renderAll();
-  }
+function removeRoom(index, e) {
+  e.stopPropagation();
+  if (rooms.length === 1) return;
+  rooms.splice(index, 1);
+  if (activeRoom >= rooms.length) activeRoom = rooms.length - 1;
+  renderTabs();
+  loadRoomToForm(rooms[activeRoom]);
+}
 
-  // ---- Variations ----
-  function getVariations() {
-    if (!appData.activeProject) return [];
-    return appData.projects[appData.activeProject] || [];
-  }
+function renderTabs() {
+  const container = document.getElementById('roomTabs');
+  let html = '';
+  rooms.forEach((room, i) => {
+    html += `<button class="room-tab ${i === activeRoom ? 'active' : ''}" onclick="switchRoom(${i})">
+      ${room.name}
+      ${rooms.length > 1 ? `<span class="room-tab-remove" onclick="removeRoom(${i}, event)">&times;</span>` : ''}
+    </button>`;
+  });
+  html += `<button class="room-tab-add" onclick="addRoom()">+ Add Room</button>`;
+  container.innerHTML = html;
+}
 
-  function setVariations(list) {
-    if (!appData.activeProject) return;
-    appData.projects[appData.activeProject] = list;
-    saveData(appData);
-  }
+function saveCurrentRoom() {
+  const room = rooms[activeRoom];
+  room.name = document.getElementById('roomName').value || ('Room ' + (activeRoom + 1));
+  room.length = fromDisplay(document.getElementById('roomLength').value);
+  room.width = fromDisplay(document.getElementById('roomWidth').value);
+  room.tileSize = document.querySelector('#tileSizeGroup .toggle-option.active').dataset.value;
+  room.gridType = document.querySelector('#gridTypeGroup .toggle-option.active').dataset.value;
+  room.waste = Number(document.getElementById('wasteFactor').value);
+  room.wireSpacing = fromDisplay(document.getElementById('wireSpacing').value);
+}
 
-  function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  }
+function loadRoomToForm(room) {
+  document.getElementById('roomName').value = room.name;
+  document.getElementById('roomLength').value = toDisplay(room.length);
+  document.getElementById('roomWidth').value = toDisplay(room.width);
 
-  // ---- Modal ----
-  function openModal(id) {
-    const overlay = document.getElementById('modalOverlay');
-    document.getElementById('editId').value = '';
-    document.getElementById('varNumber').value = '';
-    document.getElementById('varDescription').value = '';
-    document.getElementById('varCost').value = '';
-    document.getElementById('varPercent').value = '0';
-    document.getElementById('varStatus').value = 'draft';
-    document.getElementById('modalTitle').textContent = 'Add Variation';
-
-    if (id) {
-      const v = getVariations().find(x => x.id === id);
-      if (v) {
-        document.getElementById('editId').value = v.id;
-        document.getElementById('varNumber').value = v.number;
-        document.getElementById('varDescription').value = v.description;
-        document.getElementById('varCost').value = v.cost;
-        document.getElementById('varPercent').value = v.percent;
-        document.getElementById('varStatus').value = v.status;
-        document.getElementById('modalTitle').textContent = 'Edit Variation';
-      }
-    }
-    overlay.classList.add('active');
-  }
-
-  function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('active');
-  }
-
-  function saveVariation() {
-    const id = document.getElementById('editId').value;
-    const number = document.getElementById('varNumber').value.trim();
-    const description = document.getElementById('varDescription').value.trim();
-    const cost = parseFloat(document.getElementById('varCost').value) || 0;
-    const percent = Math.min(100, Math.max(0, parseInt(document.getElementById('varPercent').value) || 0));
-    const status = document.getElementById('varStatus').value;
-
-    if (!number) { alert('Variation number is required.'); return; }
-    if (!description) { alert('Description is required.'); return; }
-
-    const list = getVariations();
-
-    if (id) {
-      const idx = list.findIndex(x => x.id === id);
-      if (idx >= 0) {
-        list[idx] = { ...list[idx], number, description, cost, percent, status };
-      }
-    } else {
-      list.push({ id: generateId(), number, description, cost, percent, status });
-    }
-
-    setVariations(list);
-    closeModal();
-    renderAll();
-  }
-
-  function deleteVariation(id) {
-    if (!confirm('Delete this variation?')) return;
-    const list = getVariations().filter(x => x.id !== id);
-    setVariations(list);
-    renderAll();
-  }
-
-  // ---- Slider / Dollar Inline Controls ----
-  function updateSliderTrack(slider, percent) {
-    const color = percent < 33 ? 'var(--danger)' : percent < 66 ? 'var(--warning)' : 'var(--success)';
-    slider.style.background = 'linear-gradient(to right, ' + color + ' 0%, ' + color + ' ' + percent + '%, var(--border) ' + percent + '%, var(--border) 100%)';
-  }
-
-  function onSliderChange(slider) {
-    const id = slider.dataset.id;
-    const percent = parseInt(slider.value);
-    const list = getVariations();
-    const v = list.find(x => x.id === id);
-    if (!v) return;
-    v.percent = percent;
-    setVariations(list);
-
-    // Update percentage label
-    document.getElementById('pct-' + id).textContent = percent + '%';
-
-    // Update dollar input
-    const dollarInput = document.querySelector('.progress-dollar-input[data-id="' + id + '"]');
-    if (dollarInput) dollarInput.value = (v.cost * percent / 100).toFixed(2);
-
-    // Update completed value cell
-    updateCompletedCell(id, v);
-
-    // Update slider track color
-    updateSliderTrack(slider, percent);
-
-    // Update summary cards
-    renderSummary();
-  }
-
-  function onDollarChange(input) {
-    const id = input.dataset.id;
-    const cost = parseFloat(input.dataset.cost) || 0;
-    const dollarVal = parseFloat(input.value) || 0;
-    const percent = cost > 0 ? Math.min(100, Math.max(0, Math.round(dollarVal / cost * 100))) : 0;
-
-    const list = getVariations();
-    const v = list.find(x => x.id === id);
-    if (!v) return;
-    v.percent = percent;
-    setVariations(list);
-
-    // Update slider
-    const slider = document.querySelector('.progress-slider[data-id="' + id + '"]');
-    if (slider) {
-      slider.value = percent;
-      updateSliderTrack(slider, percent);
-    }
-
-    // Update percentage label
-    document.getElementById('pct-' + id).textContent = percent + '%';
-
-    // Update completed value cell
-    updateCompletedCell(id, v);
-
-    // Update summary cards
-    renderSummary();
-  }
-
-  function updateCompletedCell(id, v) {
-    const completed = v.cost * (v.percent / 100);
-    const isRisk = v.status !== 'approved' && v.percent > 0;
-    const cell = document.getElementById('completed-' + id);
-    if (cell) {
-      cell.textContent = formatCurrency(completed) + (isRisk ? ' *' : '');
-      cell.className = 'cost-value' + (isRisk ? ' risk-value' : '');
-    }
-  }
-
-  // ---- Rendering ----
-  function formatCurrency(val) {
-    return '$' + val.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  function renderSummary() {
-    const list = getVariations();
-    let approvedTotal = 0;
-    let approvedCount = 0;
-    let riskTotal = 0;
-    let totalCompleted = 0;
-    let statusCounts = { draft: 0, submitted: 0, approved: 0, rejected: 0 };
-
-    list.forEach(v => {
-      const completed = v.cost * (v.percent / 100);
-      totalCompleted += completed;
-      statusCounts[v.status] = (statusCounts[v.status] || 0) + 1;
-
-      if (v.status === 'approved') {
-        approvedTotal += v.cost;
-        approvedCount++;
-      } else {
-        if (v.percent > 0) {
-          riskTotal += completed;
-        }
-      }
-    });
-
-    document.getElementById('approvedValue').textContent = formatCurrency(approvedTotal);
-    document.getElementById('approvedCount').textContent = approvedCount + ' approved variation' + (approvedCount !== 1 ? 's' : '');
-    document.getElementById('riskValue').textContent = formatCurrency(riskTotal);
-    document.getElementById('totalCompleted').textContent = formatCurrency(totalCompleted);
-    document.getElementById('variationCount').textContent = list.length;
-
-    const parts = [];
-    if (statusCounts.draft) parts.push(statusCounts.draft + ' draft');
-    if (statusCounts.submitted) parts.push(statusCounts.submitted + ' submitted');
-    if (statusCounts.approved) parts.push(statusCounts.approved + ' approved');
-    if (statusCounts.rejected) parts.push(statusCounts.rejected + ' rejected');
-    document.getElementById('statusBreakdown').textContent = parts.join(' / ') || 'No variations';
-  }
-
-  function renderAll() {
-    const hasProject = !!appData.activeProject;
-    document.getElementById('noProjectMsg').style.display = hasProject ? 'none' : '';
-    document.getElementById('summaryGrid').style.display = hasProject ? '' : 'none';
-    document.getElementById('tableWrapper').style.display = hasProject ? '' : 'none';
-    document.getElementById('exportBtn').disabled = !hasProject;
-
-    if (!hasProject) return;
-
-    renderSummary();
-
-    const list = getVariations();
-
-    // Table
-    const tbody = document.getElementById('variationBody');
-    const emptyState = document.getElementById('emptyState');
-
-    if (list.length === 0) {
-      tbody.innerHTML = '';
-      emptyState.style.display = '';
-      return;
-    }
-
-    emptyState.style.display = 'none';
-    tbody.innerHTML = list.map(v => {
-      const completed = v.cost * (v.percent / 100);
-      const isRisk = v.status !== 'approved' && v.percent > 0;
-
-      return '<tr>' +
-        '<td class="var-number">' + escapeHtml(v.number) + '</td>' +
-        '<td>' + escapeHtml(v.description) + '</td>' +
-        '<td class="cost-value">' + formatCurrency(v.cost) + '</td>' +
-        '<td><span class="status-badge status-' + v.status + '">' + v.status + '</span></td>' +
-        '<td class="progress-cell">' +
-          '<div class="progress-slider-row">' +
-            '<input type="range" class="progress-slider" min="0" max="100" value="' + v.percent + '" data-id="' + v.id + '" oninput="onSliderChange(this)">' +
-            '<span class="progress-pct" id="pct-' + v.id + '">' + v.percent + '%</span>' +
-          '</div>' +
-          '<div class="progress-dollar-row">' +
-            '<span class="dollar-prefix">$</span>' +
-            '<input type="number" class="progress-dollar-input" value="' + completed.toFixed(2) + '" data-id="' + v.id + '" data-cost="' + v.cost + '" step="0.01" min="0" oninput="onDollarChange(this)">' +
-          '</div>' +
-        '</td>' +
-        '<td class="cost-value' + (isRisk ? ' risk-value' : '') + '" id="completed-' + v.id + '">' + formatCurrency(completed) + (isRisk ? ' *' : '') + '</td>' +
-        '<td class="actions-cell">' +
-          '<button class="btn btn-ghost btn-sm" onclick="openModal(\'' + v.id + '\')">Edit</button>' +
-          '<button class="btn btn-danger btn-sm" onclick="deleteVariation(\'' + v.id + '\')">Del</button>' +
-        '</td>' +
-      '</tr>';
-    }).join('');
-
-    // Initialize slider track colors
-    document.querySelectorAll('.progress-slider').forEach(slider => {
-      updateSliderTrack(slider, parseInt(slider.value));
-    });
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
-  // ---- CSV Export ----
-  function exportCSV() {
-    if (!appData.activeProject) return;
-    const list = getVariations();
-    if (list.length === 0) { alert('No variations to export.'); return; }
-
-    const headers = ['Project', 'Variation No.', 'Description', 'Cost', 'Status', '% Complete', 'Completed Value', 'At Risk'];
-    const rows = list.map(v => {
-      const completed = v.cost * (v.percent / 100);
-      const isRisk = v.status !== 'approved' && v.percent > 0;
-      return [
-        appData.activeProject,
-        v.number,
-        v.description,
-        v.cost.toFixed(2),
-        v.status,
-        v.percent,
-        completed.toFixed(2),
-        isRisk ? 'Yes' : 'No'
-      ];
-    });
-
-    // Summary rows
-    let approvedTotal = 0, riskTotal = 0, totalCompleted = 0;
-    list.forEach(v => {
-      const completed = v.cost * (v.percent / 100);
-      totalCompleted += completed;
-      if (v.status === 'approved') approvedTotal += v.cost;
-      else if (v.percent > 0) riskTotal += completed;
-    });
-
-    rows.push([]);
-    rows.push(['SUMMARY']);
-    rows.push(['Total Approved Value', '', '', approvedTotal.toFixed(2)]);
-    rows.push(['Total At-Risk Value', '', '', riskTotal.toFixed(2)]);
-    rows.push(['Total Value Completed', '', '', totalCompleted.toFixed(2)]);
-    rows.push(['Total Variations', '', '', list.length]);
-
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(','))
-      .join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = appData.activeProject.replace(/[^a-zA-Z0-9_-]/g, '_') + '_variations.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  // ---- Keyboard shortcut: Escape to close modal ----
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeModal();
+  document.querySelectorAll('#tileSizeGroup .toggle-option').forEach(o => {
+    o.classList.toggle('active', o.dataset.value === room.tileSize);
+  });
+  document.querySelectorAll('#gridTypeGroup .toggle-option').forEach(o => {
+    o.classList.toggle('active', o.dataset.value === room.gridType);
   });
 
-  // ---- Init ----
-  renderProjectSelect();
-  renderAll();
-</script>
+  document.getElementById('wasteFactor').value = room.waste;
+  document.getElementById('wireSpacing').value = toDisplay(room.wireSpacing);
+}
 
+// Calculation
+function calculate() {
+  saveCurrentRoom();
+  const room = rooms[activeRoom];
+  const L = room.length; // mm
+  const W = room.width;
+  const [tw, tl] = room.tileSize.split('x').map(Number);
+  const waste = room.waste / 100;
+  const wireSpacing = room.wireSpacing;
+
+  // Area
+  const areaM2 = (L * W) / 1e6;
+
+  // Tile layout: how many full tiles fit, plus borders
+  const fullTilesL = Math.floor(L / tl);
+  const fullTilesW = Math.floor(W / tw);
+  const borderL = (L - fullTilesL * tl) / 2; // border tile size on each end along length
+  const borderW = (W - fullTilesW * tw) / 2; // border tile size on each end along width
+
+  const tilesAlongLength = borderL > 0 ? fullTilesL + 2 : fullTilesL;
+  const tilesAlongWidth = borderW > 0 ? fullTilesW + 2 : fullTilesW;
+
+  // Total tiles
+  const totalTiles = tilesAlongLength * tilesAlongWidth;
+  const tilesWithWaste = Math.ceil(totalTiles * (1 + waste));
+
+  // Main Tees (run along the length of the room, spaced at tile width apart)
+  // Standard main tee length is 3600mm (3.6m) or 3660mm (12ft)
+  const mainTeeStdLen = (tw === 610 || tw === 1220) ? 3660 : 3600;
+  const numMainTeeRows = Math.floor(W / tw) + 1; // number of main tee rows
+  const mainTeePerRow = Math.ceil(L / mainTeeStdLen);
+  const totalMainTees = numMainTeeRows * mainTeePerRow;
+  const mainTeesWithWaste = Math.ceil(totalMainTees * (1 + waste));
+
+  // Cross Tees (run across, connecting main tees)
+  // For 600x600: 600mm cross tees between every main tee, at every tile length interval
+  // For 600x1200: 1200mm cross tees at each bay, plus 600mm cross tees to subdivide
+  let crossTee1200 = 0;
+  let crossTee600 = 0;
+
+  if (tl === 1200 || tl === 1220) {
+    // 1200mm cross tees
+    const crossRows1200 = Math.ceil(L / tl) + 1;
+    crossTee1200 = crossRows1200 * (numMainTeeRows - 1);
+
+    // 600mm cross tees subdivide each 1200 bay
+    if (tw === 600 || tw === 610) {
+      crossTee600 = Math.ceil(L / tl) * (numMainTeeRows - 1);
+    }
+  } else {
+    // 600x600: all 600mm cross tees
+    const crossRows = Math.ceil(L / tl) + 1;
+    crossTee600 = crossRows * (numMainTeeRows - 1);
+  }
+
+  const crossTee1200WithWaste = Math.ceil(crossTee1200 * (1 + waste));
+  const crossTee600WithWaste = Math.ceil(crossTee600 * (1 + waste));
+
+  // Wall Angle / Perimeter Trim
+  const perimeter = 2 * (L + W);
+  const wallAngleStdLen = (tw === 610 || tw === 1220) ? 3050 : 3000; // 3m or 10ft
+  const wallAnglePcs = Math.ceil(perimeter / wallAngleStdLen);
+  const wallAngleWithWaste = Math.ceil(wallAnglePcs * (1 + waste));
+
+  // Suspension Wires
+  const wiresAlongL = Math.ceil(L / wireSpacing) + 1;
+  const wiresAlongW = Math.ceil(W / wireSpacing) + 1;
+  const totalWires = wiresAlongL * wiresAlongW;
+  const wiresWithWaste = Math.ceil(totalWires * (1 + waste));
+
+  // Render results
+  document.getElementById('emptyState').style.display = 'none';
+  const content = document.getElementById('resultsContent');
+  content.style.display = 'block';
+  content.classList.remove('fade-in');
+  void content.offsetWidth;
+  content.classList.add('fade-in');
+
+  // Summary
+  document.getElementById('summaryBanner').innerHTML = `
+    <div class="summary-stat">
+      <div class="summary-stat-value">${areaM2.toFixed(1)}m&sup2;</div>
+      <div class="summary-stat-label">Ceiling Area</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-stat-value">${tilesWithWaste}</div>
+      <div class="summary-stat-label">Tiles Required</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-stat-value">${mainTeesWithWaste}</div>
+      <div class="summary-stat-label">Main Tees</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-stat-value">${(perimeter / 1000).toFixed(1)}m</div>
+      <div class="summary-stat-label">Perimeter</div>
+    </div>
+  `;
+
+  // Layout badge
+  document.getElementById('layoutBadge').textContent = room.tileSize.replace('x', ' x ');
+  document.getElementById('materialsBadge').textContent = `Including ${room.waste}% waste`;
+
+  // Materials table
+  let tableHTML = `
+    <thead>
+      <tr>
+        <th>Material</th>
+        <th>Description</th>
+        <th style="text-align:center">Net Qty</th>
+        <th>With Waste</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <span class="material-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          </span>
+          <span class="material-name">Ceiling Tiles</span>
+          <div class="material-desc" style="margin-left:44px">${room.tileSize.replace('x', ' x ')}mm</div>
+        </td>
+        <td>${tilesAlongLength} x ${tilesAlongWidth} grid</td>
+        <td style="text-align:center">${totalTiles}</td>
+        <td>${tilesWithWaste}</td>
+      </tr>
+      <tr>
+        <td>
+          <span class="material-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/></svg>
+          </span>
+          <span class="material-name">Main Tees</span>
+          <div class="material-desc" style="margin-left:44px">${mainTeeStdLen}mm lengths</div>
+        </td>
+        <td>${numMainTeeRows} rows x ${mainTeePerRow} per row</td>
+        <td style="text-align:center">${totalMainTees}</td>
+        <td>${mainTeesWithWaste}</td>
+      </tr>`;
+
+  if (crossTee1200 > 0) {
+    tableHTML += `
+      <tr>
+        <td>
+          <span class="material-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+          </span>
+          <span class="material-name">Cross Tees (1200mm)</span>
+          <div class="material-desc" style="margin-left:44px">Primary cross members</div>
+        </td>
+        <td>Connecting main tees</td>
+        <td style="text-align:center">${crossTee1200}</td>
+        <td>${crossTee1200WithWaste}</td>
+      </tr>`;
+  }
+
+  if (crossTee600 > 0) {
+    tableHTML += `
+      <tr>
+        <td>
+          <span class="material-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+          </span>
+          <span class="material-name">Cross Tees (600mm)</span>
+          <div class="material-desc" style="margin-left:44px">${tl > 600 ? 'Intermediate cross members' : 'Cross members'}</div>
+        </td>
+        <td>Between main tees</td>
+        <td style="text-align:center">${crossTee600}</td>
+        <td>${crossTee600WithWaste}</td>
+      </tr>`;
+  }
+
+  tableHTML += `
+      <tr>
+        <td>
+          <span class="material-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+          </span>
+          <span class="material-name">Wall Angle</span>
+          <div class="material-desc" style="margin-left:44px">${wallAngleStdLen}mm lengths</div>
+        </td>
+        <td>${(perimeter/1000).toFixed(1)}m perimeter</td>
+        <td style="text-align:center">${wallAnglePcs}</td>
+        <td>${wallAngleWithWaste}</td>
+      </tr>
+      <tr>
+        <td>
+          <span class="material-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="3" x2="12" y2="21"/><circle cx="12" cy="3" r="2"/></svg>
+          </span>
+          <span class="material-name">Suspension Wires</span>
+          <div class="material-desc" style="margin-left:44px">@ ${wireSpacing}mm centres</div>
+        </td>
+        <td>${wiresAlongL} x ${wiresAlongW} grid</td>
+        <td style="text-align:center">${totalWires}</td>
+        <td>${wiresWithWaste}</td>
+      </tr>
+    </tbody>`;
+
+  document.getElementById('materialsTable').innerHTML = tableHTML;
+
+  // Border details
+  const borderLDisplay = borderL > 0 ? borderL.toFixed(0) : 'None (exact fit)';
+  const borderWDisplay = borderW > 0 ? borderW.toFixed(0) : 'None (exact fit)';
+  document.getElementById('borderDetails').innerHTML = `
+    <div class="form-row" style="margin-bottom: 16px;">
+      <div>
+        <div class="form-label">Border Along Length</div>
+        <div style="font-size:20px; font-weight:700; color:var(--white)">${borderL > 0 ? borderLDisplay + 'mm' : borderLDisplay}</div>
+        <div class="form-hint">${borderL > 0 ? 'Cut tiles on each end (left & right)' : 'Tiles fit perfectly along length'}</div>
+      </div>
+      <div>
+        <div class="form-label">Border Along Width</div>
+        <div style="font-size:20px; font-weight:700; color:var(--white)">${borderW > 0 ? borderWDisplay + 'mm' : borderWDisplay}</div>
+        <div class="form-hint">${borderW > 0 ? 'Cut tiles on each end (top & bottom)' : 'Tiles fit perfectly along width'}</div>
+      </div>
+    </div>
+    ${borderL > 0 || borderW > 0 ? `
+    <div style="font-size:13px; color:var(--text-muted); padding:12px; background:var(--surface-raised); border-radius:var(--radius-sm);">
+      <strong style="color:var(--text)">Centering Note:</strong> Border tiles are calculated assuming the grid is centred in the room.
+      Each border is half the remaining space after laying full tiles.
+      ${borderL > 0 && borderL < tw * 0.5 ? `<br><span style="color:var(--warning)">Warning: Border along length (${borderLDisplay}mm) is less than half a tile. Consider shifting the grid to create larger border tiles.</span>` : ''}
+      ${borderW > 0 && borderW < tw * 0.5 ? `<br><span style="color:var(--warning)">Warning: Border along width (${borderWDisplay}mm) is less than half a tile. Consider shifting the grid to create larger border tiles.</span>` : ''}
+    </div>` : ''}
+  `;
+
+  // Notes
+  const notes = [
+    'Material quantities include the selected waste factor to account for cuts, breakage, and site conditions.',
+    `Main tees run along the room length (${L}mm) and are spaced ${tw}mm apart.`,
+    'Border tiles are calculated assuming the grid is centred within the room for a balanced appearance.',
+    'Suspension wire quantity is based on the specified spacing. Check structural requirements for actual wire gauge and fixing method.',
+    room.gridType === 'concealed' ? 'Concealed grid systems may require additional clips and special edge trims not listed here.' : 'Exposed grid uses standard T-bar profiles visible below the ceiling plane.',
+  ];
+
+  if (borderL > 0 && borderL < tw * 0.5) {
+    notes.push(`Consider reducing full tiles along the length by one and redistributing to avoid narrow ${borderLDisplay}mm border cuts.`);
+  }
+  if (borderW > 0 && borderW < tw * 0.5) {
+    notes.push(`Consider reducing full tiles along the width by one and redistributing to avoid narrow ${borderWDisplay}mm border cuts.`);
+  }
+
+  document.getElementById('notesList').innerHTML = notes.map(n =>
+    `<li><span class="note-bullet"></span>${n}</li>`
+  ).join('');
+
+  // Draw canvas
+  drawGrid(L, W, tl, tw, borderL, borderW);
+}
+
+// Canvas drawing
+function drawGrid(L, W, tileL, tileW, borderL, borderW) {
+  const canvas = document.getElementById('gridCanvas');
+  const container = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = container.clientWidth * dpr;
+  canvas.height = container.clientHeight * dpr;
+  canvas.style.width = container.clientWidth + 'px';
+  canvas.style.height = container.clientHeight + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const cw = container.clientWidth;
+  const ch = container.clientHeight;
+  const pad = 40;
+
+  const scaleX = (cw - pad * 2) / L;
+  const scaleY = (ch - pad * 2) / W;
+  const scale = Math.min(scaleX, scaleY);
+
+  const drawW = L * scale;
+  const drawH = W * scale;
+  const ox = (cw - drawW) / 2;
+  const oy = (ch - drawH) / 2;
+
+  // Background
+  ctx.fillStyle = '#12121a';
+  ctx.fillRect(0, 0, cw, ch);
+
+  // Room outline
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(ox, oy, drawW, drawH);
+
+  // Draw tiles
+  const fullTilesL = Math.floor(L / tileL);
+  const fullTilesW = Math.floor(W / tileW);
+
+  // Draw border tiles (left)
+  if (borderL > 0) {
+    ctx.fillStyle = 'rgba(255,187,51,0.12)';
+    ctx.fillRect(ox, oy, borderL * scale, drawH);
+    // Right border
+    ctx.fillRect(ox + drawW - borderL * scale, oy, borderL * scale, drawH);
+  }
+
+  // Draw border tiles (top/bottom)
+  if (borderW > 0) {
+    ctx.fillStyle = 'rgba(255,187,51,0.12)';
+    ctx.fillRect(ox, oy, drawW, borderW * scale);
+    ctx.fillRect(ox, oy + drawH - borderW * scale, drawW, borderW * scale);
+  }
+
+  // Grid lines along length (vertical) - cross tees
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+
+  // Vertical lines (cross tee positions)
+  if (borderL > 0) {
+    ctx.beginPath();
+    ctx.moveTo(ox + borderL * scale, oy);
+    ctx.lineTo(ox + borderL * scale, oy + drawH);
+    ctx.stroke();
+  }
+  for (let i = 1; i <= fullTilesL; i++) {
+    const x = ox + (borderL + i * tileL) * scale;
+    if (x <= ox + drawW + 1) {
+      ctx.beginPath();
+      ctx.moveTo(x, oy);
+      ctx.lineTo(x, oy + drawH);
+      ctx.stroke();
+    }
+  }
+
+  // Horizontal lines (main tee positions)
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+
+  if (borderW > 0) {
+    ctx.beginPath();
+    ctx.moveTo(ox, oy + borderW * scale);
+    ctx.lineTo(ox + drawW, oy + borderW * scale);
+    ctx.stroke();
+  }
+  for (let i = 1; i <= fullTilesW; i++) {
+    const y = oy + (borderW + i * tileW) * scale;
+    if (y <= oy + drawH + 1) {
+      ctx.beginPath();
+      ctx.moveTo(ox, y);
+      ctx.lineTo(ox + drawW, y);
+      ctx.stroke();
+    }
+  }
+
+  // Room outline
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(ox, oy, drawW, drawH);
+
+  // Dimension labels
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '11px Inter, sans-serif';
+  ctx.textAlign = 'center';
+
+  // Length label (bottom)
+  const lengthLabel = currentUnit === 'ft' ? (L / MM_PER_FT).toFixed(1) + ' ft' : (L / 1000).toFixed(2) + ' m';
+  ctx.fillText(lengthLabel, ox + drawW / 2, oy + drawH + 20);
+
+  // Width label (left)
+  ctx.save();
+  ctx.translate(ox - 20, oy + drawH / 2);
+  ctx.rotate(-Math.PI / 2);
+  const widthLabel = currentUnit === 'ft' ? (W / MM_PER_FT).toFixed(1) + ' ft' : (W / 1000).toFixed(2) + ' m';
+  ctx.fillText(widthLabel, 0, 0);
+  ctx.restore();
+
+  // Border dimension labels
+  if (borderL > 0 && borderL * scale > 30) {
+    ctx.fillStyle = 'rgba(255,187,51,0.8)';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.fillText(borderL.toFixed(0), ox + (borderL * scale) / 2, oy - 8);
+  }
+  if (borderW > 0 && borderW * scale > 30) {
+    ctx.fillStyle = 'rgba(255,187,51,0.8)';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.save();
+    ctx.translate(ox + drawW + 14, oy + (borderW * scale) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(borderW.toFixed(0), 0, 0);
+    ctx.restore();
+  }
+
+  // Legend
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '10px Inter, sans-serif';
+  ctx.textAlign = 'left';
+
+  // Main tee legend
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(ox, oy + drawH + 32);
+  ctx.lineTo(ox + 20, oy + drawH + 32);
+  ctx.stroke();
+  ctx.fillText('Main Tee', ox + 26, oy + drawH + 36);
+
+  // Cross tee legend
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(ox + 100, oy + drawH + 32);
+  ctx.lineTo(ox + 120, oy + drawH + 32);
+  ctx.stroke();
+  ctx.fillText('Cross Tee', ox + 126, oy + drawH + 36);
+
+  // Border legend
+  ctx.fillStyle = 'rgba(255,187,51,0.3)';
+  ctx.fillRect(ox + 210, oy + drawH + 27, 16, 10);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fillText('Border Cut', ox + 232, oy + drawH + 36);
+}
+
+// Print
+function printResults() {
+  window.print();
+}
+
+// Export CSV
+function exportCSV() {
+  saveCurrentRoom();
+  const lines = ['Room,Material,Description,Net Qty,With Waste'];
+
+  rooms.forEach(room => {
+    const L = room.length;
+    const W = room.width;
+    const [tw, tl] = room.tileSize.split('x').map(Number);
+    const waste = room.waste / 100;
+
+    const fullTilesL = Math.floor(L / tl);
+    const fullTilesW = Math.floor(W / tw);
+    const borderL = (L - fullTilesL * tl) / 2;
+    const borderW = (W - fullTilesW * tw) / 2;
+    const tilesAlongLength = borderL > 0 ? fullTilesL + 2 : fullTilesL;
+    const tilesAlongWidth = borderW > 0 ? fullTilesW + 2 : fullTilesW;
+    const totalTiles = tilesAlongLength * tilesAlongWidth;
+
+    const mainTeeStdLen = (tw === 610 || tw === 1220) ? 3660 : 3600;
+    const numMainTeeRows = Math.floor(W / tw) + 1;
+    const mainTeePerRow = Math.ceil(L / mainTeeStdLen);
+    const totalMainTees = numMainTeeRows * mainTeePerRow;
+
+    let crossTee1200 = 0, crossTee600 = 0;
+    if (tl === 1200 || tl === 1220) {
+      crossTee1200 = (Math.ceil(L / tl) + 1) * (numMainTeeRows - 1);
+      if (tw === 600 || tw === 610) crossTee600 = Math.ceil(L / tl) * (numMainTeeRows - 1);
+    } else {
+      crossTee600 = (Math.ceil(L / tl) + 1) * (numMainTeeRows - 1);
+    }
+
+    const perimeter = 2 * (L + W);
+    const wallAngleStdLen = (tw === 610 || tw === 1220) ? 3050 : 3000;
+    const wallAnglePcs = Math.ceil(perimeter / wallAngleStdLen);
+
+    const wiresAlongL = Math.ceil(L / room.wireSpacing) + 1;
+    const wiresAlongW = Math.ceil(W / room.wireSpacing) + 1;
+    const totalWires = wiresAlongL * wiresAlongW;
+
+    const n = room.name;
+    lines.push(`"${n}","Ceiling Tiles","${room.tileSize}mm",${totalTiles},${Math.ceil(totalTiles*(1+waste))}`);
+    lines.push(`"${n}","Main Tees","${mainTeeStdLen}mm",${totalMainTees},${Math.ceil(totalMainTees*(1+waste))}`);
+    if (crossTee1200 > 0) lines.push(`"${n}","Cross Tees 1200mm","Primary",${crossTee1200},${Math.ceil(crossTee1200*(1+waste))}`);
+    if (crossTee600 > 0) lines.push(`"${n}","Cross Tees 600mm","${tl > 600 ? 'Intermediate' : 'Standard'}",${crossTee600},${Math.ceil(crossTee600*(1+waste))}`);
+    lines.push(`"${n}","Wall Angle","${wallAngleStdLen}mm",${wallAnglePcs},${Math.ceil(wallAnglePcs*(1+waste))}`);
+    lines.push(`"${n}","Suspension Wires","@${room.wireSpacing}mm",${totalWires},${Math.ceil(totalWires*(1+waste))}`);
+  });
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'ceiling-grid-materials.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Resize handler for canvas
+window.addEventListener('resize', () => {
+  const canvas = document.getElementById('gridCanvas');
+  if (canvas && document.getElementById('resultsContent').style.display !== 'none') {
+    const room = rooms[activeRoom];
+    const [tw, tl] = room.tileSize.split('x').map(Number);
+    const fullTilesL = Math.floor(room.length / tl);
+    const fullTilesW = Math.floor(room.width / tw);
+    const borderL = (room.length - fullTilesL * tl) / 2;
+    const borderW = (room.width - fullTilesW * tw) / 2;
+    drawGrid(room.length, room.width, tl, tw, borderL, borderW);
+  }
+});
+
+// Auto-calculate on input change
+document.querySelectorAll('.form-input, .form-select').forEach(el => {
+  el.addEventListener('change', () => {
+    if (document.getElementById('resultsContent').style.display !== 'none') {
+      calculate();
+    }
+  });
+});
+
+// Update room tab name on input
+document.getElementById('roomName').addEventListener('input', function() {
+  rooms[activeRoom].name = this.value;
+  renderTabs();
+});
+</script>
 </body>
 </html>
