@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tender Scorecard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #000000;
+      --surface: #1e1e24;
+      --surface-raised: #26262d;
+      --surface-hover: #2e2e36;
+      --border: #3a3a44;
+      --border-light: #4a4a55;
+      --text: #eaeaee;
+      --text-muted: #b0b0bc;
+      --text-dim: #8a8a98;
+      --white: #ffffff;
+      --accent: #ffffff;
+      --accent-hover: #e0e0e0;
+      --danger: #ff5555;
+      --danger-hover: #ff7777;
+      --success: #33dd88;
+      --warning: #ffbb33;
+      --info: #77bbff;
+      --radius: 4px;
+      --radius-lg: 8px;
+      --shadow: 0 2px 10px rgba(0,0,0,0.5);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.7);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      height: 72px;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-brand .logo-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #ffffff 0%, #b0b0bc 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #000;
+      font-size: 18px;
+      letter-spacing: -1px;
+    }
+    .header-brand h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ---- Buttons ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .btn-primary { background: var(--white); color: #000; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-success { background: var(--success); color: #000; }
+    .btn-success:hover { opacity: 0.85; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-light);
+    }
+    .btn-ghost:hover { background: var(--surface-hover); color: var(--text); border-color: var(--text-dim); }
+    .btn-sm { padding: 6px 12px; font-size: 11px; }
+
+    /* ---- Layout ---- */
+    .container { max-width: 1320px; margin: 0 auto; padding: 28px 32px; }
+
+    /* ---- Summary Cards ---- */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent);
+    }
+    .summary-card.success::before { background: var(--success); }
+    .summary-card.warning::before { background: var(--warning); }
+    .summary-card.info::before { background: var(--info); }
+    .summary-card .label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+    .summary-card .value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .summary-card .sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* ---- Section Titles ---- */
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 12px;
+    }
+    .section-title h2 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    /* ---- Form Card ---- */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      margin-bottom: 32px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="date"],
+    .form-group textarea {
+      padding: 11px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-group textarea { resize: vertical; min-height: 72px; }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 1px var(--white);
+    }
+
+    /* ---- Score Sliders ---- */
+    .score-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 16px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .score-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .score-header .title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .score-header .hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+    .score-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--white);
+      min-width: 42px;
+      text-align: right;
+    }
+    .score-buttons {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+    .score-btn {
+      padding: 10px 0;
+      background: var(--bg);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .score-btn:hover {
+      border-color: var(--white);
+      color: var(--text);
+    }
+    .score-btn.active {
+      background: var(--white);
+      color: #000;
+      border-color: var(--white);
+    }
+    .score-desc {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-style: italic;
+      min-height: 14px;
+    }
+
+    /* ---- Total Score Preview ---- */
+    .total-preview {
+      margin-top: 24px;
+      padding: 20px 24px;
+      background: var(--bg);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .total-preview .label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .total-preview .score {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--white);
+    }
+    .total-preview .score span { font-size: 16px; color: var(--text-dim); font-weight: 600; }
+    .rating-badge {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .rating-poor { background: rgba(255, 85, 85, 0.15); color: var(--danger); border: 1px solid var(--danger); }
+    .rating-fair { background: rgba(255, 187, 51, 0.15); color: var(--warning); border: 1px solid var(--warning); }
+    .rating-good { background: rgba(119, 187, 255, 0.15); color: var(--info); border: 1px solid var(--info); }
+    .rating-strong { background: rgba(51, 221, 136, 0.15); color: var(--success); border: 1px solid var(--success); }
+    .rating-excellent { background: var(--success); color: #000; border: 1px solid var(--success); }
+
+    .form-actions {
+      margin-top: 24px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* ---- Tender Table ---- */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead {
+      background: var(--surface-raised);
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      white-space: nowrap;
+    }
+    th.center, td.center { text-align: center; }
+    th.right, td.right { text-align: right; }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-hover); }
+    td {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text);
+      vertical-align: middle;
+    }
+    td.muted { color: var(--text-dim); }
+    td.name { font-weight: 600; }
+    td.score-cell {
+      font-weight: 800;
+      font-size: 16px;
+    }
+    .mini-breakdown {
+      display: flex;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: 'SF Mono', Menlo, monospace;
+    }
+    .mini-breakdown span { padding: 2px 6px; background: var(--bg); border-radius: 3px; }
+
+    .empty-state {
+      padding: 64px 32px;
+      text-align: center;
+      color: var(--text-dim);
+    }
+    .empty-state h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .empty-state p { font-size: 13px; }
+
+    .row-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 14px 22px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-light);
+      border-left: 3px solid var(--success);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      transform: translateX(calc(100% + 40px));
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+    .toast.show { transform: translateX(0); }
+    .toast.error { border-left-color: var(--danger); }
+
+    /* ---- Filter bar ---- */
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .filter-bar input {
+      padding: 8px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      min-width: 220px;
+    }
+    .filter-bar input:focus {
+      outline: none;
+      border-color: var(--white);
+    }
+    .filter-bar select {
+      padding: 8px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      cursor: pointer;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 900px) {
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-grid { grid-template-columns: 1fr; }
+      .container { padding: 20px 16px; }
+      .header { padding: 0 16px; }
+      th:nth-child(3), td:nth-child(3),
+      th:nth-child(4), td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-brand">
+      <div class="logo-mark">TS</div>
+      <div class="divider"></div>
+      <h1>Tender Scorecard</h1>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost btn-sm" id="exportBtn">Export JSON</button>
+      <button class="btn btn-ghost btn-sm" id="exportCsvBtn">Export CSV</button>
+      <button class="btn btn-ghost btn-sm" id="importBtn">Import</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Summary -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="label">Total Tenders</div>
+        <div class="value" id="statCount">0</div>
+        <div class="sub">In the scorecard</div>
+      </div>
+      <div class="summary-card success">
+        <div class="label">Average Score</div>
+        <div class="value" id="statAvg">0</div>
+        <div class="sub">Out of 25</div>
+      </div>
+      <div class="summary-card info">
+        <div class="label">Highest Score</div>
+        <div class="value" id="statHigh">—</div>
+        <div class="sub" id="statHighName">No tenders yet</div>
+      </div>
+      <div class="summary-card warning">
+        <div class="label">Strong Bids</div>
+        <div class="value" id="statStrong">0</div>
+        <div class="sub">Score 20+</div>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="section-title">
+      <h2 id="formTitle">Score a Tender</h2>
+    </div>
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="tenderName">Tender Name / Reference</label>
+          <input type="text" id="tenderName" placeholder="e.g. Acme HQ Fit-Out">
+        </div>
+        <div class="form-group">
+          <label for="tenderDate">Date Assessed</label>
+          <input type="date" id="tenderDate">
+        </div>
+
+        <div class="form-group full">
+          <div class="score-group" data-criterion="client">
+            <div class="score-header">
+              <div>
+                <div class="title">Client</div>
+                <div class="hint">Relationship strength, reputation, payment history</div>
+              </div>
+              <div class="score-value" id="val-client">0</div>
+            </div>
+            <div class="score-buttons" data-target="client">
+              <button type="button" class="score-btn" data-val="1">1</button>
+              <button type="button" class="score-btn" data-val="2">2</button>
+              <button type="button" class="score-btn" data-val="3">3</button>
+              <button type="button" class="score-btn" data-val="4">4</button>
+              <button type="button" class="score-btn" data-val="5">5</button>
+            </div>
+            <div class="score-desc" id="desc-client">Select a score</div>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <div class="score-group" data-criterion="difficulty">
+            <div class="score-header">
+              <div>
+                <div class="title">Difficulty</div>
+                <div class="hint">How well it matches our capabilities (5 = easy fit, 1 = very challenging)</div>
+              </div>
+              <div class="score-value" id="val-difficulty">0</div>
+            </div>
+            <div class="score-buttons" data-target="difficulty">
+              <button type="button" class="score-btn" data-val="1">1</button>
+              <button type="button" class="score-btn" data-val="2">2</button>
+              <button type="button" class="score-btn" data-val="3">3</button>
+              <button type="button" class="score-btn" data-val="4">4</button>
+              <button type="button" class="score-btn" data-val="5">5</button>
+            </div>
+            <div class="score-desc" id="desc-difficulty">Select a score</div>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <div class="score-group" data-criterion="timing">
+            <div class="score-header">
+              <div>
+                <div class="title">Project Timing</div>
+                <div class="hint">How well the start date fits our current workload</div>
+              </div>
+              <div class="score-value" id="val-timing">0</div>
+            </div>
+            <div class="score-buttons" data-target="timing">
+              <button type="button" class="score-btn" data-val="1">1</button>
+              <button type="button" class="score-btn" data-val="2">2</button>
+              <button type="button" class="score-btn" data-val="3">3</button>
+              <button type="button" class="score-btn" data-val="4">4</button>
+              <button type="button" class="score-btn" data-val="5">5</button>
+            </div>
+            <div class="score-desc" id="desc-timing">Select a score</div>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <div class="score-group" data-criterion="duration">
+            <div class="score-header">
+              <div>
+                <div class="title">Duration</div>
+                <div class="hint">How suitable the project length is for our pipeline</div>
+              </div>
+              <div class="score-value" id="val-duration">0</div>
+            </div>
+            <div class="score-buttons" data-target="duration">
+              <button type="button" class="score-btn" data-val="1">1</button>
+              <button type="button" class="score-btn" data-val="2">2</button>
+              <button type="button" class="score-btn" data-val="3">3</button>
+              <button type="button" class="score-btn" data-val="4">4</button>
+              <button type="button" class="score-btn" data-val="5">5</button>
+            </div>
+            <div class="score-desc" id="desc-duration">Select a score</div>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <div class="score-group" data-criterion="margin">
+            <div class="score-header">
+              <div>
+                <div class="title">Margin</div>
+                <div class="hint">Expected profitability (5 = excellent margin, 1 = very tight)</div>
+              </div>
+              <div class="score-value" id="val-margin">0</div>
+            </div>
+            <div class="score-buttons" data-target="margin">
+              <button type="button" class="score-btn" data-val="1">1</button>
+              <button type="button" class="score-btn" data-val="2">2</button>
+              <button type="button" class="score-btn" data-val="3">3</button>
+              <button type="button" class="score-btn" data-val="4">4</button>
+              <button type="button" class="score-btn" data-val="5">5</button>
+            </div>
+            <div class="score-desc" id="desc-margin">Select a score</div>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label for="tenderNotes">Notes</label>
+          <textarea id="tenderNotes" placeholder="Context, risks, assumptions..."></textarea>
+        </div>
+      </div>
+
+      <div class="total-preview">
+        <div>
+          <div class="label">Total Score</div>
+        </div>
+        <div class="score" id="totalScore">0<span>/25</span></div>
+        <div id="ratingBadge" class="rating-badge rating-poor">Not Scored</div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-ghost" id="resetBtn">Reset</button>
+        <button class="btn btn-primary" id="saveBtn">Save Tender</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="section-title">
+      <h2>Saved Tenders</h2>
+      <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="Search by name...">
+        <select id="sortSelect">
+          <option value="score-desc">Score (High to Low)</option>
+          <option value="score-asc">Score (Low to High)</option>
+          <option value="date-desc">Newest First</option>
+          <option value="date-asc">Oldest First</option>
+          <option value="name-asc">Name (A-Z)</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Tender</th>
+            <th>Date</th>
+            <th class="center">Client</th>
+            <th class="center">Difficulty</th>
+            <th class="center">Timing</th>
+            <th class="center">Duration</th>
+            <th class="center">Margin</th>
+            <th class="center">Total</th>
+            <th class="center">Rating</th>
+            <th class="right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tenderTbody"></tbody>
+      </table>
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <h3>No tenders scored yet</h3>
+        <p>Fill out the scorecard above and click "Save Tender" to get started.</p>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- State ----
+    const STORAGE_KEY = 'tender-scorecard-v1';
+    const CRITERIA = ['client', 'difficulty', 'timing', 'duration', 'margin'];
+    const SCORE_DESCRIPTIONS = {
+      client: {
+        1: 'Unknown or problematic client',
+        2: 'New client, limited relationship',
+        3: 'Decent client, some history',
+        4: 'Good client, strong relationship',
+        5: 'Key strategic client, excellent history'
+      },
+      difficulty: {
+        1: 'Very challenging, outside comfort zone',
+        2: 'Difficult, several unknowns',
+        3: 'Standard complexity',
+        4: 'Well-matched to our skills',
+        5: 'Routine, perfectly in our wheelhouse'
+      },
+      timing: {
+        1: 'Very poor fit with schedule',
+        2: 'Would require reshuffling',
+        3: 'Manageable with planning',
+        4: 'Good fit with current workload',
+        5: 'Perfect timing, fills a gap'
+      },
+      duration: {
+        1: 'Too short or too long to be viable',
+        2: 'Awkward length for our pipeline',
+        3: 'Acceptable duration',
+        4: 'Well-suited length',
+        5: 'Ideal duration'
+      },
+      margin: {
+        1: 'Very tight, risk of loss',
+        2: 'Below target margin',
+        3: 'On target',
+        4: 'Above target',
+        5: 'Excellent margin'
+      }
+    };
+
+    let tenders = [];
+    let editingId = null;
+    let currentScores = { client: 0, difficulty: 0, timing: 0, duration: 0, margin: 0 };
+
+    // ---- DOM ----
+    const $ = (id) => document.getElementById(id);
+    const tbody = $('tenderTbody');
+    const emptyState = $('emptyState');
+    const searchInput = $('searchInput');
+    const sortSelect = $('sortSelect');
+
+    // ---- Storage ----
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        tenders = raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        tenders = [];
+      }
+    }
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tenders));
+    }
+
+    // ---- Rating ----
+    function getRating(total) {
+      if (total === 0) return { label: 'Not Scored', cls: 'rating-poor' };
+      if (total < 10) return { label: 'Poor', cls: 'rating-poor' };
+      if (total < 15) return { label: 'Fair', cls: 'rating-fair' };
+      if (total < 20) return { label: 'Good', cls: 'rating-good' };
+      if (total < 24) return { label: 'Strong', cls: 'rating-strong' };
+      return { label: 'Excellent', cls: 'rating-excellent' };
+    }
+
+    // ---- Score Buttons ----
+    function setScore(criterion, value) {
+      currentScores[criterion] = value;
+      const group = document.querySelector(`.score-buttons[data-target="${criterion}"]`);
+      group.querySelectorAll('.score-btn').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.val) === value);
+      });
+      $(`val-${criterion}`).textContent = value;
+      $(`desc-${criterion}`).textContent = value > 0 ? SCORE_DESCRIPTIONS[criterion][value] : 'Select a score';
+      updateTotalPreview();
+    }
+
+    function updateTotalPreview() {
+      const total = CRITERIA.reduce((sum, c) => sum + currentScores[c], 0);
+      $('totalScore').innerHTML = `${total}<span>/25</span>`;
+      const rating = getRating(total);
+      const badge = $('ratingBadge');
+      badge.textContent = rating.label;
+      badge.className = `rating-badge ${rating.cls}`;
+    }
+
+    document.querySelectorAll('.score-buttons').forEach(group => {
+      group.addEventListener('click', (e) => {
+        const btn = e.target.closest('.score-btn');
+        if (!btn) return;
+        setScore(group.dataset.target, Number(btn.dataset.val));
+      });
+    });
+
+    // ---- Form ----
+    function resetForm() {
+      editingId = null;
+      $('formTitle').textContent = 'Score a Tender';
+      $('saveBtn').textContent = 'Save Tender';
+      $('tenderName').value = '';
+      $('tenderDate').value = new Date().toISOString().split('T')[0];
+      $('tenderNotes').value = '';
+      CRITERIA.forEach(c => {
+        currentScores[c] = 0;
+        const group = document.querySelector(`.score-buttons[data-target="${c}"]`);
+        group.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active'));
+        $(`val-${c}`).textContent = '0';
+        $(`desc-${c}`).textContent = 'Select a score';
+      });
+      updateTotalPreview();
+    }
+
+    function validateForm() {
+      const name = $('tenderName').value.trim();
+      if (!name) {
+        toast('Please enter a tender name', true);
+        $('tenderName').focus();
+        return false;
+      }
+      for (const c of CRITERIA) {
+        if (currentScores[c] === 0) {
+          toast(`Please score "${c}" before saving`, true);
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function saveTender() {
+      if (!validateForm()) return;
+      const data = {
+        id: editingId || Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+        name: $('tenderName').value.trim(),
+        date: $('tenderDate').value || new Date().toISOString().split('T')[0],
+        notes: $('tenderNotes').value.trim(),
+        scores: { ...currentScores },
+        total: CRITERIA.reduce((s, c) => s + currentScores[c], 0),
+        createdAt: editingId ? tenders.find(t => t.id === editingId).createdAt : Date.now(),
+        updatedAt: Date.now()
+      };
+      if (editingId) {
+        tenders = tenders.map(t => t.id === editingId ? data : t);
+        toast('Tender updated');
+      } else {
+        tenders.push(data);
+        toast('Tender saved');
+      }
+      save();
+      resetForm();
+      render();
+    }
+
+    function editTender(id) {
+      const t = tenders.find(x => x.id === id);
+      if (!t) return;
+      editingId = id;
+      $('formTitle').textContent = 'Edit Tender';
+      $('saveBtn').textContent = 'Update Tender';
+      $('tenderName').value = t.name;
+      $('tenderDate').value = t.date;
+      $('tenderNotes').value = t.notes || '';
+      CRITERIA.forEach(c => setScore(c, t.scores[c]));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteTender(id) {
+      const t = tenders.find(x => x.id === id);
+      if (!t) return;
+      if (!confirm(`Delete "${t.name}"?`)) return;
+      tenders = tenders.filter(x => x.id !== id);
+      save();
+      render();
+      toast('Tender deleted');
+    }
+
+    // ---- Render ----
+    function getFilteredSorted() {
+      const q = searchInput.value.trim().toLowerCase();
+      let list = tenders.filter(t => !q || t.name.toLowerCase().includes(q));
+      const sort = sortSelect.value;
+      list.sort((a, b) => {
+        switch (sort) {
+          case 'score-desc': return b.total - a.total;
+          case 'score-asc': return a.total - b.total;
+          case 'date-desc': return b.createdAt - a.createdAt;
+          case 'date-asc': return a.createdAt - b.createdAt;
+          case 'name-asc': return a.name.localeCompare(b.name);
+          default: return 0;
+        }
+      });
+      return list;
+    }
+
+    function renderTable() {
+      const list = getFilteredSorted();
+      if (list.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+      emptyState.style.display = 'none';
+      tbody.innerHTML = list.map(t => {
+        const rating = getRating(t.total);
+        const formattedDate = t.date ? new Date(t.date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+        return `
+          <tr>
+            <td class="name">${escapeHtml(t.name)}</td>
+            <td class="muted">${formattedDate}</td>
+            <td class="center">${t.scores.client}</td>
+            <td class="center">${t.scores.difficulty}</td>
+            <td class="center">${t.scores.timing}</td>
+            <td class="center">${t.scores.duration}</td>
+            <td class="center">${t.scores.margin}</td>
+            <td class="center score-cell">${t.total}<span style="font-size:11px;color:var(--text-dim);font-weight:600;">/25</span></td>
+            <td class="center"><span class="rating-badge ${rating.cls}">${rating.label}</span></td>
+            <td class="right">
+              <div class="row-actions">
+                <button class="btn btn-ghost btn-sm" onclick="editTender('${t.id}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteTender('${t.id}')">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderStats() {
+      $('statCount').textContent = tenders.length;
+      if (tenders.length === 0) {
+        $('statAvg').textContent = '0';
+        $('statHigh').textContent = '—';
+        $('statHighName').textContent = 'No tenders yet';
+        $('statStrong').textContent = '0';
+        return;
+      }
+      const avg = tenders.reduce((s, t) => s + t.total, 0) / tenders.length;
+      $('statAvg').textContent = avg.toFixed(1);
+      const highest = tenders.reduce((a, b) => b.total > a.total ? b : a);
+      $('statHigh').textContent = highest.total;
+      $('statHighName').textContent = highest.name;
+      $('statStrong').textContent = tenders.filter(t => t.total >= 20).length;
+    }
+
+    function render() {
+      renderStats();
+      renderTable();
+    }
+
+    // ---- Utilities ----
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    let toastTimer;
+    function toast(msg, isError = false) {
+      const el = $('toast');
+      el.textContent = msg;
+      el.classList.toggle('error', isError);
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+    }
+
+    // ---- Export / Import ----
+    function exportJson() {
+      if (tenders.length === 0) { toast('Nothing to export', true); return; }
+      const blob = new Blob([JSON.stringify(tenders, null, 2)], { type: 'application/json' });
+      downloadBlob(blob, `tenders-${new Date().toISOString().split('T')[0]}.json`);
+      toast('Exported JSON');
+    }
+
+    function exportCsv() {
+      if (tenders.length === 0) { toast('Nothing to export', true); return; }
+      const header = ['Name', 'Date', 'Client', 'Difficulty', 'Timing', 'Duration', 'Margin', 'Total', 'Rating', 'Notes'];
+      const rows = tenders.map(t => {
+        const rating = getRating(t.total).label;
+        return [
+          t.name, t.date, t.scores.client, t.scores.difficulty, t.scores.timing,
+          t.scores.duration, t.scores.margin, t.total, rating, (t.notes || '').replace(/\n/g, ' ')
+        ];
+      });
+      const csv = [header, ...rows].map(row =>
+        row.map(cell => {
+          const s = String(cell ?? '');
+          return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        }).join(',')
+      ).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      downloadBlob(blob, `tenders-${new Date().toISOString().split('T')[0]}.csv`);
+      toast('Exported CSV');
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importJson(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!Array.isArray(data)) throw new Error('Invalid format');
+          const merged = [...tenders];
+          let added = 0;
+          data.forEach(t => {
+            if (t && t.name && t.scores) {
+              if (!merged.find(x => x.id === t.id)) {
+                merged.push(t);
+                added++;
+              }
+            }
+          });
+          tenders = merged;
+          save();
+          render();
+          toast(`Imported ${added} tender(s)`);
+        } catch (err) {
+          toast('Invalid JSON file', true);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ---- Events ----
+    $('saveBtn').addEventListener('click', saveTender);
+    $('resetBtn').addEventListener('click', resetForm);
+    $('exportBtn').addEventListener('click', exportJson);
+    $('exportCsvBtn').addEventListener('click', exportCsv);
+    $('importBtn').addEventListener('click', () => $('importFile').click());
+    $('importFile').addEventListener('change', (e) => {
+      if (e.target.files[0]) importJson(e.target.files[0]);
+      e.target.value = '';
+    });
+    searchInput.addEventListener('input', renderTable);
+    sortSelect.addEventListener('change', renderTable);
+
+    // Expose for inline handlers
+    window.editTender = editTender;
+    window.deleteTender = deleteTender;
+
+    // ---- Init ----
+    load();
+    resetForm();
+    render();
+  </script>
+</body>
+</html>
