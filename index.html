@@ -774,6 +774,12 @@
             </div>
           </div>
 
+          <div class="form-group" style="margin-top:20px">
+            <label class="form-label">Hanger Drop Length <span class="unit dim-unit">(mm)</span></label>
+            <input type="number" class="form-input" id="hangerLength" value="500" min="100" step="50">
+            <div class="form-hint">Distance from soffit to grid level. 5mm rod supplied in 3600mm lengths.</div>
+          </div>
+
           <hr class="divider">
 
           <button class="btn btn-primary" onclick="calculate()">
@@ -847,7 +853,7 @@
 <script>
 // State
 let currentUnit = 'mm';
-let rooms = [{ id: 0, name: 'Room 1', length: 6000, width: 4000, tileSize: '600x600', gridType: 'exposed', waste: 10, wireSpacing: 1200 }];
+let rooms = [{ id: 0, name: 'Room 1', length: 6000, width: 4000, tileSize: '600x600', gridType: 'exposed', waste: 10, wireSpacing: 1200, hangerLength: 500 }];
 let activeRoom = 0;
 let roomCounter = 1;
 
@@ -895,7 +901,8 @@ function addRoom() {
     tileSize: '600x600',
     gridType: 'exposed',
     waste: 10,
-    wireSpacing: 1200
+    wireSpacing: 1200,
+    hangerLength: 500
   };
   rooms.push(newRoom);
   activeRoom = rooms.length - 1;
@@ -941,6 +948,7 @@ function saveCurrentRoom() {
   room.gridType = document.querySelector('#gridTypeGroup .toggle-option.active').dataset.value;
   room.waste = Number(document.getElementById('wasteFactor').value);
   room.wireSpacing = fromDisplay(document.getElementById('wireSpacing').value);
+  room.hangerLength = fromDisplay(document.getElementById('hangerLength').value);
 }
 
 function loadRoomToForm(room) {
@@ -957,6 +965,7 @@ function loadRoomToForm(room) {
 
   document.getElementById('wasteFactor').value = room.waste;
   document.getElementById('wireSpacing').value = toDisplay(room.wireSpacing);
+  document.getElementById('hangerLength').value = toDisplay(room.hangerLength);
 }
 
 // Calculation
@@ -1029,6 +1038,13 @@ function calculate() {
   const totalWires = wiresAlongL * wiresAlongW;
   const wiresWithWaste = Math.ceil(totalWires * (1 + waste));
 
+  // Suspension Rods (5mm, 3600mm lengths)
+  const hangerLength = room.hangerLength;
+  const rodStdLen = 3600; // mm
+  const hangersPerRod = Math.floor(rodStdLen / hangerLength);
+  const totalRods = Math.ceil(totalWires / hangersPerRod);
+  const rodsWithWaste = Math.ceil(totalRods * (1 + waste));
+
   // Render results
   document.getElementById('emptyState').style.display = 'none';
   const content = document.getElementById('resultsContent');
@@ -1050,6 +1066,10 @@ function calculate() {
     <div class="summary-stat">
       <div class="summary-stat-value">${mainTeesWithWaste}</div>
       <div class="summary-stat-label">Main Tees</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-stat-value">${rodsWithWaste}</div>
+      <div class="summary-stat-label">Rod Lengths</div>
     </div>
     <div class="summary-stat">
       <div class="summary-stat-value">${(perimeter / 1000).toFixed(1)}m</div>
@@ -1154,6 +1174,18 @@ function calculate() {
         <td style="text-align:center">${totalWires}</td>
         <td>${wiresWithWaste}</td>
       </tr>
+      <tr>
+        <td>
+          <span class="material-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+          </span>
+          <span class="material-name">Suspension Rod</span>
+          <div class="material-desc" style="margin-left:44px">5mm x 3600mm lengths</div>
+        </td>
+        <td>${hangersPerRod} hangers per rod (${hangerLength}mm drop)</td>
+        <td style="text-align:center">${totalRods}</td>
+        <td>${rodsWithWaste}</td>
+      </tr>
     </tbody>`;
 
   document.getElementById('materialsTable').innerHTML = tableHTML;
@@ -1189,6 +1221,7 @@ function calculate() {
     `Main tees run along the room length (${L}mm) and are spaced ${tw}mm apart.`,
     'Border tiles are calculated assuming the grid is centred within the room for a balanced appearance.',
     'Suspension wire quantity is based on the specified spacing. Check structural requirements for actual wire gauge and fixing method.',
+    `Suspension rod: each 3600mm rod yields ${Math.floor(3600 / room.hangerLength)} hangers at ${room.hangerLength}mm drop length.`,
     room.gridType === 'concealed' ? 'Concealed grid systems may require additional clips and special edge trims not listed here.' : 'Exposed grid uses standard T-bar profiles visible below the ceiling plane.',
   ];
 
@@ -1415,6 +1448,10 @@ function exportCSV() {
     const wiresAlongW = Math.ceil(W / room.wireSpacing) + 1;
     const totalWires = wiresAlongL * wiresAlongW;
 
+    const hangerLength = room.hangerLength;
+    const hangersPerRod = Math.floor(3600 / hangerLength);
+    const totalRods = Math.ceil(totalWires / hangersPerRod);
+
     const n = room.name;
     lines.push(`"${n}","Ceiling Tiles","${room.tileSize}mm",${totalTiles},${Math.ceil(totalTiles*(1+waste))}`);
     lines.push(`"${n}","Main Tees","${mainTeeStdLen}mm",${totalMainTees},${Math.ceil(totalMainTees*(1+waste))}`);
@@ -1422,6 +1459,7 @@ function exportCSV() {
     if (crossTee600 > 0) lines.push(`"${n}","Cross Tees 600mm","${tl > 600 ? 'Intermediate' : 'Standard'}",${crossTee600},${Math.ceil(crossTee600*(1+waste))}`);
     lines.push(`"${n}","Wall Angle","${wallAngleStdLen}mm",${wallAnglePcs},${Math.ceil(wallAnglePcs*(1+waste))}`);
     lines.push(`"${n}","Suspension Wires","@${room.wireSpacing}mm",${totalWires},${Math.ceil(totalWires*(1+waste))}`);
+    lines.push(`"${n}","Suspension Rod 5mm","3600mm lengths (${hangerLength}mm drop)",${totalRods},${Math.ceil(totalRods*(1+waste))}`);
   });
 
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
