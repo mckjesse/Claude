@@ -301,8 +301,8 @@
           <div class="result-unit">mm</div>
         </div>
         <div class="result-card overlap">
-          <div class="result-label">Overlap (per side)</div>
-          <div class="result-value" id="resultOverlap">0</div>
+          <div class="result-label">Overlap L / R</div>
+          <div class="result-value"><span id="resultOverlapL">0</span> / <span id="resultOverlapR">0</span></div>
           <div class="result-unit">mm</div>
         </div>
         <div class="result-card clear-opening">
@@ -325,7 +325,7 @@
         <div>
           <div class="card-title">Door Open Position</div>
           <div class="diagram-area" id="openDiagramArea">
-            <svg class="diagram-svg" id="openSvg" viewBox="0 0 860 240" preserveAspectRatio="xMidYMid meet"></svg>
+            <svg class="diagram-svg" id="openSvg" viewBox="0 0 860 300" preserveAspectRatio="xMidYMid meet"></svg>
           </div>
         </div>
       </div>
@@ -355,7 +355,8 @@
     let P = 50;     // projection
 
     // Derived (computed in calculate())
-    let V = 0;      // overlap per side
+    let VL = 0;     // left overlap (door over left sidelight)
+    let VR = 0;     // right overlap (door over right sidelight)
     let W = 0;      // walk-through
     let CO = 0;     // clear opening
 
@@ -366,16 +367,25 @@
     const elD = document.getElementById('inputD');
     const elSR = document.getElementById('inputSR');
     const elResultW = document.getElementById('resultWalkthrough');
-    const elResultV = document.getElementById('resultOverlap');
+    const elResultVL = document.getElementById('resultOverlapL');
+    const elResultVR = document.getElementById('resultOverlapR');
     const elResultCO = document.getElementById('resultClearOpening');
     const closedSvg = document.getElementById('closedSvg');
     const openSvg = document.getElementById('openSvg');
     const closedArea = document.getElementById('closedDiagramArea');
 
     // ========== CALCULATION ==========
+    function resetOverlaps() {
+      // Distribute overlap equally on both sides
+      const total = SL + D + SR - O;
+      VL = total / 2;
+      VR = total / 2;
+    }
+
     function calculate() {
       W = O - SL - SR;
-      V = (SL + D + SR - O) / 2;  // equal overlap each side
+      // VR derived from constraint: VL + VR = SL + D + SR - O
+      VR = SL + D + SR - O - VL;
       CO = Math.max(0, W - P);
     }
 
@@ -390,7 +400,8 @@
 
     function syncResultsFromState() {
       elResultW.textContent = Math.round(W);
-      elResultV.textContent = Math.round(V);
+      elResultVL.textContent = Math.round(VL);
+      elResultVR.textContent = Math.round(VR);
       elResultCO.textContent = Math.round(CO);
     }
 
@@ -404,6 +415,7 @@
     // ========== INPUT HANDLERS ==========
     function onOpeningChange() {
       O = Math.max(500, parseInt(elO.value) || 2400);
+      resetOverlaps();
       fullUpdate();
     }
     function onProjectionChange() {
@@ -412,14 +424,17 @@
     }
     function onSLChange() {
       SL = Math.max(50, parseInt(elSL.value) || 700);
+      resetOverlaps();
       fullUpdate();
     }
     function onDChange() {
       D = Math.max(200, parseInt(elD.value) || 1200);
+      resetOverlaps();
       fullUpdate();
     }
     function onSRChange() {
       SR = Math.max(50, parseInt(elSR.value) || 700);
+      resetOverlaps();
       fullUpdate();
     }
 
@@ -496,15 +511,16 @@
       const slW = scaleX(SL);
       const srW = scaleX(SR);
       const dW = scaleX(D);
-      const vW = scaleX(Math.max(0, V));
+      const vlW = scaleX(Math.max(0, VL));
+      const vrW = scaleX(Math.max(0, VR));
 
       // Panel positions in SVG coords
       const slLeftX = PAD_X;
       const slLeftEndX = PAD_X + slW;
       const srRightX = PAD_X + DRAW_W;
       const srLeftX = srRightX - srW;
-      const doorLeftX = slLeftEndX - vW;
-      const doorRightX = srLeftX + vW;
+      const doorLeftX = slLeftEndX - vlW;   // door overlaps left SL by VL
+      const doorRightX = srLeftX + vrW;     // door overlaps right SL by VR
 
       let h = '';
 
@@ -526,17 +542,15 @@
                  'rgba(78,168,255,0.2)', '#4ea8ff', 'DOOR');
 
       // Overlap zones
-      if (V > 0) {
-        // Left overlap
-        if (vW > 1) {
-          h += `<rect x="${doorLeftX}" y="${frontY-4}" width="${vW}" height="${panelH*2+trackGap+8}"
-                rx="2" fill="rgba(192,132,252,0.06)" stroke="#c084fc" stroke-width="1" stroke-dasharray="3,3"/>`;
-        }
-        // Right overlap
-        if (vW > 1) {
-          h += `<rect x="${srLeftX}" y="${frontY-4}" width="${vW}" height="${panelH*2+trackGap+8}"
-                rx="2" fill="rgba(192,132,252,0.06)" stroke="#c084fc" stroke-width="1" stroke-dasharray="3,3"/>`;
-        }
+      // Left overlap
+      if (VL > 0 && vlW > 1) {
+        h += `<rect x="${doorLeftX}" y="${frontY-4}" width="${vlW}" height="${panelH*2+trackGap+8}"
+              rx="2" fill="rgba(192,132,252,0.06)" stroke="#c084fc" stroke-width="1" stroke-dasharray="3,3"/>`;
+      }
+      // Right overlap
+      if (VR > 0 && vrW > 1) {
+        h += `<rect x="${srLeftX}" y="${frontY-4}" width="${vrW}" height="${panelH*2+trackGap+8}"
+              rx="2" fill="rgba(192,132,252,0.06)" stroke="#c084fc" stroke-width="1" stroke-dasharray="3,3"/>`;
       }
 
       // Dimension lines below
@@ -544,9 +558,11 @@
       h += dimLine(slLeftX, slLeftEndX, dimY, `Left SL: ${Math.round(SL)} mm`, '#ff8c4e');
       h += dimLine(srLeftX, srRightX, dimY, `Right SL: ${Math.round(SR)} mm`, '#ff8c4e');
       h += dimLine(doorLeftX, doorRightX, dimY + 22, `Door: ${Math.round(D)} mm`, '#4ea8ff');
-      if (V > 0 && vW > 3) {
-        h += dimLine(doorLeftX, slLeftEndX, topDimY + 22, `OL: ${Math.round(V)}`, '#c084fc');
-        h += dimLine(srLeftX, doorRightX, topDimY + 22, `OL: ${Math.round(V)}`, '#c084fc');
+      if (VL > 0 && vlW > 3) {
+        h += dimLine(doorLeftX, slLeftEndX, topDimY + 22, `OL: ${Math.round(VL)}`, '#c084fc');
+      }
+      if (VR > 0 && vrW > 3) {
+        h += dimLine(srLeftX, doorRightX, topDimY + 22, `OL: ${Math.round(VR)}`, '#c084fc');
       }
 
       // Track labels
@@ -592,10 +608,22 @@
       const srRightX = PAD_X + DRAW_W;
       const srLeftX = srRightX - srW;
 
-      // Door: right edge aligns with right sidelight right edge
-      // Left edge extends into walk-through by projection amount
+      // Door: positioned at actual width D
+      // Right edge aligns with the opening right edge
       const doorRightX = srRightX;
-      const doorLeftX = srLeftX - pW;
+      const doorLeftX = doorRightX - dW;
+
+      // Geometric projection: how far door extends past right SL inner edge
+      const geomProj = Math.max(0, D - SR);
+      const geomProjW = scaleX(geomProj);
+
+      // Distance from door back (left edge) to right SL outer edge (right edge)
+      const doorToSLEdge = srRightX - doorLeftX; // in SVG coords — equals dW
+      const doorToSLEdgeMM = D; // in mm, it's just the door width...
+      // But more usefully: from door left edge to right SL right edge in opening coords
+      // = O - (O - D) = D. But user wants the stacking distance.
+      // Actually: distance from back of door to outside edge of right SL = D
+      // Let's show it as the full door footprint behind the right SL
 
       let h = '';
 
@@ -612,17 +640,14 @@
       // Right SL (front)
       h += panel(srLeftX, frontY, srW, panelH, 'rgba(255,140,78,0.15)', '#ff8c4e', 'RIGHT SL');
 
-      // Door (back track — open position)
-      h += panel(doorLeftX, backY, Math.max(0, doorRightX - doorLeftX), panelH,
+      // Door (back track — open position, actual width)
+      h += panel(doorLeftX, backY, dW, panelH,
                  'rgba(78,168,255,0.2)', '#4ea8ff', 'DOOR (OPEN)');
 
-      // Projection zone
-      if (P > 0 && pW > 2) {
-        h += `<rect x="${doorLeftX}" y="${frontY-8}" width="${pW}" height="${panelH*2+trackGap+16}"
+      // Projection zone — geometric projection into walk-through
+      if (geomProj > 0 && geomProjW > 2) {
+        h += `<rect x="${doorLeftX}" y="${frontY-8}" width="${geomProjW}" height="${panelH*2+trackGap+16}"
               rx="2" fill="rgba(244,114,182,0.08)" stroke="#f472b6" stroke-width="1" stroke-dasharray="4,3"/>`;
-        if (pW > 20) {
-          h += dimLine(doorLeftX, srLeftX, topDimY + 22, `Proj: ${Math.round(P)} mm`, '#f472b6');
-        }
       }
 
       // Walk-through arrow in gap
@@ -636,14 +661,34 @@
 
       // Dimension lines below
       const dimY = backY + panelH + 24;
+
+      // Walk-through
       if (W > 0) {
         h += dimLine(slLeftEndX, srLeftX, dimY, `Walk-through: ${Math.round(W)} mm`, '#34d399');
       }
-      if (CO > 0 && CO !== W) {
+
+      // Clear opening (walk-through minus projection)
+      if (CO > 0 && P > 0) {
         const clearRightX = srLeftX - pW;
         h += dimLine(slLeftEndX, clearRightX, dimY + 22, `Clear Opening: ${Math.round(CO)} mm`, '#fbbf24');
       } else if (CO > 0) {
         h += dimLine(slLeftEndX, srLeftX, dimY + 22, `Clear Opening: ${Math.round(CO)} mm`, '#fbbf24');
+      }
+
+      // Door width in open position
+      h += dimLine(doorLeftX, doorRightX, dimY + 44, `Door: ${Math.round(D)} mm`, '#4ea8ff');
+
+      // Distance from back of door to outside edge of right sidelight
+      if (dW > 3) {
+        const distMM = Math.round(D);
+        h += dimLine(doorLeftX, srRightX, dimY + 66,
+          `Door back to SL edge: ${distMM} mm`, '#a78bfa');
+      }
+
+      // Geometric projection dimension (if door extends past sidelight)
+      if (geomProj > 0 && geomProjW > 8) {
+        h += dimLine(doorLeftX, srLeftX, topDimY + 22,
+          `Projection: ${Math.round(geomProj)} mm`, '#f472b6');
       }
 
       // Track labels
@@ -654,21 +699,24 @@
     }
 
     // ========== DRAG HANDLING ==========
-    let dragTarget = null;   // 'sl', 'sr', 'door-l', 'door-r'
-    let dragStartSvgX = 0;
-    let dragStartValue = 0;
-    let dragStartValue2 = 0; // for door, store D
+    let dragTarget = null;    // 'sl', 'sr', 'door-l', 'door-r'
+    let doorFixedEdge = 0;    // the opposite edge that stays put during door drag
 
     function onDragStart(e) {
       const target = e.target.closest('[data-handle]');
       if (!target) return;
       e.preventDefault();
       dragTarget = target.getAttribute('data-handle');
-      dragStartSvgX = getSvgPoint(e, closedSvg);
 
-      if (dragTarget === 'sl') dragStartValue = SL;
-      else if (dragTarget === 'sr') dragStartValue = SR;
-      else if (dragTarget === 'door-l' || dragTarget === 'door-r') dragStartValue = D;
+      if (dragTarget === 'door-l') {
+        // Dragging left edge of door — fix the RIGHT edge
+        // Door right edge in opening coords = O - SR + VR
+        doorFixedEdge = O - SR + VR;
+      } else if (dragTarget === 'door-r') {
+        // Dragging right edge of door — fix the LEFT edge
+        // Door left edge in opening coords = SL - VL
+        doorFixedEdge = SL - VL;
+      }
 
       document.body.style.cursor = 'col-resize';
     }
@@ -680,25 +728,27 @@
       const openingX = svgXToOpening(svgX);
 
       if (dragTarget === 'sl') {
-        // Left SL right edge: openingX = new SL
+        // Left SL right edge: openingX = new SL width
         SL = Math.round(Math.max(50, Math.min(O - SR - 100, openingX)));
+        resetOverlaps();
       } else if (dragTarget === 'sr') {
-        // Right SR left edge: openingX = O - new SR
+        // Right SR left edge: openingX = O - new SR width
         SR = Math.round(Math.max(50, Math.min(O - SL - 100, O - openingX)));
+        resetOverlaps();
       } else if (dragTarget === 'door-l') {
-        // Door left edge position in opening coords = SL - V = (O + SL - D - SR) / 2
-        // New door-left = openingX, so: (O + SL - D_new - SR) / 2 = openingX
-        // D_new = O + SL - SR - 2 * openingX
-        const newD = Math.round(O + SL - SR - 2 * openingX);
-        D = Math.max(200, Math.min(O, newD));
+        // Drag left edge of door — right edge stays fixed at doorFixedEdge
+        const newDoorLeft = Math.max(0, Math.min(doorFixedEdge - 100, openingX));
+        D = Math.round(doorFixedEdge - newDoorLeft);
+        D = Math.max(100, D);
+        VL = SL - newDoorLeft;
+        // VR derived in calculate()
       } else if (dragTarget === 'door-r') {
-        // Door right edge in opening coords = (O + SL + D - SR) / 2... wait
-        // Door right = O - SR + V = O - SR + (SL + D + SR - O)/2 = (O - SR + SL + D + SR - O)/2 + (O - SR)... let me recalculate
-        // Door right = O - SR + V, where V = (SL + D + SR - O)/2
-        // Door right = O - SR + (SL + D + SR - O)/2 = (2O - 2SR + SL + D + SR - O)/2 = (O + SL + D - SR)/2
-        // So: (O + SL + D_new - SR) / 2 = openingX → D_new = 2 * openingX - O - SL + SR
-        const newD = Math.round(2 * openingX - O - SL + SR);
-        D = Math.max(200, Math.min(O, newD));
+        // Drag right edge of door — left edge stays fixed at doorFixedEdge
+        const newDoorRight = Math.max(doorFixedEdge + 100, Math.min(O, openingX));
+        D = Math.round(newDoorRight - doorFixedEdge);
+        D = Math.max(100, D);
+        // VL stays the same (left edge is fixed)
+        // VR derived in calculate()
       }
 
       syncInputsFromState();
@@ -722,6 +772,7 @@
     document.addEventListener('touchend', onDragEnd);
 
     // ========== INIT ==========
+    resetOverlaps();
     fullUpdate();
   </script>
 </body>
