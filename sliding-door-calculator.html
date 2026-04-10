@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sliding Door Calculator</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #16161d;
+      --surface-raised: #1e1e28;
+      --surface-highlight: #252530;
+      --border: #2a2a38;
+      --border-light: #3a3a4a;
+      --text: #e8e8f0;
+      --text-muted: #a0a0b4;
+      --text-dim: #707088;
+      --white: #ffffff;
+      --accent: #4ea8ff;
+      --accent-glow: rgba(78, 168, 255, 0.15);
+      --accent-dim: #1a3050;
+      --door-color: #4ea8ff;
+      --door-bg: rgba(78, 168, 255, 0.12);
+      --sidelight-color: #ff8c4e;
+      --sidelight-bg: rgba(255, 140, 78, 0.12);
+      --overlap-color: #c084fc;
+      --overlap-bg: rgba(192, 132, 252, 0.12);
+      --walkthrough-color: #34d399;
+      --walkthrough-bg: rgba(52, 211, 153, 0.12);
+      --opening-color: #e8e8f0;
+      --radius: 6px;
+      --radius-lg: 12px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--white);
+    }
+    .header p {
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* Layout */
+    .app-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+
+    /* Input group */
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-wrap input {
+      width: 100%;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 50px 10px 14px;
+      font-family: inherit;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--white);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-wrap input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .input-unit {
+      position: absolute;
+      right: 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    /* Slider section */
+    .slider-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .slider-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* Toggle switch */
+    .toggle-group {
+      display: flex;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .toggle-btn {
+      padding: 8px 16px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .toggle-btn.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+    .toggle-btn:hover:not(.active) {
+      color: var(--text-muted);
+      background: var(--surface-highlight);
+    }
+
+    /* Range slider */
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .slider-value-display {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .slider-value-display .value {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--white);
+      font-variant-numeric: tabular-nums;
+    }
+    .slider-value-display .unit {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-dim);
+    }
+    .slider-value-display .label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-left: 4px;
+    }
+    .slider-track-wrap {
+      position: relative;
+      padding: 8px 0;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid var(--white);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      cursor: grab;
+      transition: transform 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:active {
+      cursor: grabbing;
+      transform: scale(1.15);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid var(--white);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      cursor: grab;
+    }
+    .slider-limits {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+
+    /* Results grid */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .result-card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+    .result-card .result-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+    .result-card .result-value {
+      font-size: 24px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+    .result-card .result-unit {
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 2px;
+    }
+    .result-card.door {
+      border-color: color-mix(in srgb, var(--door-color) 40%, transparent);
+      background: var(--door-bg);
+    }
+    .result-card.door .result-label { color: var(--door-color); }
+    .result-card.door .result-value { color: var(--door-color); }
+    .result-card.door .result-unit { color: color-mix(in srgb, var(--door-color) 60%, transparent); }
+
+    .result-card.sidelight {
+      border-color: color-mix(in srgb, var(--sidelight-color) 40%, transparent);
+      background: var(--sidelight-bg);
+    }
+    .result-card.sidelight .result-label { color: var(--sidelight-color); }
+    .result-card.sidelight .result-value { color: var(--sidelight-color); }
+    .result-card.sidelight .result-unit { color: color-mix(in srgb, var(--sidelight-color) 60%, transparent); }
+
+    .result-card.overlap {
+      border-color: color-mix(in srgb, var(--overlap-color) 40%, transparent);
+      background: var(--overlap-bg);
+    }
+    .result-card.overlap .result-label { color: var(--overlap-color); }
+    .result-card.overlap .result-value { color: var(--overlap-color); }
+    .result-card.overlap .result-unit { color: color-mix(in srgb, var(--overlap-color) 60%, transparent); }
+
+    .result-card.walkthrough {
+      border-color: color-mix(in srgb, var(--walkthrough-color) 40%, transparent);
+      background: var(--walkthrough-bg);
+    }
+    .result-card.walkthrough .result-label { color: var(--walkthrough-color); }
+    .result-card.walkthrough .result-value { color: var(--walkthrough-color); }
+    .result-card.walkthrough .result-unit { color: color-mix(in srgb, var(--walkthrough-color) 60%, transparent); }
+
+    /* Diagram */
+    .diagram-area {
+      position: relative;
+      width: 100%;
+      height: 280px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .diagram-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Info note */
+    .info-note {
+      display: flex;
+      gap: 10px;
+      padding: 14px 16px;
+      background: var(--accent-dim);
+      border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .info-note .icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .app-container { padding: 16px 12px 40px; }
+      .card { padding: 16px; }
+      .input-row { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+      .slider-value-display .value { font-size: 26px; }
+      .result-card .result-value { font-size: 20px; }
+      .header h1 { font-size: 18px; }
+      .diagram-area { height: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>SLIDING DOOR CALCULATOR</h1>
+    <p>Calculate door and sidelight dimensions for sliding door openings</p>
+  </div>
+
+  <div class="app-container">
+    <!-- Inputs -->
+    <div class="card">
+      <div class="card-title">Opening Dimensions</div>
+      <div class="input-row">
+        <div class="input-group">
+          <label for="openingWidth">Total Opening Width</label>
+          <div class="input-wrap">
+            <input type="number" id="openingWidth" value="2400" min="500" max="10000" step="1">
+            <span class="input-unit">mm</span>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="walkthroughWidth">Desired Walk-through Width</label>
+          <div class="input-wrap">
+            <input type="number" id="walkthroughWidth" value="1000" min="200" max="9000" step="1">
+            <span class="input-unit">mm</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slider Control -->
+    <div class="card">
+      <div class="slider-section">
+        <div class="slider-header">
+          <div class="card-title" style="margin-bottom:0;">Adjust Panel Size</div>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="toggleDoor" onclick="setSliderMode('door')">Door Size</button>
+            <button class="toggle-btn" id="toggleSidelight" onclick="setSliderMode('sidelight')">Sidelight Size</button>
+          </div>
+        </div>
+
+        <div class="slider-container">
+          <div class="slider-value-display">
+            <span class="value" id="sliderValueDisplay">1250</span>
+            <span class="unit">mm</span>
+            <span class="label" id="sliderLabel">Door Width</span>
+          </div>
+          <div class="slider-track-wrap">
+            <input type="range" id="panelSlider" min="500" max="2000" value="1250" step="1">
+          </div>
+          <div class="slider-limits">
+            <span id="sliderMin">500 mm</span>
+            <span id="sliderMax">2000 mm</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="card">
+      <div class="card-title">Calculated Dimensions</div>
+      <div class="results-grid">
+        <div class="result-card door">
+          <div class="result-label">Door Width</div>
+          <div class="result-value" id="resultDoor">1250</div>
+          <div class="result-unit">mm</div>
+        </div>
+        <div class="result-card sidelight">
+          <div class="result-label">Sidelight</div>
+          <div class="result-value" id="resultSidelight">1400</div>
+          <div class="result-unit">mm</div>
+        </div>
+        <div class="result-card overlap">
+          <div class="result-label">Overlap</div>
+          <div class="result-value" id="resultOverlap">250</div>
+          <div class="result-unit">mm</div>
+        </div>
+        <div class="result-card walkthrough">
+          <div class="result-label">Walk-through</div>
+          <div class="result-value" id="resultWalkthrough">1000</div>
+          <div class="result-unit">mm</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagram -->
+    <div class="card">
+      <div class="card-title">Visual Diagram — Door Closed</div>
+      <div class="diagram-area">
+        <svg class="diagram-svg" id="diagramSvg" viewBox="0 0 800 280"></svg>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="info-note">
+      <span class="icon">i</span>
+      <div>
+        <strong>How it works:</strong> The total opening is filled by the door panel and sidelight (fixed panel),
+        which overlap in the centre. When the door slides open behind the sidelight, the walk-through width is
+        the clear space remaining.<br>
+        <strong>Formula:</strong> Opening = Door + Sidelight &minus; Overlap &nbsp;|&nbsp; Walk-through = Opening &minus; Sidelight
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let sliderMode = 'door'; // 'door' or 'sidelight'
+    let storedDoorWidth = null; // persists door width when switching to sidelight mode
+
+    // DOM refs
+    const elOpening = document.getElementById('openingWidth');
+    const elWalkthrough = document.getElementById('walkthroughWidth');
+    const elSlider = document.getElementById('panelSlider');
+    const elSliderValueDisplay = document.getElementById('sliderValueDisplay');
+    const elSliderLabel = document.getElementById('sliderLabel');
+    const elSliderMin = document.getElementById('sliderMin');
+    const elSliderMax = document.getElementById('sliderMax');
+    const elToggleDoor = document.getElementById('toggleDoor');
+    const elToggleSidelight = document.getElementById('toggleSidelight');
+
+    const elResultDoor = document.getElementById('resultDoor');
+    const elResultSidelight = document.getElementById('resultSidelight');
+    const elResultOverlap = document.getElementById('resultOverlap');
+    const elResultWalkthrough = document.getElementById('resultWalkthrough');
+
+    const MIN_OVERLAP = 30; // mm minimum overlap
+
+    function getOpening() {
+      return Math.max(500, parseInt(elOpening.value) || 2400);
+    }
+
+    function getWalkthrough() {
+      return Math.max(200, parseInt(elWalkthrough.value) || 1000);
+    }
+
+    function clamp(val, min, max) {
+      return Math.max(min, Math.min(max, val));
+    }
+
+    // Calculate everything based on current inputs + slider
+    // Relationships:
+    //   Opening = Door + Sidelight - Overlap
+    //   Walk-through = Opening - Sidelight (clear space when door slides open)
+    //   Overlap = Door - Walk-through = Door + Sidelight - Opening
+    function calculate() {
+      const O = getOpening();
+      let D, S, V, W;
+
+      if (sliderMode === 'door') {
+        // Door width controlled by slider; walk-through fixed from input
+        W = Math.min(getWalkthrough(), O - 100);
+        D = parseInt(elSlider.value) || 1200;
+        S = O - W;           // sidelight determined by opening & walk-through
+        V = D + S - O;       // overlap = D - W
+        storedDoorWidth = D;  // remember for sidelight mode
+      } else {
+        // Sidelight width controlled by slider; door width stays fixed
+        S = parseInt(elSlider.value) || 1200;
+        W = O - S;
+        D = storedDoorWidth || (W + MIN_OVERLAP);
+        V = D + S - O;
+        // If overlap drops below minimum, grow the door to maintain it
+        if (V < MIN_OVERLAP) {
+          V = MIN_OVERLAP;
+          D = O - S + V;
+        }
+      }
+
+      V = Math.max(0, V);
+      return { O, D, S, V, W };
+    }
+
+    function updateSliderBounds() {
+      const O = getOpening();
+      const W = getWalkthrough();
+
+      if (sliderMode === 'door') {
+        // Door slider bounds
+        // Min door: walk-through + minimum overlap
+        const minD = Math.min(O, Math.max(200, W + MIN_OVERLAP));
+        // Max door: opening - 100 (sidelight at least 100mm)
+        // Also: S = O - W, V = D + S - O = D - W
+        // Max D could be O (but then V = O - W = S, door covers everything)
+        const maxD = Math.max(minD, O - 100);
+
+        elSlider.min = minD;
+        elSlider.max = maxD;
+        elSlider.value = clamp(parseInt(elSlider.value) || Math.round((minD + maxD) / 2), minD, maxD);
+        elSliderMin.textContent = minD + ' mm';
+        elSliderMax.textContent = maxD + ' mm';
+        elSliderLabel.textContent = 'Door Width';
+      } else {
+        // Sidelight slider bounds
+        // Min sidelight: 100mm
+        const minS = 100;
+        // Max sidelight: O - 200 (walk-through at least 200)
+        const maxS = Math.max(minS, O - 200);
+
+        elSlider.min = minS;
+        elSlider.max = maxS;
+        elSlider.value = clamp(parseInt(elSlider.value) || Math.round((minS + maxS) / 2), minS, maxS);
+        elSliderMin.textContent = minS + ' mm';
+        elSliderMax.textContent = maxS + ' mm';
+        elSliderLabel.textContent = 'Sidelight Width';
+      }
+    }
+
+    function updateResults() {
+      const vals = calculate();
+
+      elResultDoor.textContent = Math.round(vals.D);
+      elResultSidelight.textContent = Math.round(vals.S);
+      elResultOverlap.textContent = Math.round(vals.V);
+      elResultWalkthrough.textContent = Math.round(vals.W);
+      elSliderValueDisplay.textContent = parseInt(elSlider.value);
+
+      drawDiagram(vals);
+    }
+
+    function setSliderMode(mode) {
+      sliderMode = mode;
+      elToggleDoor.classList.toggle('active', mode === 'door');
+      elToggleSidelight.classList.toggle('active', mode === 'sidelight');
+
+      const vals = calculate();
+      updateSliderBounds();
+
+      if (mode === 'door') {
+        elSlider.value = clamp(vals.D, parseInt(elSlider.min), parseInt(elSlider.max));
+      } else {
+        elSlider.value = clamp(vals.S, parseInt(elSlider.min), parseInt(elSlider.max));
+      }
+
+      updateResults();
+    }
+
+    function onInputChange() {
+      updateSliderBounds();
+      updateResults();
+    }
+
+    // Diagram drawing
+    function drawDiagram(vals) {
+      const svg = document.getElementById('diagramSvg');
+      const { O, D, S, V, W } = vals;
+
+      // Layout constants
+      const padX = 60;
+      const padTop = 50;
+      const panelY = 90;
+      const panelH = 50;
+      const gap = 18; // vertical gap between door and sidelight tracks
+
+      const svgW = 800;
+      const drawW = svgW - padX * 2;
+
+      // Scale: map O to drawW
+      const scale = drawW / O;
+      const dW = D * scale;
+      const sW = S * scale;
+      const vW = V * scale;
+      const wW = W * scale;
+
+      // Positions (door on the left, sidelight on the right, overlapping in middle)
+      const doorX = padX;
+      const doorEndX = doorX + dW;
+      const sidelightX = padX + drawW - sW;
+      const sidelightEndX = padX + drawW;
+
+      // Overlap region
+      const overlapStartX = sidelightX;
+      const overlapEndX = doorEndX;
+
+      let html = '';
+
+      // Background frame
+      html += `<rect x="${padX - 4}" y="${panelY - 10}" width="${drawW + 8}" height="${panelH * 2 + gap + 20}"
+                rx="4" fill="none" stroke="#3a3a4a" stroke-width="1" stroke-dasharray="6,4"/>`;
+
+      // Opening dimension line at top
+      html += drawDimLine(padX, padX + drawW, padTop - 16, `Opening: ${O} mm`, '#e8e8f0');
+
+      // Sidelight panel (back track — draw first so door is on top)
+      const slY = panelY + panelH + gap;
+      html += `<rect x="${sidelightX}" y="${slY}" width="${sW}" height="${panelH}"
+                rx="3" fill="rgba(255,140,78,0.15)" stroke="#ff8c4e" stroke-width="2"/>`;
+      // Sidelight hatching
+      for (let hx = sidelightX + 12; hx < sidelightX + sW - 4; hx += 16) {
+        html += `<line x1="${hx}" y1="${slY}" x2="${hx}" y2="${slY + panelH}" stroke="#ff8c4e" stroke-width="0.5" opacity="0.3"/>`;
+      }
+      html += `<text x="${sidelightX + sW / 2}" y="${slY + panelH / 2 + 5}" text-anchor="middle"
+                font-size="13" font-weight="700" fill="#ff8c4e">SIDELIGHT</text>`;
+
+      // Door panel (front track)
+      html += `<rect x="${doorX}" y="${panelY}" width="${dW}" height="${panelH}"
+                rx="3" fill="rgba(78,168,255,0.2)" stroke="#4ea8ff" stroke-width="2"/>`;
+      // Door fill pattern
+      for (let hx = doorX + 12; hx < doorX + dW - 4; hx += 16) {
+        html += `<line x1="${hx}" y1="${panelY}" x2="${hx}" y2="${panelY + panelH}" stroke="#4ea8ff" stroke-width="0.5" opacity="0.3"/>`;
+      }
+      html += `<text x="${doorX + dW / 2}" y="${panelY + panelH / 2 + 5}" text-anchor="middle"
+                font-size="13" font-weight="700" fill="#4ea8ff">DOOR</text>`;
+
+      // Overlap indicator
+      if (V > 0 && overlapEndX > overlapStartX) {
+        const olY = panelY - 2;
+        const olH = panelH * 2 + gap + 4;
+        html += `<rect x="${overlapStartX}" y="${olY}" width="${Math.max(0, overlapEndX - overlapStartX)}" height="${olH}"
+                  rx="2" fill="rgba(192,132,252,0.08)" stroke="#c084fc" stroke-width="1" stroke-dasharray="4,3"/>`;
+      }
+
+      // Dimension lines below
+      const dimY = slY + panelH + 30;
+
+      // Door dimension
+      html += drawDimLine(doorX, doorEndX, dimY, `Door: ${Math.round(D)} mm`, '#4ea8ff');
+
+      // Sidelight dimension
+      html += drawDimLine(sidelightX, sidelightEndX, dimY + 22, `Sidelight: ${Math.round(S)} mm`, '#ff8c4e');
+
+      // Overlap dimension (if visible)
+      if (V > 0 && overlapEndX > overlapStartX + 5) {
+        html += drawDimLine(overlapStartX, overlapEndX, padTop - 16 + 22, `Overlap: ${Math.round(V)} mm`, '#c084fc');
+      }
+
+      // Walk-through arrow
+      const wtStartX = padX;
+      const wtEndX = padX + wW;
+      if (W > 0) {
+        const wtY = panelY + panelH / 2;
+        // Show walk-through label
+        html += `<text x="${padX + drawW / 2}" y="${dimY + 48}" text-anchor="middle"
+                  font-size="12" font-weight="600" fill="#34d399">Walk-through: ${Math.round(W)} mm (when door open)</text>`;
+      }
+
+      // Track labels
+      html += `<text x="${padX - 8}" y="${panelY + panelH / 2 + 4}" text-anchor="end"
+                font-size="10" font-weight="600" fill="#4ea8ff" opacity="0.7">FRONT</text>`;
+      html += `<text x="${padX - 8}" y="${slY + panelH / 2 + 4}" text-anchor="end"
+                font-size="10" font-weight="600" fill="#ff8c4e" opacity="0.7">BACK</text>`;
+
+      svg.innerHTML = html;
+    }
+
+    function drawDimLine(x1, x2, y, label, color) {
+      const tickH = 6;
+      let html = '';
+      // Line
+      html += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color}" stroke-width="1.5"/>`;
+      // End ticks
+      html += `<line x1="${x1}" y1="${y - tickH}" x2="${x1}" y2="${y + tickH}" stroke="${color}" stroke-width="1.5"/>`;
+      html += `<line x1="${x2}" y1="${y - tickH}" x2="${x2}" y2="${y + tickH}" stroke="${color}" stroke-width="1.5"/>`;
+      // Label
+      const midX = (x1 + x2) / 2;
+      html += `<text x="${midX}" y="${y - 6}" text-anchor="middle" font-size="11" font-weight="600" fill="${color}">${label}</text>`;
+      return html;
+    }
+
+    // Event listeners
+    elOpening.addEventListener('input', onInputChange);
+    elWalkthrough.addEventListener('input', onInputChange);
+    elSlider.addEventListener('input', () => {
+      updateResults();
+    });
+
+    // Initial render
+    updateSliderBounds();
+    updateResults();
+    // Store initial door width
+    storedDoorWidth = parseInt(elSlider.value);
+  </script>
+</body>
+</html>
