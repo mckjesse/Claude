@@ -254,7 +254,7 @@
           </div>
         </div>
         <div class="input-group">
-          <label for="projectionInput">Door Projection (when open)</label>
+          <label for="projectionInput">Frame Projection (track/handle)</label>
           <div class="input-wrap">
             <input type="number" id="projectionInput" value="50" min="0" max="500" step="1">
             <span class="input-unit">mm</span>
@@ -341,7 +341,8 @@
         <strong>Formulas:</strong>
         Opening = Left SL + Door + Right SL &minus; 2 &times; Overlap &nbsp;|&nbsp;
         Walk-through = Opening &minus; Left SL &minus; Right SL &nbsp;|&nbsp;
-        Clear Opening = Walk-through &minus; Projection
+        Door Projection = Door &minus; Right SL (if door wider than SL) &nbsp;|&nbsp;
+        Clear Opening = Walk-through &minus; Door Projection &minus; Frame Projection
       </div>
     </div>
   </div>
@@ -386,7 +387,10 @@
       W = O - SL - SR;
       // VR derived from constraint: VL + VR = SL + D + SR - O
       VR = SL + D + SR - O - VL;
-      CO = Math.max(0, W - P);
+      // Geometric projection: how far door extends past right SL when open
+      const geomProj = Math.max(0, D - SR);
+      // Clear opening = walk-through minus geometric projection minus frame projection
+      CO = Math.max(0, W - geomProj - P);
     }
 
     // ========== SYNC UI ==========
@@ -396,6 +400,14 @@
       elSL.value = Math.round(SL);
       elD.value = Math.round(D);
       elSR.value = Math.round(SR);
+    }
+
+    // Snap state to integers (called on drag end for clean values)
+    function snapState() {
+      SL = Math.round(SL);
+      SR = Math.round(SR);
+      D = Math.round(D);
+      VL = Math.round(VL);
     }
 
     function syncResultsFromState() {
@@ -481,18 +493,15 @@
       return s;
     }
 
-    function dragHandle(cx, y, h, id) {
-      // Visible handle: thin bright bar with grip dots
+    function dragHandle(cx, y, h, id, color) {
+      const barColor = color || '#ffffff';
       const hw = 4;
-      const hitW = 20; // invisible wider hit area
+      const hitW = 24;
       let s = '';
-      // Hit area (invisible)
       s += `<rect x="${cx - hitW/2}" y="${y}" width="${hitW}" height="${h}"
             fill="transparent" data-handle="${id}" style="cursor:col-resize;" class="drag-hit"/>`;
-      // Visible bar
       s += `<rect x="${cx - hw/2}" y="${y + 4}" width="${hw}" height="${h - 8}"
-            rx="2" fill="#ffffff" opacity="0.8" data-handle="${id}" style="cursor:col-resize;" class="drag-bar"/>`;
-      // Grip dots
+            rx="2" fill="${barColor}" opacity="0.9" data-handle="${id}" style="cursor:col-resize;" class="drag-bar"/>`;
       const dotR = 1.5;
       for (let dy = h * 0.3; dy <= h * 0.7; dy += 8) {
         s += `<circle cx="${cx}" cy="${y + dy}" r="${dotR}" fill="#000" opacity="0.5" style="pointer-events:none;"/>`;
@@ -569,26 +578,22 @@
       h += `<text x="${PAD_X-8}" y="${frontY+panelH/2+4}" text-anchor="end" font-size="10" font-weight="600" fill="#ff8c4e" opacity="0.7">FRONT</text>`;
       h += `<text x="${PAD_X-8}" y="${backY+panelH/2+4}" text-anchor="end" font-size="10" font-weight="600" fill="#4ea8ff" opacity="0.7">BACK</text>`;
 
-      // DRAG HANDLES
-      const handleY = frontY - 8;
-      const handleH = panelH * 2 + trackGap + 16;
+      // DRAG HANDLES — separated by track to prevent overlap
+      // SL/SR handles: front track only (orange)
+      h += dragHandle(slLeftEndX, frontY - 4, panelH + 8, 'sl', '#ff8c4e');
+      h += dragHandle(srLeftX, frontY - 4, panelH + 8, 'sr', '#ff8c4e');
 
-      // Handle: Left SL right edge
-      h += dragHandle(slLeftEndX, handleY, handleH, 'sl');
-
-      // Handle: Right SR left edge
-      h += dragHandle(srLeftX, handleY, handleH, 'sr');
-
-      // Handle: Door left edge
-      h += dragHandle(doorLeftX, handleY, handleH, 'door-l');
-
-      // Handle: Door right edge
-      h += dragHandle(doorRightX, handleY, handleH, 'door-r');
+      // Door handles: back track only (blue)
+      h += dragHandle(doorLeftX, backY - 4, panelH + 8, 'door-l', '#4ea8ff');
+      h += dragHandle(doorRightX, backY - 4, panelH + 8, 'door-r', '#4ea8ff');
 
       closedSvg.innerHTML = h;
     }
 
     // ========== DRAW OPEN DIAGRAM ==========
+    // Door slides right behind the right sidelight.
+    // Right edge of door is at the opening right edge.
+    // As D increases, the door's back (left edge) extends further into the walk-through.
     function drawOpenDiagram() {
       const panelH = 44;
       const trackGap = 14;
@@ -600,30 +605,30 @@
       const srW = scaleX(SR);
       const dW = scaleX(D);
       const pW = scaleX(P);
-      const wW = scaleX(Math.max(0, W));
 
-      // Panel positions — door OPEN (slid right, behind right sidelight)
+      // Fixed positions
       const slLeftX = PAD_X;
       const slLeftEndX = PAD_X + slW;
       const srRightX = PAD_X + DRAW_W;
       const srLeftX = srRightX - srW;
 
-      // Door: positioned at actual width D
-      // Right edge aligns with the opening right edge
+      // Door: right edge at opening right edge, left edge = O - D
       const doorRightX = srRightX;
       const doorLeftX = doorRightX - dW;
+
+      // Frame projection extends P beyond the door's left edge
+      const effectiveBackX = doorLeftX - pW;
 
       // Geometric projection: how far door extends past right SL inner edge
       const geomProj = Math.max(0, D - SR);
       const geomProjW = scaleX(geomProj);
 
-      // Distance from door back (left edge) to right SL outer edge (right edge)
-      const doorToSLEdge = srRightX - doorLeftX; // in SVG coords — equals dW
-      const doorToSLEdgeMM = D; // in mm, it's just the door width...
-      // But more usefully: from door left edge to right SL right edge in opening coords
-      // = O - (O - D) = D. But user wants the stacking distance.
-      // Actually: distance from back of door to outside edge of right SL = D
-      // Let's show it as the full door footprint behind the right SL
+      // Total projection into walk-through (geometric + frame)
+      const totalProj = geomProj + P;
+      const totalProjW = geomProjW + pW;
+
+      // Distance from door back (left edge) to right SL right edge
+      const backToEdgeMM = D;
 
       let h = '';
 
@@ -640,17 +645,26 @@
       // Right SL (front)
       h += panel(srLeftX, frontY, srW, panelH, 'rgba(255,140,78,0.15)', '#ff8c4e', 'RIGHT SL');
 
-      // Door (back track — open position, actual width)
+      // Door (back track — actual width D)
       h += panel(doorLeftX, backY, dW, panelH,
                  'rgba(78,168,255,0.2)', '#4ea8ff', 'DOOR (OPEN)');
 
-      // Projection zone — geometric projection into walk-through
+      // Frame projection zone (P beyond door left edge)
+      if (P > 0 && pW > 1) {
+        h += `<rect x="${effectiveBackX}" y="${backY}" width="${pW}" height="${panelH}"
+              rx="2" fill="rgba(244,114,182,0.25)" stroke="#f472b6" stroke-width="1.5"/>`;
+        h += `<text x="${effectiveBackX + pW/2}" y="${backY + panelH/2 + 4}" text-anchor="middle"
+              font-size="9" font-weight="600" fill="#f472b6">${pW > 18 ? 'FRAME' : ''}</text>`;
+      }
+
+      // Geometric projection zone into walk-through
       if (geomProj > 0 && geomProjW > 2) {
-        h += `<rect x="${doorLeftX}" y="${frontY-8}" width="${geomProjW}" height="${panelH*2+trackGap+16}"
-              rx="2" fill="rgba(244,114,182,0.08)" stroke="#f472b6" stroke-width="1" stroke-dasharray="4,3"/>`;
+        h += `<rect x="${doorLeftX}" y="${frontY-6}" width="${geomProjW}" height="${panelH*2+trackGap+12}"
+              rx="2" fill="rgba(244,114,182,0.06)" stroke="#f472b6" stroke-width="1" stroke-dasharray="4,3"/>`;
       }
 
       // Walk-through arrow in gap
+      const wW = scaleX(Math.max(0, W));
       if (wW > 30) {
         const ay = frontY + panelH / 2;
         h += `<line x1="${slLeftEndX+8}" y1="${ay}" x2="${srLeftX-8}" y2="${ay}"
@@ -667,28 +681,27 @@
         h += dimLine(slLeftEndX, srLeftX, dimY, `Walk-through: ${Math.round(W)} mm`, '#34d399');
       }
 
-      // Clear opening (walk-through minus projection)
-      if (CO > 0 && P > 0) {
-        const clearRightX = srLeftX - pW;
-        h += dimLine(slLeftEndX, clearRightX, dimY + 22, `Clear Opening: ${Math.round(CO)} mm`, '#fbbf24');
+      // Clear opening (reduced by geometric projection + frame)
+      if (CO > 0 && totalProj > 0) {
+        const clearRightX = effectiveBackX;
+        if (clearRightX > slLeftEndX + 2) {
+          h += dimLine(slLeftEndX, clearRightX, dimY + 22, `Clear Opening: ${Math.round(CO)} mm`, '#fbbf24');
+        }
       } else if (CO > 0) {
         h += dimLine(slLeftEndX, srLeftX, dimY + 22, `Clear Opening: ${Math.round(CO)} mm`, '#fbbf24');
       }
 
-      // Door width in open position
+      // Door width
       h += dimLine(doorLeftX, doorRightX, dimY + 44, `Door: ${Math.round(D)} mm`, '#4ea8ff');
 
-      // Distance from back of door to outside edge of right sidelight
-      if (dW > 3) {
-        const distMM = Math.round(D);
-        h += dimLine(doorLeftX, srRightX, dimY + 66,
-          `Door back to SL edge: ${distMM} mm`, '#a78bfa');
-      }
+      // Distance from door back (left edge) to right SL right edge (outer edge)
+      h += dimLine(doorLeftX, srRightX, dimY + 66,
+        `Door back to R/SL edge: ${Math.round(backToEdgeMM)} mm`, '#a78bfa');
 
-      // Geometric projection dimension (if door extends past sidelight)
+      // Geometric projection dim (door past SL inner edge)
       if (geomProj > 0 && geomProjW > 8) {
         h += dimLine(doorLeftX, srLeftX, topDimY + 22,
-          `Projection: ${Math.round(geomProj)} mm`, '#f472b6');
+          `Door projection: ${Math.round(geomProj)} mm`, '#f472b6');
       }
 
       // Track labels
@@ -728,27 +741,22 @@
       const openingX = svgXToOpening(svgX);
 
       if (dragTarget === 'sl') {
-        // Left SL right edge: openingX = new SL width
-        SL = Math.round(Math.max(50, Math.min(O - SR - 100, openingX)));
+        // Left SL right edge — SL changes, door untouched
+        SL = Math.max(50, Math.min(O - SR - 100, openingX));
         resetOverlaps();
       } else if (dragTarget === 'sr') {
-        // Right SR left edge: openingX = O - new SR width
-        SR = Math.round(Math.max(50, Math.min(O - SL - 100, O - openingX)));
+        // Right SR left edge — SR changes, door untouched
+        SR = Math.max(50, Math.min(O - SL - 100, O - openingX));
         resetOverlaps();
       } else if (dragTarget === 'door-l') {
-        // Drag left edge of door — right edge stays fixed at doorFixedEdge
-        const newDoorLeft = Math.max(0, Math.min(doorFixedEdge - 100, openingX));
-        D = Math.round(doorFixedEdge - newDoorLeft);
-        D = Math.max(100, D);
+        // Drag LEFT edge only — right edge stays fixed, SL/SR locked
+        const newDoorLeft = Math.max(0, Math.min(doorFixedEdge - 50, openingX));
+        D = Math.max(50, doorFixedEdge - newDoorLeft);
         VL = SL - newDoorLeft;
-        // VR derived in calculate()
       } else if (dragTarget === 'door-r') {
-        // Drag right edge of door — left edge stays fixed at doorFixedEdge
-        const newDoorRight = Math.max(doorFixedEdge + 100, Math.min(O, openingX));
-        D = Math.round(newDoorRight - doorFixedEdge);
-        D = Math.max(100, D);
-        // VL stays the same (left edge is fixed)
-        // VR derived in calculate()
+        // Drag RIGHT edge only — left edge stays fixed, SL/SR locked
+        const newDoorRight = Math.max(doorFixedEdge + 50, Math.min(O + 200, openingX));
+        D = Math.max(50, newDoorRight - doorFixedEdge);
       }
 
       syncInputsFromState();
@@ -759,6 +767,9 @@
       if (!dragTarget) return;
       dragTarget = null;
       document.body.style.cursor = '';
+      snapState();
+      syncInputsFromState();
+      fullUpdate();
     }
 
     // Mouse events on the closed diagram SVG
