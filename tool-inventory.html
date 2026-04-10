@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tool Inventory | Fit Out By Design</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #000000;
+      --surface: #1e1e24;
+      --surface-raised: #26262d;
+      --surface-hover: #2e2e36;
+      --border: #3a3a44;
+      --border-light: #4a4a55;
+      --text: #eaeaee;
+      --text-muted: #b0b0bc;
+      --text-dim: #8a8a98;
+      --white: #ffffff;
+      --accent: #ffffff;
+      --accent-hover: #e0e0e0;
+      --danger: #ff5555;
+      --danger-hover: #ff7777;
+      --danger-dim: #3d1a1a;
+      --success: #33dd88;
+      --success-dim: #1a3328;
+      --warning: #ffbb33;
+      --warning-dim: #3d3018;
+      --blue: #77bbff;
+      --blue-dim: #1a2840;
+      --plant-color: #ff9f43;
+      --plant-dim: #3d2a10;
+      --equip-color: #a29bfe;
+      --equip-dim: #2a2640;
+      --radius: 4px;
+      --radius-lg: 8px;
+      --shadow: 0 2px 10px rgba(0,0,0,0.5);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.7);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      height: 72px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-brand .divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border-light);
+    }
+    .header-brand h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .header-brand .app-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: 0.5px;
+    }
+
+    /* ---- Nav Tabs ---- */
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      position: sticky;
+      top: 72px;
+      z-index: 99;
+    }
+    .nav-tab {
+      padding: 14px 24px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dim);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .nav-tab:hover {
+      color: var(--text);
+      background: var(--surface);
+    }
+    .nav-tab.active {
+      color: var(--white);
+      border-bottom-color: var(--white);
+    }
+
+    /* ---- Main Content ---- */
+    .main { padding: 32px; max-width: 1400px; margin: 0 auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ---- Stats Bar ---- */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stat-card .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--white);
+    }
+    .stat-card .stat-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ---- Section Header ---- */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .section-header h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    /* ---- Buttons ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: var(--radius);
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .btn:hover { background: var(--surface-hover); border-color: var(--border-light); }
+    .btn-primary {
+      background: var(--white);
+      color: #000;
+      border-color: var(--white);
+    }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn-danger { color: var(--danger); }
+    .btn-danger:hover { background: var(--danger-dim); border-color: var(--danger); }
+    .btn-success { color: var(--success); }
+    .btn-success:hover { background: var(--success-dim); border-color: var(--success); }
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+    .btn-icon {
+      width: 36px; height: 36px; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: var(--radius);
+    }
+
+    /* ---- Forms ---- */
+    .form-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .form-group input, .form-group select {
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+      min-width: 200px;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--border-light);
+    }
+    .form-group input::placeholder { color: var(--text-dim); }
+    .form-group select option { background: var(--surface); color: var(--text); }
+
+    /* ---- Table ---- */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left;
+      padding: 14px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-raised);
+    }
+    tbody td {
+      padding: 14px 20px;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-hover); }
+
+    /* ---- Badges ---- */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .badge-plant { background: var(--plant-dim); color: var(--plant-color); }
+    .badge-equipment { background: var(--equip-dim); color: var(--equip-color); }
+    .badge-warehouse { background: var(--success-dim); color: var(--success); }
+    .badge-assigned { background: var(--blue-dim); color: var(--blue); }
+    .badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor;
+      display: inline-block;
+    }
+
+    /* ---- Project Cards (Dashboard) ---- */
+    .project-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 20px;
+    }
+    .project-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .project-card:hover { border-color: var(--border-light); }
+    .project-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .project-card-header:hover { background: var(--surface-hover); }
+    .project-card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .project-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .project-card-count {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .project-card-count strong {
+      color: var(--white);
+      font-weight: 700;
+    }
+    .expand-arrow {
+      font-size: 12px;
+      color: var(--text-dim);
+      transition: transform 0.25s;
+      display: inline-block;
+    }
+    .project-card.expanded .expand-arrow {
+      transform: rotate(180deg);
+    }
+    .project-card-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+    .project-card.expanded .project-card-body {
+      max-height: 2000px;
+    }
+    .project-card-body-inner {
+      padding: 0 24px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .tool-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .tool-list-item:last-child { border-bottom: none; }
+    .tool-list-item-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .tool-list-item-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* ---- Warehouse card ---- */
+    .warehouse-card {
+      border-color: var(--success);
+      border-width: 2px;
+    }
+    .warehouse-card .project-card-title { color: var(--success); }
+
+    /* ---- Modal ---- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      min-width: 420px;
+      max-width: 90vw;
+      box-shadow: var(--shadow-lg);
+    }
+    .modal h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 20px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    /* ---- Empty State ---- */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-dim);
+    }
+    .empty-state .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+    .empty-state p { font-size: 14px; margin-bottom: 8px; }
+
+    /* ---- Search ---- */
+    .search-input {
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      outline: none;
+      min-width: 260px;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: var(--border-light); }
+    .search-input::placeholder { color: var(--text-dim); }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 768px) {
+      .header { padding: 0 16px; height: auto; padding-top: 12px; padding-bottom: 12px; flex-direction: column; align-items: flex-start; }
+      .nav-tabs { padding: 0 16px; overflow-x: auto; }
+      .main { padding: 16px; }
+      .form-row { flex-direction: column; align-items: stretch; }
+      .form-group input, .form-group select { min-width: 100%; }
+      .project-grid { grid-template-columns: 1fr; }
+      .modal { min-width: auto; margin: 16px; }
+      .search-input { min-width: 100%; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ---- Allocation select styling ---- */
+    .allocation-select {
+      padding: 6px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
+    }
+    .allocation-select:focus { border-color: var(--border-light); }
+
+    /* ---- History ---- */
+    .history-row {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .history-row td { padding: 8px 20px; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <h1>Fit Out By Design</h1>
+      <div class="divider"></div>
+      <span class="app-title">Tool Inventory</span>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav-tabs">
+    <button class="nav-tab active" data-page="dashboard">Dashboard</button>
+    <button class="nav-tab" data-page="tools">Tools</button>
+    <button class="nav-tab" data-page="projects">Projects</button>
+    <button class="nav-tab" data-page="allocations">Allocations</button>
+  </nav>
+
+  <main class="main">
+
+    <!-- ====== DASHBOARD PAGE ====== -->
+    <section class="page active" id="page-dashboard">
+      <div class="stats-bar" id="dashboard-stats"></div>
+      <div class="section-header">
+        <h2>Project Dashboard</h2>
+        <input type="text" class="search-input" id="dashboard-search" placeholder="Search projects or tools...">
+      </div>
+      <div class="project-grid" id="dashboard-grid"></div>
+    </section>
+
+    <!-- ====== TOOLS PAGE ====== -->
+    <section class="page" id="page-tools">
+      <div class="section-header">
+        <h2>Tool Registry</h2>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Tool Name</label>
+          <input type="text" id="tool-name" placeholder="e.g. Hilti Drill #4">
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="tool-type">
+            <option value="plant">Plant</option>
+            <option value="equipment">Equipment</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btn-add-tool">+ Add Tool</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tool Name</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Location</th>
+              <th style="width:100px;text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tools-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="tools-empty" style="display:none;">
+        <div class="empty-icon">&#9881;</div>
+        <p>No tools registered yet.</p>
+        <p>Add your first tool above to get started.</p>
+      </div>
+    </section>
+
+    <!-- ====== PROJECTS PAGE ====== -->
+    <section class="page" id="page-projects">
+      <div class="section-header">
+        <h2>Projects / Sites</h2>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Project Name</label>
+          <input type="text" id="project-name" placeholder="e.g. Office Fit Out - Level 3">
+        </div>
+        <button class="btn btn-primary" id="btn-add-project">+ Add Project</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Project Name</th>
+              <th>Tools Assigned</th>
+              <th>Created</th>
+              <th style="width:100px;text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="projects-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="projects-empty" style="display:none;">
+        <div class="empty-icon">&#128197;</div>
+        <p>No projects created yet.</p>
+        <p>Create a project above to start assigning tools.</p>
+      </div>
+    </section>
+
+    <!-- ====== ALLOCATIONS PAGE ====== -->
+    <section class="page" id="page-allocations">
+      <div class="section-header">
+        <h2>Assign & Return Tools</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:24px;font-size:14px;">
+        Change where each tool is allocated. Select a project to assign it on-site, or choose <strong>Warehouse</strong> to return it.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tool Name</th>
+              <th>Type</th>
+              <th>Current Location</th>
+              <th>Assign To</th>
+            </tr>
+          </thead>
+          <tbody id="allocations-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="allocations-empty" style="display:none;">
+        <div class="empty-icon">&#128295;</div>
+        <p>Add tools and projects first to manage allocations.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- DELETE CONFIRM MODAL -->
+  <div class="modal-overlay" id="modal-delete">
+    <div class="modal">
+      <h3>Confirm Delete</h3>
+      <p id="modal-delete-msg" style="color:var(--text-muted);font-size:14px;"></p>
+      <div class="modal-actions">
+        <button class="btn" id="btn-cancel-delete">Cancel</button>
+        <button class="btn btn-danger" id="btn-confirm-delete">Delete</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ======================= DATA LAYER =======================
+const STORAGE_KEY = 'fobd_tool_inventory';
+
+function loadData() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) return JSON.parse(raw);
+  return { tools: [], projects: [], history: [] };
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+let data = loadData();
+
+// ======================= NAV =======================
+const tabs = document.querySelectorAll('.nav-tab');
+const pages = document.querySelectorAll('.page');
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    pages.forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('page-' + tab.dataset.page).classList.add('active');
+    renderAll();
+  });
+});
+
+// ======================= TOOLS =======================
+const toolNameInput = document.getElementById('tool-name');
+const toolTypeSelect = document.getElementById('tool-type');
+const btnAddTool = document.getElementById('btn-add-tool');
+const toolsTbody = document.getElementById('tools-tbody');
+const toolsEmpty = document.getElementById('tools-empty');
+
+btnAddTool.addEventListener('click', addTool);
+toolNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTool(); });
+
+function addTool() {
+  const name = toolNameInput.value.trim();
+  if (!name) { toolNameInput.focus(); return; }
+
+  data.tools.push({
+    id: genId(),
+    name: name,
+    type: toolTypeSelect.value,
+    projectId: null, // null = warehouse
+    createdAt: new Date().toISOString()
+  });
+
+  data.history.push({
+    toolId: data.tools[data.tools.length - 1].id,
+    toolName: name,
+    action: 'created',
+    from: null,
+    to: 'Warehouse',
+    date: new Date().toISOString()
+  });
+
+  saveData(data);
+  toolNameInput.value = '';
+  toolNameInput.focus();
+  renderAll();
+}
+
+function deleteTool(id) {
+  const tool = data.tools.find(t => t.id === id);
+  if (!tool) return;
+  showDeleteModal(`Delete tool "${tool.name}"? This will remove it from all allocations.`, () => {
+    data.tools = data.tools.filter(t => t.id !== id);
+    data.history = data.history.filter(h => h.toolId !== id);
+    saveData(data);
+    renderAll();
+  });
+}
+
+function renderTools() {
+  if (data.tools.length === 0) {
+    toolsTbody.innerHTML = '';
+    toolsEmpty.style.display = 'block';
+    document.querySelector('#page-tools .table-wrap').style.display = 'none';
+    return;
+  }
+  toolsEmpty.style.display = 'none';
+  document.querySelector('#page-tools .table-wrap').style.display = '';
+
+  toolsTbody.innerHTML = data.tools.map(t => {
+    const project = t.projectId ? data.projects.find(p => p.id === t.projectId) : null;
+    const locationName = project ? project.name : 'Warehouse';
+    const statusBadge = t.projectId
+      ? `<span class="badge badge-assigned"><span class="badge-dot"></span>Assigned</span>`
+      : `<span class="badge badge-warehouse"><span class="badge-dot"></span>Warehouse</span>`;
+    const typeBadge = t.type === 'plant'
+      ? `<span class="badge badge-plant">Plant</span>`
+      : `<span class="badge badge-equipment">Equipment</span>`;
+
+    return `<tr>
+      <td style="font-weight:600;color:var(--white)">${esc(t.name)}</td>
+      <td>${typeBadge}</td>
+      <td>${statusBadge}</td>
+      <td style="color:var(--text-muted)">${esc(locationName)}</td>
+      <td style="text-align:right">
+        <button class="btn btn-sm btn-danger" onclick="deleteTool('${t.id}')">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ======================= PROJECTS =======================
+const projectNameInput = document.getElementById('project-name');
+const btnAddProject = document.getElementById('btn-add-project');
+const projectsTbody = document.getElementById('projects-tbody');
+const projectsEmpty = document.getElementById('projects-empty');
+
+btnAddProject.addEventListener('click', addProject);
+projectNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addProject(); });
+
+function addProject() {
+  const name = projectNameInput.value.trim();
+  if (!name) { projectNameInput.focus(); return; }
+
+  data.projects.push({
+    id: genId(),
+    name: name,
+    createdAt: new Date().toISOString()
+  });
+
+  saveData(data);
+  projectNameInput.value = '';
+  projectNameInput.focus();
+  renderAll();
+}
+
+function deleteProject(id) {
+  const project = data.projects.find(p => p.id === id);
+  if (!project) return;
+  const assignedCount = data.tools.filter(t => t.projectId === id).length;
+  const extra = assignedCount > 0 ? ` ${assignedCount} tool(s) will be returned to the Warehouse.` : '';
+  showDeleteModal(`Delete project "${project.name}"?${extra}`, () => {
+    data.tools.forEach(t => {
+      if (t.projectId === id) {
+        data.history.push({
+          toolId: t.id,
+          toolName: t.name,
+          action: 'returned',
+          from: project.name,
+          to: 'Warehouse',
+          date: new Date().toISOString()
+        });
+        t.projectId = null;
+      }
+    });
+    data.projects = data.projects.filter(p => p.id !== id);
+    saveData(data);
+    renderAll();
+  });
+}
+
+function renderProjects() {
+  if (data.projects.length === 0) {
+    projectsTbody.innerHTML = '';
+    projectsEmpty.style.display = 'block';
+    document.querySelector('#page-projects .table-wrap').style.display = 'none';
+    return;
+  }
+  projectsEmpty.style.display = 'none';
+  document.querySelector('#page-projects .table-wrap').style.display = '';
+
+  projectsTbody.innerHTML = data.projects.map(p => {
+    const count = data.tools.filter(t => t.projectId === p.id).length;
+    const date = new Date(p.createdAt).toLocaleDateString();
+    return `<tr>
+      <td style="font-weight:600;color:var(--white)">${esc(p.name)}</td>
+      <td><span style="font-weight:700;color:var(--white)">${count}</span> <span style="color:var(--text-dim)">tool${count !== 1 ? 's' : ''}</span></td>
+      <td style="color:var(--text-muted)">${date}</td>
+      <td style="text-align:right">
+        <button class="btn btn-sm btn-danger" onclick="deleteProject('${p.id}')">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ======================= ALLOCATIONS =======================
+const allocationsTbody = document.getElementById('allocations-tbody');
+const allocationsEmpty = document.getElementById('allocations-empty');
+
+function allocateTool(toolId, newProjectId) {
+  const tool = data.tools.find(t => t.id === toolId);
+  if (!tool) return;
+
+  const oldProject = tool.projectId ? data.projects.find(p => p.id === tool.projectId) : null;
+  const newProject = newProjectId ? data.projects.find(p => p.id === newProjectId) : null;
+
+  const fromName = oldProject ? oldProject.name : 'Warehouse';
+  const toName = newProject ? newProject.name : 'Warehouse';
+
+  if (fromName === toName) return;
+
+  data.history.push({
+    toolId: tool.id,
+    toolName: tool.name,
+    action: newProjectId ? 'assigned' : 'returned',
+    from: fromName,
+    to: toName,
+    date: new Date().toISOString()
+  });
+
+  tool.projectId = newProjectId || null;
+  saveData(data);
+  renderAll();
+}
+
+function renderAllocations() {
+  if (data.tools.length === 0) {
+    allocationsTbody.innerHTML = '';
+    allocationsEmpty.style.display = 'block';
+    document.querySelector('#page-allocations .table-wrap').style.display = 'none';
+    return;
+  }
+  allocationsEmpty.style.display = 'none';
+  document.querySelector('#page-allocations .table-wrap').style.display = '';
+
+  allocationsTbody.innerHTML = data.tools.map(t => {
+    const project = t.projectId ? data.projects.find(p => p.id === t.projectId) : null;
+    const locationName = project ? project.name : 'Warehouse';
+    const typeBadge = t.type === 'plant'
+      ? `<span class="badge badge-plant">Plant</span>`
+      : `<span class="badge badge-equipment">Equipment</span>`;
+    const statusBadge = t.projectId
+      ? `<span class="badge badge-assigned"><span class="badge-dot"></span>${esc(locationName)}</span>`
+      : `<span class="badge badge-warehouse"><span class="badge-dot"></span>Warehouse</span>`;
+
+    const options = [
+      `<option value="" ${!t.projectId ? 'selected' : ''}>Warehouse</option>`
+    ].concat(data.projects.map(p =>
+      `<option value="${p.id}" ${t.projectId === p.id ? 'selected' : ''}>${esc(p.name)}</option>`
+    )).join('');
+
+    return `<tr>
+      <td style="font-weight:600;color:var(--white)">${esc(t.name)}</td>
+      <td>${typeBadge}</td>
+      <td>${statusBadge}</td>
+      <td>
+        <select class="allocation-select" onchange="allocateTool('${t.id}', this.value)">
+          ${options}
+        </select>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ======================= DASHBOARD =======================
+const dashboardStats = document.getElementById('dashboard-stats');
+const dashboardGrid = document.getElementById('dashboard-grid');
+const dashboardSearch = document.getElementById('dashboard-search');
+
+dashboardSearch.addEventListener('input', renderDashboard);
+
+function renderDashboard() {
+  const search = dashboardSearch.value.toLowerCase();
+
+  // Stats
+  const totalTools = data.tools.length;
+  const plantCount = data.tools.filter(t => t.type === 'plant').length;
+  const equipCount = data.tools.filter(t => t.type === 'equipment').length;
+  const warehouseCount = data.tools.filter(t => !t.projectId).length;
+  const assignedCount = data.tools.filter(t => t.projectId).length;
+
+  dashboardStats.innerHTML = `
+    <div class="stat-card">
+      <span class="stat-label">Total Tools</span>
+      <span class="stat-value">${totalTools}</span>
+      <span class="stat-sub">${plantCount} plant &middot; ${equipCount} equipment</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">In Warehouse</span>
+      <span class="stat-value" style="color:var(--success)">${warehouseCount}</span>
+      <span class="stat-sub">Available for allocation</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Assigned to Sites</span>
+      <span class="stat-value" style="color:var(--blue)">${assignedCount}</span>
+      <span class="stat-sub">Across ${data.projects.length} project${data.projects.length !== 1 ? 's' : ''}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Active Projects</span>
+      <span class="stat-value">${data.projects.length}</span>
+      <span class="stat-sub">Sites tracked</span>
+    </div>
+  `;
+
+  // Build cards: Warehouse + each project
+  let cards = [];
+
+  // Warehouse card
+  const warehouseTools = data.tools.filter(t => !t.projectId);
+  if (!search || 'warehouse'.includes(search) || warehouseTools.some(t => t.name.toLowerCase().includes(search))) {
+    const filteredWh = search
+      ? warehouseTools.filter(t => t.name.toLowerCase().includes(search) || 'warehouse'.includes(search))
+      : warehouseTools;
+
+    cards.push(buildCardHTML('warehouse', 'Warehouse', filteredWh, true));
+  }
+
+  // Project cards
+  data.projects.forEach(p => {
+    const pTools = data.tools.filter(t => t.projectId === p.id);
+    if (search && !p.name.toLowerCase().includes(search) && !pTools.some(t => t.name.toLowerCase().includes(search))) return;
+
+    const filtered = search
+      ? pTools.filter(t => t.name.toLowerCase().includes(search) || p.name.toLowerCase().includes(search))
+      : pTools;
+
+    cards.push(buildCardHTML(p.id, p.name, filtered, false));
+  });
+
+  if (cards.length === 0 && (data.tools.length > 0 || data.projects.length > 0)) {
+    dashboardGrid.innerHTML = `<div class="empty-state"><p>No results match your search.</p></div>`;
+  } else if (data.tools.length === 0 && data.projects.length === 0) {
+    dashboardGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">&#128736;</div>
+      <p>Welcome to Tool Inventory!</p>
+      <p>Start by adding tools and creating projects using the tabs above.</p>
+    </div>`;
+  } else {
+    dashboardGrid.innerHTML = cards.join('');
+  }
+}
+
+function buildCardHTML(id, name, tools, isWarehouse) {
+  const plantCount = tools.filter(t => t.type === 'plant').length;
+  const equipCount = tools.filter(t => t.type === 'equipment').length;
+
+  const toolListHTML = tools.length === 0
+    ? `<p style="color:var(--text-dim);font-size:13px;padding:16px 0;">No tools currently here.</p>`
+    : tools.map(t => {
+      const typeBadge = t.type === 'plant'
+        ? `<span class="badge badge-plant" style="font-size:10px;">Plant</span>`
+        : `<span class="badge badge-equipment" style="font-size:10px;">Equipment</span>`;
+      return `<div class="tool-list-item">
+        <div class="tool-list-item-info">
+          <span class="tool-list-item-name">${esc(t.name)}</span>
+          ${typeBadge}
+        </div>
+      </div>`;
+    }).join('');
+
+  return `<div class="project-card ${isWarehouse ? 'warehouse-card' : ''}" id="card-${id}">
+    <div class="project-card-header" onclick="toggleCard('${id}')">
+      <div>
+        <div class="project-card-title">${isWarehouse ? '&#127970; ' : '&#128205; '}${esc(name)}</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">${plantCount} plant &middot; ${equipCount} equipment</div>
+      </div>
+      <div class="project-card-meta">
+        <span class="project-card-count"><strong>${tools.length}</strong> tool${tools.length !== 1 ? 's' : ''}</span>
+        <span class="expand-arrow">&#9660;</span>
+      </div>
+    </div>
+    <div class="project-card-body">
+      <div class="project-card-body-inner">
+        ${toolListHTML}
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleCard(id) {
+  const card = document.getElementById('card-' + id);
+  if (card) card.classList.toggle('expanded');
+}
+
+// ======================= DELETE MODAL =======================
+let pendingDeleteFn = null;
+
+function showDeleteModal(msg, onConfirm) {
+  document.getElementById('modal-delete-msg').textContent = msg;
+  document.getElementById('modal-delete').classList.add('active');
+  pendingDeleteFn = onConfirm;
+}
+
+document.getElementById('btn-cancel-delete').addEventListener('click', () => {
+  document.getElementById('modal-delete').classList.remove('active');
+  pendingDeleteFn = null;
+});
+
+document.getElementById('btn-confirm-delete').addEventListener('click', () => {
+  document.getElementById('modal-delete').classList.remove('active');
+  if (pendingDeleteFn) pendingDeleteFn();
+  pendingDeleteFn = null;
+});
+
+// ======================= UTILITY =======================
+function esc(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ======================= RENDER ALL =======================
+function renderAll() {
+  renderTools();
+  renderProjects();
+  renderAllocations();
+  renderDashboard();
+}
+
+renderAll();
+</script>
+</body>
+</html>
