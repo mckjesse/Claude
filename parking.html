@@ -811,6 +811,166 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
+    /* ---- Image Upload ---- */
+    .image-upload-area {
+      border: 2px dashed var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .image-upload-area:hover {
+      border-color: var(--text-dim);
+      background: var(--surface-hover);
+    }
+    .image-upload-area.has-image {
+      border-style: solid;
+      padding: 8px;
+    }
+    .image-upload-area input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .upload-placeholder {
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+    .upload-placeholder .upload-icon {
+      font-size: 28px;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .image-preview {
+      position: relative;
+      display: inline-block;
+    }
+    .image-preview img {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: var(--radius);
+      display: block;
+    }
+    .image-remove-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(0,0,0,0.7);
+      color: var(--danger);
+      border: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .image-remove-btn:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+    .entry-row-image {
+      flex-shrink: 0;
+    }
+    .entry-row-thumb {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius);
+      object-fit: cover;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: border-color 0.15s;
+    }
+    .entry-row-thumb:hover {
+      border-color: var(--white);
+    }
+    .entry-row-no-image {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    /* ---- Image Viewer Modal ---- */
+    .image-viewer-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 3000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      cursor: pointer;
+    }
+    .image-viewer-overlay.active { display: flex; }
+    .image-viewer-overlay img {
+      max-width: 90%;
+      max-height: 90vh;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* ---- Submit Week Bar ---- */
+    .submit-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .submit-bar-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .submit-bar-info .submit-status {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .submit-bar-info .submit-status strong {
+      color: var(--white);
+    }
+    .status-badge-submitted {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: var(--radius);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: var(--success-dim);
+      color: var(--success);
+    }
+    .status-badge-pending {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: var(--radius);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: var(--warning-dim);
+      color: var(--warning);
+    }
+
     /* ---- Responsive ---- */
     @media (max-width: 1024px) {
       .summary-grid { grid-template-columns: 1fr 1fr; }
@@ -931,7 +1091,23 @@
         </div>
         <div id="entriesList"></div>
       </div>
+
+      <!-- Submit Week Bar -->
+      <div class="submit-bar" id="submitBar" style="display:none;">
+        <div class="submit-bar-info">
+          <span id="submitStatus"></span>
+          <span class="submit-status" id="submitDetail"></span>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-success btn-sm" id="submitWeekBtn" onclick="submitWeek()">Submit Week</button>
+        </div>
+      </div>
     </div>
+
+<!-- ============ IMAGE VIEWER ============ -->
+<div class="image-viewer-overlay" id="imageViewer" onclick="closeImageViewer()">
+  <img id="imageViewerImg" src="" alt="Receipt">
+</div>
 
     <!-- ======= ADMIN TAB ======= -->
     <div class="tab-content" id="tab-admin">
@@ -985,6 +1161,20 @@
       <div class="form-group">
         <label for="entryNotes">Notes (optional)</label>
         <input type="text" id="entryNotes" placeholder="e.g. CBD parking, site visit">
+      </div>
+      <div class="form-group">
+        <label>Receipt / Ticket Image (optional)</label>
+        <div class="image-upload-area" id="imageUploadArea">
+          <div class="upload-placeholder" id="uploadPlaceholder">
+            <span class="upload-icon">&#128247;</span>
+            Click or drag to upload an image
+          </div>
+          <div class="image-preview" id="imagePreview" style="display:none;">
+            <img id="imagePreviewImg" src="" alt="Receipt">
+            <button type="button" class="image-remove-btn" onclick="removeImage(event)">&times;</button>
+          </div>
+          <input type="file" id="entryImage" accept="image/*" onchange="handleImageUpload(this)">
+        </div>
       </div>
     </div>
     <div class="modal-foot">
@@ -1043,8 +1233,10 @@
       users: [
         { id: 'u1', name: 'Admin', username: 'admin', password: 'admin', role: 'admin' }
       ],
-      entries: []
-      // entry: { id, userId, date (YYYY-MM-DD), jobNumber, amount, notes }
+      entries: [],
+      // entry: { id, userId, date (YYYY-MM-DD), jobNumber, amount, notes, image (base64) }
+      submissions: {}
+      // submissions: { "userId||weekStart": { date, userId, weekStart } }
     };
   }
 
@@ -1053,7 +1245,10 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const d = JSON.parse(raw);
-        if (d.users && d.entries) return d;
+        if (d.users && d.entries) {
+          if (!d.submissions) d.submissions = {};
+          return d;
+        }
       }
     } catch (e) { /* ignore */ }
     return defaultData();
@@ -1228,6 +1423,7 @@
     renderSummary();
     renderWeekTable();
     renderEntriesList();
+    renderSubmitBar();
     populateJobSuggestions();
   }
 
@@ -1369,7 +1565,12 @@
       const dateDisplay = dayName + ' ' + dateObj.getDate() + '/' + (dateObj.getMonth() + 1);
       const canDelete = currentUser.role === 'admin' || e.userId === currentUser.id;
 
+      const imageHtml = e.image
+        ? '<span class="entry-row-image"><img class="entry-row-thumb" src="' + e.image + '" onclick="viewImage(\'' + e.id + '\')" title="View receipt"></span>'
+        : '<span class="entry-row-image"><span class="entry-row-no-image">&#128247;</span></span>';
+
       return '<div class="entry-row">' +
+        imageHtml +
         '<div class="entry-row-info">' +
           '<span class="entry-row-date">' + dateDisplay + '</span>' +
           '<span class="entry-row-job">' + escapeHtml(e.jobNumber) + '</span>' +
@@ -1538,6 +1739,74 @@
   });
 
   // ================================================================
+  //  IMAGE HANDLING
+  // ================================================================
+  let currentImageData = null;
+
+  function handleImageUpload(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      // Resize for localStorage efficiency
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const maxW = 800;
+        const maxH = 800;
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = h * maxW / w; w = maxW; }
+        if (h > maxH) { w = w * maxH / h; h = maxH; }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        currentImageData = canvas.toDataURL('image/jpeg', 0.7);
+        showImagePreview(currentImageData);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showImagePreview(dataUrl) {
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+    document.getElementById('imagePreview').style.display = '';
+    document.getElementById('imagePreviewImg').src = dataUrl;
+    document.getElementById('imageUploadArea').classList.add('has-image');
+  }
+
+  function clearImagePreview() {
+    currentImageData = null;
+    document.getElementById('uploadPlaceholder').style.display = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('imagePreviewImg').src = '';
+    document.getElementById('imageUploadArea').classList.remove('has-image');
+    document.getElementById('entryImage').value = '';
+  }
+
+  function removeImage(event) {
+    event.stopPropagation();
+    clearImagePreview();
+  }
+
+  function viewImage(entryId) {
+    const entry = appData.entries.find(e => e.id === entryId);
+    if (!entry || !entry.image) return;
+    document.getElementById('imageViewerImg').src = entry.image;
+    document.getElementById('imageViewer').classList.add('active');
+  }
+
+  function closeImageViewer() {
+    document.getElementById('imageViewer').classList.remove('active');
+    document.getElementById('imageViewerImg').src = '';
+  }
+
+  // ================================================================
   //  ENTRY MODAL
   // ================================================================
   function openEntryModal(editId) {
@@ -1550,6 +1819,7 @@
     document.getElementById('entryDeleteBtn').style.display = 'none';
     document.getElementById('entryModalTitle').textContent = 'Add Parking Entry';
     document.getElementById('calendarDropdown').classList.remove('open');
+    clearImagePreview();
 
     if (editId) {
       const entry = appData.entries.find(e => e.id === editId);
@@ -1561,6 +1831,10 @@
         document.getElementById('entryNotes').value = entry.notes || '';
         document.getElementById('entryDeleteBtn').style.display = '';
         document.getElementById('entryModalTitle').textContent = 'Edit Parking Entry';
+        if (entry.image) {
+          currentImageData = entry.image;
+          showImagePreview(entry.image);
+        }
       }
     }
 
@@ -1597,6 +1871,7 @@
         appData.entries[idx].jobNumber = jobNumber;
         appData.entries[idx].amount = amount;
         appData.entries[idx].notes = notes;
+        appData.entries[idx].image = currentImageData || null;
       }
     } else {
       appData.entries.push({
@@ -1605,7 +1880,8 @@
         date: date,
         jobNumber: jobNumber,
         amount: amount,
-        notes: notes
+        notes: notes,
+        image: currentImageData || null
       });
     }
 
@@ -1706,6 +1982,109 @@
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  // ================================================================
+  //  SUBMIT WEEK & EMAIL
+  // ================================================================
+  function getSubmissionKey() {
+    if (!currentUser) return null;
+    return currentUser.id + '||' + formatDate(currentWeekStart);
+  }
+
+  function isWeekSubmitted() {
+    const key = getSubmissionKey();
+    return key && appData.submissions[key];
+  }
+
+  function renderSubmitBar() {
+    const bar = document.getElementById('submitBar');
+    const entries = getWeekEntries();
+    const userEntries = entries.filter(e => e.userId === currentUser.id);
+
+    // Only show submit bar if the user has entries this week
+    if (userEntries.length === 0) {
+      bar.style.display = 'none';
+      return;
+    }
+
+    bar.style.display = 'flex';
+    const submitted = isWeekSubmitted();
+    const statusEl = document.getElementById('submitStatus');
+    const detailEl = document.getElementById('submitDetail');
+    const submitBtn = document.getElementById('submitWeekBtn');
+
+    if (submitted) {
+      const subDate = new Date(appData.submissions[getSubmissionKey()].date);
+      statusEl.innerHTML = '<span class="status-badge-submitted">Submitted</span>';
+      detailEl.innerHTML = 'Submitted on <strong>' + formatDateDisplay(subDate) + '</strong> to accounts@foxd.co';
+      submitBtn.textContent = 'Re-submit Week';
+      submitBtn.className = 'btn btn-ghost btn-sm';
+    } else {
+      statusEl.innerHTML = '<span class="status-badge-pending">Not Submitted</span>';
+      detailEl.innerHTML = userEntries.length + ' entries ready to submit';
+      submitBtn.textContent = 'Submit Week';
+      submitBtn.className = 'btn btn-success btn-sm';
+    }
+  }
+
+  function submitWeek() {
+    const entries = getWeekEntries();
+    const userEntries = entries.filter(e => e.userId === currentUser.id);
+
+    if (userEntries.length === 0) {
+      alert('No entries to submit for this week.');
+      return;
+    }
+
+    const weekDates = getWeekDates(currentWeekStart);
+    const sunday = addDays(currentWeekStart, 6);
+    const weekRange = formatDateDisplay(currentWeekStart) + ' - ' + formatDateDisplay(sunday);
+
+    // Build email body
+    let body = 'PARKING COST SUBMISSION\n';
+    body += '========================\n\n';
+    body += 'Employee: ' + currentUser.name + '\n';
+    body += 'Week: ' + weekRange + '\n\n';
+    body += '------- ENTRIES -------\n\n';
+
+    let total = 0;
+    userEntries.sort((a, b) => a.date.localeCompare(b.date)).forEach(e => {
+      const parts = e.date.split('-');
+      const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+      const dayName = DAY_NAMES[(dateObj.getDay() + 6) % 7];
+      body += dayName + ' ' + e.date + '  |  Job: ' + e.jobNumber + '  |  $' + e.amount.toFixed(2);
+      if (e.notes) body += '  |  ' + e.notes;
+      if (e.image) body += '  |  [Receipt attached in app]';
+      body += '\n';
+      total += e.amount;
+    });
+
+    body += '\n------- TOTAL -------\n';
+    body += 'Weekly Total: $' + total.toFixed(2) + '\n';
+    body += 'Number of Entries: ' + userEntries.length + '\n\n';
+    body += 'Submitted from Parking Cost Tracker';
+
+    const subject = 'Parking Costs - ' + currentUser.name + ' - ' + weekRange;
+
+    // Mark as submitted
+    appData.submissions[getSubmissionKey()] = {
+      date: new Date().toISOString(),
+      userId: currentUser.id,
+      weekStart: formatDate(currentWeekStart)
+    };
+    saveData();
+
+    // Also generate and auto-download the CSV
+    exportCSV();
+
+    // Open email client
+    const mailto = 'mailto:accounts@foxd.co'
+      + '?subject=' + encodeURIComponent(subject)
+      + '&body=' + encodeURIComponent(body);
+    window.open(mailto, '_self');
+
+    renderSubmitBar();
   }
 
   // ================================================================
@@ -1827,6 +2206,7 @@
     if (e.key === 'Escape') {
       closeEntryModal();
       closeUserModal();
+      closeImageViewer();
     }
   });
 
