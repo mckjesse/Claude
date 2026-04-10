@@ -35,10 +35,10 @@
       --clear-bg: rgba(251, 191, 36, 0.12);
       --projection-color: #f472b6;
       --projection-bg: rgba(244, 114, 182, 0.12);
-      --opening-color: #e8e8f0;
+      --handle-color: #ffffff;
+      --handle-active: #4ea8ff;
       --radius: 6px;
       --radius-lg: 12px;
-      --shadow: 0 4px 20px rgba(0,0,0,0.4);
     }
 
     body {
@@ -47,28 +47,19 @@
       color: var(--text);
       line-height: 1.5;
       min-height: 100vh;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    /* Header */
     .header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       padding: 20px 32px;
       text-align: center;
     }
-    .header h1 {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      color: var(--white);
-    }
-    .header p {
-      font-size: 13px;
-      color: var(--text-dim);
-      margin-top: 4px;
-    }
+    .header h1 { font-size: 22px; font-weight: 800; letter-spacing: 1px; color: var(--white); }
+    .header p { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
 
-    /* Layout */
     .app-container {
       max-width: 960px;
       margin: 0 auto;
@@ -78,7 +69,6 @@
       gap: 20px;
     }
 
-    /* Cards */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -93,9 +83,21 @@
       color: var(--text-dim);
       margin-bottom: 16px;
     }
+    .card-title .hint {
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      text-transform: none;
+      color: var(--text-dim);
+      opacity: 0.7;
+      margin-left: 8px;
+    }
 
-    /* Input group */
     .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .input-row-3 {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 16px;
@@ -107,6 +109,8 @@
       color: var(--text-muted);
       margin-bottom: 6px;
     }
+    .input-group label.color-sl { color: var(--sidelight-color); }
+    .input-group label.color-door { color: var(--door-color); }
     .input-wrap {
       position: relative;
       display: flex;
@@ -138,125 +142,7 @@
       pointer-events: none;
     }
 
-    /* Slider section */
-    .slider-section {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .slider-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    /* Toggle switch */
-    .toggle-group {
-      display: flex;
-      background: var(--surface-raised);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .toggle-btn {
-      padding: 8px 16px;
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-dim);
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative;
-    }
-    .toggle-btn.active {
-      background: var(--accent-dim);
-      color: var(--accent);
-    }
-    .toggle-btn:hover:not(.active) {
-      color: var(--text-muted);
-      background: var(--surface-highlight);
-    }
-
-    /* Range slider */
-    .slider-container {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .slider-value-display {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-    }
-    .slider-value-display .value {
-      font-size: 32px;
-      font-weight: 800;
-      color: var(--white);
-      font-variant-numeric: tabular-nums;
-    }
-    .slider-value-display .unit {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-dim);
-    }
-    .slider-value-display .label {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-left: 4px;
-    }
-    .slider-track-wrap {
-      position: relative;
-      padding: 8px 0;
-    }
-    input[type="range"] {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: 8px;
-      border-radius: 4px;
-      background: var(--surface-raised);
-      border: 1px solid var(--border);
-      outline: none;
-      cursor: pointer;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--accent);
-      border: 3px solid var(--white);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      cursor: grab;
-      transition: transform 0.15s;
-    }
-    input[type="range"]::-webkit-slider-thumb:active {
-      cursor: grabbing;
-      transform: scale(1.15);
-    }
-    input[type="range"]::-moz-range-thumb {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--accent);
-      border: 3px solid var(--white);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      cursor: grab;
-    }
-    .slider-limits {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--text-dim);
-      font-weight: 500;
-    }
-
-    /* Results grid */
+    /* Results */
     .results-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -268,7 +154,6 @@
       border-radius: var(--radius);
       padding: 16px;
       text-align: center;
-      transition: border-color 0.2s;
     }
     .result-card .result-label {
       font-size: 11px;
@@ -287,30 +172,6 @@
       font-weight: 600;
       margin-left: 2px;
     }
-    .result-card.door {
-      border-color: color-mix(in srgb, var(--door-color) 40%, transparent);
-      background: var(--door-bg);
-    }
-    .result-card.door .result-label { color: var(--door-color); }
-    .result-card.door .result-value { color: var(--door-color); }
-    .result-card.door .result-unit { color: color-mix(in srgb, var(--door-color) 60%, transparent); }
-
-    .result-card.sidelight {
-      border-color: color-mix(in srgb, var(--sidelight-color) 40%, transparent);
-      background: var(--sidelight-bg);
-    }
-    .result-card.sidelight .result-label { color: var(--sidelight-color); }
-    .result-card.sidelight .result-value { color: var(--sidelight-color); }
-    .result-card.sidelight .result-unit { color: color-mix(in srgb, var(--sidelight-color) 60%, transparent); }
-
-    .result-card.overlap {
-      border-color: color-mix(in srgb, var(--overlap-color) 40%, transparent);
-      background: var(--overlap-bg);
-    }
-    .result-card.overlap .result-label { color: var(--overlap-color); }
-    .result-card.overlap .result-value { color: var(--overlap-color); }
-    .result-card.overlap .result-unit { color: color-mix(in srgb, var(--overlap-color) 60%, transparent); }
-
     .result-card.walkthrough {
       border-color: color-mix(in srgb, var(--walkthrough-color) 40%, transparent);
       background: var(--walkthrough-bg);
@@ -318,7 +179,13 @@
     .result-card.walkthrough .result-label { color: var(--walkthrough-color); }
     .result-card.walkthrough .result-value { color: var(--walkthrough-color); }
     .result-card.walkthrough .result-unit { color: color-mix(in srgb, var(--walkthrough-color) 60%, transparent); }
-
+    .result-card.overlap {
+      border-color: color-mix(in srgb, var(--overlap-color) 40%, transparent);
+      background: var(--overlap-bg);
+    }
+    .result-card.overlap .result-label { color: var(--overlap-color); }
+    .result-card.overlap .result-value { color: var(--overlap-color); }
+    .result-card.overlap .result-unit { color: color-mix(in srgb, var(--overlap-color) 60%, transparent); }
     .result-card.clear-opening {
       border-color: color-mix(in srgb, var(--clear-color) 40%, transparent);
       background: var(--clear-bg);
@@ -327,28 +194,22 @@
     .result-card.clear-opening .result-value { color: var(--clear-color); }
     .result-card.clear-opening .result-unit { color: color-mix(in srgb, var(--clear-color) 60%, transparent); }
 
-    .result-card.projection {
-      border-color: color-mix(in srgb, var(--projection-color) 40%, transparent);
-      background: var(--projection-bg);
+    /* Diagrams */
+    .diagrams-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
-    .result-card.projection .result-label { color: var(--projection-color); }
-    .result-card.projection .result-value { color: var(--projection-color); }
-    .result-card.projection .result-unit { color: color-mix(in srgb, var(--projection-color) 60%, transparent); }
-
-    /* Diagram */
     .diagram-area {
       position: relative;
       width: 100%;
-      height: 320px;
       background: var(--surface-raised);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
     }
-    .diagram-svg {
-      width: 100%;
-      height: 100%;
-    }
+    .diagram-area.interactive { cursor: default; }
+    .diagram-svg { width: 100%; height: 100%; display: block; }
 
     /* Info note */
     .info-note {
@@ -362,22 +223,15 @@
       color: var(--text-muted);
       line-height: 1.6;
     }
-    .info-note .icon {
-      font-size: 16px;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
+    .info-note .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 
-    /* Responsive */
     @media (max-width: 700px) {
       .app-container { padding: 16px 12px 40px; }
       .card { padding: 16px; }
-      .input-row { grid-template-columns: 1fr; }
-      .results-grid { grid-template-columns: 1fr 1fr; }
-      .slider-value-display .value { font-size: 26px; }
+      .input-row, .input-row-3 { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr; }
       .result-card .result-value { font-size: 20px; }
       .header h1 { font-size: 18px; }
-      .diagram-area { height: 260px; }
     }
   </style>
 </head>
@@ -388,7 +242,7 @@
   </div>
 
   <div class="app-container">
-    <!-- Inputs -->
+    <!-- Opening & Projection inputs -->
     <div class="card">
       <div class="card-title">Opening Dimensions</div>
       <div class="input-row">
@@ -396,13 +250,6 @@
           <label for="openingWidth">Total Opening Width</label>
           <div class="input-wrap">
             <input type="number" id="openingWidth" value="2400" min="500" max="10000" step="1">
-            <span class="input-unit">mm</span>
-          </div>
-        </div>
-        <div class="input-group">
-          <label for="walkthroughWidth">Desired Walk-through Width</label>
-          <div class="input-wrap">
-            <input type="number" id="walkthroughWidth" value="1000" min="200" max="9000" step="1">
             <span class="input-unit">mm</span>
           </div>
         </div>
@@ -416,61 +263,46 @@
       </div>
     </div>
 
-    <!-- Slider Control -->
+    <!-- Panel sizes — editable text inputs that sync with diagram -->
     <div class="card">
-      <div class="slider-section">
-        <div class="slider-header">
-          <div class="card-title" style="margin-bottom:0;">Adjust Panel Size</div>
-          <div class="toggle-group">
-            <button class="toggle-btn active" id="toggleDoor" onclick="setSliderMode('door')">Door Size</button>
-            <button class="toggle-btn" id="toggleSidelight" onclick="setSliderMode('sidelight')">Sidelight Size</button>
+      <div class="card-title">Panel Sizes <span class="hint">— or drag the handles on the diagram below</span></div>
+      <div class="input-row-3">
+        <div class="input-group">
+          <label class="color-sl" for="inputSL">Left Sidelight</label>
+          <div class="input-wrap">
+            <input type="number" id="inputSL" value="700" min="50" max="5000" step="1">
+            <span class="input-unit">mm</span>
           </div>
         </div>
-
-        <div class="slider-container">
-          <div class="slider-value-display">
-            <span class="value" id="sliderValueDisplay">1250</span>
-            <span class="unit">mm</span>
-            <span class="label" id="sliderLabel">Door Width</span>
+        <div class="input-group">
+          <label class="color-door" for="inputD">Door Width</label>
+          <div class="input-wrap">
+            <input type="number" id="inputD" value="1200" min="200" max="8000" step="1">
+            <span class="input-unit">mm</span>
           </div>
-          <div class="slider-track-wrap">
-            <input type="range" id="panelSlider" min="500" max="2000" value="1250" step="1">
-          </div>
-          <div class="slider-limits">
-            <span id="sliderMin">500 mm</span>
-            <span id="sliderMax">2000 mm</span>
+        </div>
+        <div class="input-group">
+          <label class="color-sl" for="inputSR">Right Sidelight</label>
+          <div class="input-wrap">
+            <input type="number" id="inputSR" value="700" min="50" max="5000" step="1">
+            <span class="input-unit">mm</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Results -->
+    <!-- Calculated Results -->
     <div class="card">
       <div class="card-title">Calculated Dimensions</div>
       <div class="results-grid">
-        <div class="result-card door">
-          <div class="result-label">Door Width</div>
-          <div class="result-value" id="resultDoor">0</div>
-          <div class="result-unit">mm</div>
-        </div>
-        <div class="result-card sidelight">
-          <div class="result-label">Sidelight (each)</div>
-          <div class="result-value" id="resultSidelight">0</div>
-          <div class="result-unit">mm</div>
-        </div>
-        <div class="result-card overlap">
-          <div class="result-label">Overlap (per side)</div>
-          <div class="result-value" id="resultOverlap">0</div>
-          <div class="result-unit">mm</div>
-        </div>
         <div class="result-card walkthrough">
           <div class="result-label">Walk-through</div>
           <div class="result-value" id="resultWalkthrough">0</div>
           <div class="result-unit">mm</div>
         </div>
-        <div class="result-card projection">
-          <div class="result-label">Projection</div>
-          <div class="result-value" id="resultProjection">0</div>
+        <div class="result-card overlap">
+          <div class="result-label">Overlap (per side)</div>
+          <div class="result-value" id="resultOverlap">0</div>
           <div class="result-unit">mm</div>
         </div>
         <div class="result-card clear-opening">
@@ -481,11 +313,21 @@
       </div>
     </div>
 
-    <!-- Diagram -->
+    <!-- Interactive Diagrams -->
     <div class="card">
-      <div class="card-title">Visual Diagram — Door Open Position</div>
-      <div class="diagram-area">
-        <svg class="diagram-svg" id="diagramSvg" viewBox="0 0 860 320"></svg>
+      <div class="diagrams-wrap">
+        <div>
+          <div class="card-title">Door Closed Position <span class="hint">— drag handles to resize panels</span></div>
+          <div class="diagram-area interactive" id="closedDiagramArea">
+            <svg class="diagram-svg" id="closedSvg" viewBox="0 0 860 210" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+        </div>
+        <div>
+          <div class="card-title">Door Open Position</div>
+          <div class="diagram-area" id="openDiagramArea">
+            <svg class="diagram-svg" id="openSvg" viewBox="0 0 860 240" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -493,327 +335,394 @@
     <div class="info-note">
       <span class="icon">i</span>
       <div>
-        <strong>How it works:</strong> The total opening is filled by two sidelights (fixed panels) and a sliding door,
-        which overlap at each meeting stile. When the door slides open behind the right sidelight, the walk-through
-        is the clear gap between the two sidelights. The projection is how far the door extends past the sidelight
-        into the walk-through when open.<br>
-        <strong>Formulas:</strong> Opening = 2 &times; Sidelight + Door &minus; 2 &times; Overlap &nbsp;|&nbsp;
-        Walk-through = Opening &minus; 2 &times; Sidelight &nbsp;|&nbsp;
+        <strong>How it works:</strong> The opening is filled by a sliding door between two fixed sidelights.
+        Panels overlap at each meeting stile. When the door slides open behind the right sidelight,
+        the walk-through is the gap between the sidelights, minus any projection.<br>
+        <strong>Formulas:</strong>
+        Opening = Left SL + Door + Right SL &minus; 2 &times; Overlap &nbsp;|&nbsp;
+        Walk-through = Opening &minus; Left SL &minus; Right SL &nbsp;|&nbsp;
         Clear Opening = Walk-through &minus; Projection
       </div>
     </div>
   </div>
 
   <script>
-    // State
-    let sliderMode = 'door'; // 'door' or 'sidelight'
-    let storedDoorWidth = null;
+    // ========== STATE ==========
+    let O = 2400;   // opening width
+    let SL = 700;   // left sidelight
+    let SR = 700;   // right sidelight
+    let D = 1200;   // door width
+    let P = 50;     // projection
 
-    // DOM refs
-    const elOpening = document.getElementById('openingWidth');
-    const elWalkthrough = document.getElementById('walkthroughWidth');
-    const elProjection = document.getElementById('projectionInput');
-    const elSlider = document.getElementById('panelSlider');
-    const elSliderValueDisplay = document.getElementById('sliderValueDisplay');
-    const elSliderLabel = document.getElementById('sliderLabel');
-    const elSliderMin = document.getElementById('sliderMin');
-    const elSliderMax = document.getElementById('sliderMax');
-    const elToggleDoor = document.getElementById('toggleDoor');
-    const elToggleSidelight = document.getElementById('toggleSidelight');
+    // Derived (computed in calculate())
+    let V = 0;      // overlap per side
+    let W = 0;      // walk-through
+    let CO = 0;     // clear opening
 
-    const elResultDoor = document.getElementById('resultDoor');
-    const elResultSidelight = document.getElementById('resultSidelight');
-    const elResultOverlap = document.getElementById('resultOverlap');
-    const elResultWalkthrough = document.getElementById('resultWalkthrough');
-    const elResultProjection = document.getElementById('resultProjection');
-    const elResultClearOpening = document.getElementById('resultClearOpening');
+    // ========== DOM REFS ==========
+    const elO = document.getElementById('openingWidth');
+    const elP = document.getElementById('projectionInput');
+    const elSL = document.getElementById('inputSL');
+    const elD = document.getElementById('inputD');
+    const elSR = document.getElementById('inputSR');
+    const elResultW = document.getElementById('resultWalkthrough');
+    const elResultV = document.getElementById('resultOverlap');
+    const elResultCO = document.getElementById('resultClearOpening');
+    const closedSvg = document.getElementById('closedSvg');
+    const openSvg = document.getElementById('openSvg');
+    const closedArea = document.getElementById('closedDiagramArea');
 
-    const MIN_OVERLAP = 30; // mm minimum overlap per side
-
-    function getOpening() {
-      return Math.max(500, parseInt(elOpening.value) || 2400);
-    }
-
-    function getWalkthrough() {
-      return Math.max(200, parseInt(elWalkthrough.value) || 1000);
-    }
-
-    function getProjection() {
-      return Math.max(0, parseInt(elProjection.value) || 0);
-    }
-
-    function clamp(val, min, max) {
-      return Math.max(min, Math.min(max, val));
-    }
-
-    // Geometry with two equal sidelights:
-    //   O = 2S + D - 2V           (opening = 2 sidelights + door - 2 overlaps)
-    //   W = O - 2S = D - 2V       (walk-through = gap between sidelights)
-    //   V = (D - W) / 2           (overlap per side)
-    //   S = (O - W) / 2           (each sidelight)
-    //   Clear Opening = W - P     (walk-through minus projection)
+    // ========== CALCULATION ==========
     function calculate() {
-      const O = getOpening();
-      const P = getProjection();
-      let D, S, V, W;
+      W = O - SL - SR;
+      V = (SL + D + SR - O) / 2;  // equal overlap each side
+      CO = Math.max(0, W - P);
+    }
 
-      if (sliderMode === 'door') {
-        // Door width from slider; walk-through fixed from input
-        W = Math.min(getWalkthrough(), O - 200); // each sidelight at least 100
-        D = parseInt(elSlider.value) || 1200;
-        S = (O - W) / 2;
-        V = (D - W) / 2;
-        storedDoorWidth = D;
-      } else {
-        // Sidelight width from slider (both equal); door width stays fixed
-        S = parseInt(elSlider.value) || 700;
-        W = O - 2 * S;
-        D = storedDoorWidth || (W + 2 * MIN_OVERLAP);
-        V = (D - W) / 2;
-        // If overlap drops below minimum, grow door
-        if (V < MIN_OVERLAP) {
-          V = MIN_OVERLAP;
-          D = W + 2 * V;
+    // ========== SYNC UI ==========
+    function syncInputsFromState() {
+      elO.value = Math.round(O);
+      elP.value = Math.round(P);
+      elSL.value = Math.round(SL);
+      elD.value = Math.round(D);
+      elSR.value = Math.round(SR);
+    }
+
+    function syncResultsFromState() {
+      elResultW.textContent = Math.round(W);
+      elResultV.textContent = Math.round(V);
+      elResultCO.textContent = Math.round(CO);
+    }
+
+    function fullUpdate() {
+      calculate();
+      syncResultsFromState();
+      drawClosedDiagram();
+      drawOpenDiagram();
+    }
+
+    // ========== INPUT HANDLERS ==========
+    function onOpeningChange() {
+      O = Math.max(500, parseInt(elO.value) || 2400);
+      fullUpdate();
+    }
+    function onProjectionChange() {
+      P = Math.max(0, parseInt(elP.value) || 0);
+      fullUpdate();
+    }
+    function onSLChange() {
+      SL = Math.max(50, parseInt(elSL.value) || 700);
+      fullUpdate();
+    }
+    function onDChange() {
+      D = Math.max(200, parseInt(elD.value) || 1200);
+      fullUpdate();
+    }
+    function onSRChange() {
+      SR = Math.max(50, parseInt(elSR.value) || 700);
+      fullUpdate();
+    }
+
+    elO.addEventListener('input', onOpeningChange);
+    elP.addEventListener('input', onProjectionChange);
+    elSL.addEventListener('input', onSLChange);
+    elD.addEventListener('input', onDChange);
+    elSR.addEventListener('input', onSRChange);
+
+    // ========== SVG HELPERS ==========
+    const PAD_X = 70;
+    const SVG_W = 860;
+    const DRAW_W = SVG_W - PAD_X * 2;
+
+    function scaleX(mm) { return mm * (DRAW_W / O); }
+    function openingToSvgX(mm) { return PAD_X + scaleX(mm); }
+    function svgXToOpening(svgX) { return (svgX - PAD_X) / (DRAW_W / O); }
+
+    function getSvgPoint(event, svg) {
+      const rect = svg.getBoundingClientRect();
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+      const viewBox = svg.viewBox.baseVal;
+      return (clientX - rect.left) / rect.width * viewBox.width;
+    }
+
+    function dimLine(x1, x2, y, label, color) {
+      if (x2 - x1 < 2) return '';
+      const t = 6;
+      const mid = (x1 + x2) / 2;
+      return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color}" stroke-width="1.5"/>
+              <line x1="${x1}" y1="${y-t}" x2="${x1}" y2="${y+t}" stroke="${color}" stroke-width="1.5"/>
+              <line x1="${x2}" y1="${y-t}" x2="${x2}" y2="${y+t}" stroke="${color}" stroke-width="1.5"/>
+              <text x="${mid}" y="${y-6}" text-anchor="middle" font-size="11" font-weight="600" fill="${color}">${label}</text>`;
+    }
+
+    function panel(x, y, w, h, fill, stroke, label) {
+      let s = `<rect x="${x}" y="${y}" width="${Math.max(0,w)}" height="${h}" rx="3" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+      for (let hx = x + 12; hx < x + w - 4; hx += 16) {
+        s += `<line x1="${hx}" y1="${y}" x2="${hx}" y2="${y+h}" stroke="${stroke}" stroke-width="0.5" opacity="0.25"/>`;
+      }
+      if (w > 55) {
+        s += `<text x="${x+w/2}" y="${y+h/2+5}" text-anchor="middle" font-size="11" font-weight="700" fill="${stroke}">${label}</text>`;
+      }
+      return s;
+    }
+
+    function dragHandle(cx, y, h, id) {
+      // Visible handle: thin bright bar with grip dots
+      const hw = 4;
+      const hitW = 20; // invisible wider hit area
+      let s = '';
+      // Hit area (invisible)
+      s += `<rect x="${cx - hitW/2}" y="${y}" width="${hitW}" height="${h}"
+            fill="transparent" data-handle="${id}" style="cursor:col-resize;" class="drag-hit"/>`;
+      // Visible bar
+      s += `<rect x="${cx - hw/2}" y="${y + 4}" width="${hw}" height="${h - 8}"
+            rx="2" fill="#ffffff" opacity="0.8" data-handle="${id}" style="cursor:col-resize;" class="drag-bar"/>`;
+      // Grip dots
+      const dotR = 1.5;
+      for (let dy = h * 0.3; dy <= h * 0.7; dy += 8) {
+        s += `<circle cx="${cx}" cy="${y + dy}" r="${dotR}" fill="#000" opacity="0.5" style="pointer-events:none;"/>`;
+      }
+      return s;
+    }
+
+    // ========== DRAW CLOSED DIAGRAM ==========
+    function drawClosedDiagram() {
+      const panelH = 50;
+      const trackGap = 14;
+      const frontY = 60;
+      const backY = frontY + panelH + trackGap;
+      const topDimY = 28;
+
+      const slW = scaleX(SL);
+      const srW = scaleX(SR);
+      const dW = scaleX(D);
+      const vW = scaleX(Math.max(0, V));
+
+      // Panel positions in SVG coords
+      const slLeftX = PAD_X;
+      const slLeftEndX = PAD_X + slW;
+      const srRightX = PAD_X + DRAW_W;
+      const srLeftX = srRightX - srW;
+      const doorLeftX = slLeftEndX - vW;
+      const doorRightX = srLeftX + vW;
+
+      let h = '';
+
+      // Frame outline
+      h += `<rect x="${PAD_X-4}" y="${frontY-8}" width="${DRAW_W+8}" height="${panelH*2+trackGap+16}"
+            rx="4" fill="none" stroke="#3a3a4a" stroke-width="1" stroke-dasharray="6,4"/>`;
+
+      // Opening dim line
+      h += dimLine(PAD_X, PAD_X + DRAW_W, topDimY, `Opening: ${Math.round(O)} mm`, '#e8e8f0');
+
+      // LEFT SIDELIGHT (front track)
+      h += panel(slLeftX, frontY, slW, panelH, 'rgba(255,140,78,0.15)', '#ff8c4e', 'LEFT SL');
+
+      // RIGHT SIDELIGHT (front track)
+      h += panel(srLeftX, frontY, srW, panelH, 'rgba(255,140,78,0.15)', '#ff8c4e', 'RIGHT SL');
+
+      // DOOR (back track)
+      h += panel(doorLeftX, backY, Math.max(0, doorRightX - doorLeftX), panelH,
+                 'rgba(78,168,255,0.2)', '#4ea8ff', 'DOOR');
+
+      // Overlap zones
+      if (V > 0) {
+        // Left overlap
+        if (vW > 1) {
+          h += `<rect x="${doorLeftX}" y="${frontY-4}" width="${vW}" height="${panelH*2+trackGap+8}"
+                rx="2" fill="rgba(192,132,252,0.06)" stroke="#c084fc" stroke-width="1" stroke-dasharray="3,3"/>`;
+        }
+        // Right overlap
+        if (vW > 1) {
+          h += `<rect x="${srLeftX}" y="${frontY-4}" width="${vW}" height="${panelH*2+trackGap+8}"
+                rx="2" fill="rgba(192,132,252,0.06)" stroke="#c084fc" stroke-width="1" stroke-dasharray="3,3"/>`;
         }
       }
 
-      V = Math.max(0, V);
-      const CO = Math.max(0, W - P); // clear opening
-
-      return { O, D, S, V, W, P, CO };
-    }
-
-    function updateSliderBounds() {
-      const O = getOpening();
-      const W = Math.min(getWalkthrough(), O - 200);
-
-      if (sliderMode === 'door') {
-        // Min door: walk-through + 2 * min overlap
-        const minD = Math.max(200, W + 2 * MIN_OVERLAP);
-        // Max door: O - 2*100 + 2*V... simplify: sidelights at least 100 each
-        // S = (O - W)/2 is fixed, so max D is when it gets very large
-        // Practically: D can't exceed O (door wider than opening makes no sense)
-        const maxD = Math.max(minD, O - 100);
-
-        elSlider.min = minD;
-        elSlider.max = maxD;
-        elSlider.value = clamp(parseInt(elSlider.value) || Math.round((minD + maxD) / 2), minD, maxD);
-        elSliderMin.textContent = minD + ' mm';
-        elSliderMax.textContent = maxD + ' mm';
-        elSliderLabel.textContent = 'Door Width';
-      } else {
-        // Sidelight slider (each sidelight is this value)
-        const minS = 100;
-        const maxS = Math.max(minS, Math.floor((O - 200) / 2)); // walk-through at least 200
-
-        elSlider.min = minS;
-        elSlider.max = maxS;
-        elSlider.value = clamp(parseInt(elSlider.value) || Math.round((minS + maxS) / 2), minS, maxS);
-        elSliderMin.textContent = minS + ' mm';
-        elSliderMax.textContent = maxS + ' mm';
-        elSliderLabel.textContent = 'Sidelight Width (each)';
-      }
-    }
-
-    function updateResults() {
-      const vals = calculate();
-
-      elResultDoor.textContent = Math.round(vals.D);
-      elResultSidelight.textContent = Math.round(vals.S);
-      elResultOverlap.textContent = Math.round(vals.V);
-      elResultWalkthrough.textContent = Math.round(vals.W);
-      elResultProjection.textContent = Math.round(vals.P);
-      elResultClearOpening.textContent = Math.round(vals.CO);
-      elSliderValueDisplay.textContent = parseInt(elSlider.value);
-
-      drawDiagram(vals);
-    }
-
-    function setSliderMode(mode) {
-      sliderMode = mode;
-      elToggleDoor.classList.toggle('active', mode === 'door');
-      elToggleSidelight.classList.toggle('active', mode === 'sidelight');
-
-      const vals = calculate();
-      updateSliderBounds();
-
-      if (mode === 'door') {
-        elSlider.value = clamp(Math.round(vals.D), parseInt(elSlider.min), parseInt(elSlider.max));
-      } else {
-        elSlider.value = clamp(Math.round(vals.S), parseInt(elSlider.min), parseInt(elSlider.max));
+      // Dimension lines below
+      const dimY = backY + panelH + 24;
+      h += dimLine(slLeftX, slLeftEndX, dimY, `Left SL: ${Math.round(SL)} mm`, '#ff8c4e');
+      h += dimLine(srLeftX, srRightX, dimY, `Right SL: ${Math.round(SR)} mm`, '#ff8c4e');
+      h += dimLine(doorLeftX, doorRightX, dimY + 22, `Door: ${Math.round(D)} mm`, '#4ea8ff');
+      if (V > 0 && vW > 3) {
+        h += dimLine(doorLeftX, slLeftEndX, topDimY + 22, `OL: ${Math.round(V)}`, '#c084fc');
+        h += dimLine(srLeftX, doorRightX, topDimY + 22, `OL: ${Math.round(V)}`, '#c084fc');
       }
 
-      updateResults();
+      // Track labels
+      h += `<text x="${PAD_X-8}" y="${frontY+panelH/2+4}" text-anchor="end" font-size="10" font-weight="600" fill="#ff8c4e" opacity="0.7">FRONT</text>`;
+      h += `<text x="${PAD_X-8}" y="${backY+panelH/2+4}" text-anchor="end" font-size="10" font-weight="600" fill="#4ea8ff" opacity="0.7">BACK</text>`;
+
+      // DRAG HANDLES
+      const handleY = frontY - 8;
+      const handleH = panelH * 2 + trackGap + 16;
+
+      // Handle: Left SL right edge
+      h += dragHandle(slLeftEndX, handleY, handleH, 'sl');
+
+      // Handle: Right SR left edge
+      h += dragHandle(srLeftX, handleY, handleH, 'sr');
+
+      // Handle: Door left edge
+      h += dragHandle(doorLeftX, handleY, handleH, 'door-l');
+
+      // Handle: Door right edge
+      h += dragHandle(doorRightX, handleY, handleH, 'door-r');
+
+      closedSvg.innerHTML = h;
     }
 
-    function onInputChange() {
-      updateSliderBounds();
-      updateResults();
-    }
-
-    // ---- DIAGRAM: Door Open Position ----
-    // Layout: [Left SL] ... walk-through gap ... [Door behind Right SL]
-    // The door is shown on the back track, slid to the right, overlapping/behind the right sidelight.
-    // The projection is how far the door extends LEFT past the right sidelight's inner edge.
-    function drawDiagram(vals) {
-      const svg = document.getElementById('diagramSvg');
-      const { O, D, S, V, W, P, CO } = vals;
-
-      const padX = 70;
-      const padTop = 52;
-      const svgW = 860;
-      const drawW = svgW - padX * 2;
-
+    // ========== DRAW OPEN DIAGRAM ==========
+    function drawOpenDiagram() {
       const panelH = 44;
-      const trackGap = 16;
-      const frontY = 100;
+      const trackGap = 14;
+      const frontY = 55;
       const backY = frontY + panelH + trackGap;
+      const topDimY = 24;
 
-      // Scale
-      const scale = drawW / O;
-      const sW = S * scale;
-      const dW = D * scale;
-      const pW = P * scale;
-      const wW = W * scale;
+      const slW = scaleX(SL);
+      const srW = scaleX(SR);
+      const dW = scaleX(D);
+      const pW = scaleX(P);
+      const wW = scaleX(Math.max(0, W));
 
-      // Positions — door OPEN
-      // Left sidelight: left edge of opening
-      const slLeftX = padX;
-      const slLeftEndX = padX + sW;
+      // Panel positions — door OPEN (slid right, behind right sidelight)
+      const slLeftX = PAD_X;
+      const slLeftEndX = PAD_X + slW;
+      const srRightX = PAD_X + DRAW_W;
+      const srLeftX = srRightX - srW;
 
-      // Right sidelight: right edge of opening
-      const slRightEndX = padX + drawW;
-      const slRightX = slRightEndX - sW;
+      // Door: right edge aligns with right sidelight right edge
+      // Left edge extends into walk-through by projection amount
+      const doorRightX = srRightX;
+      const doorLeftX = srLeftX - pW;
 
-      // Walk-through gap
-      const wtLeftX = slLeftEndX;
-      const wtRightX = slRightX;
+      let h = '';
 
-      // Door (open, slid to the right behind right sidelight)
-      // Door's right edge aligns with right sidelight's right edge
-      // Door extends left by its full width, so left edge = slRightEndX - dW
-      // Projection = how far door's left edge extends past the right sidelight's inner edge into the walk-through
-      // doorLeftX should be: slRightX - P (door extends P into walk-through past the sidelight inner edge)
-      // So: doorLeftX = wtRightX - pW
-      const doorRightX = slRightEndX;
-      const doorLeftX = wtRightX - pW;
+      // Frame
+      h += `<rect x="${PAD_X-4}" y="${frontY-8}" width="${DRAW_W+8}" height="${panelH*2+trackGap+16}"
+            rx="4" fill="none" stroke="#3a3a4a" stroke-width="1" stroke-dasharray="6,4"/>`;
 
-      let html = '';
+      // Opening dim
+      h += dimLine(PAD_X, PAD_X + DRAW_W, topDimY, `Opening: ${Math.round(O)} mm`, '#e8e8f0');
 
-      // ---- Frame outline ----
-      const frameY = frontY - 8;
-      const frameH = panelH * 2 + trackGap + 16;
-      html += `<rect x="${padX - 4}" y="${frameY}" width="${drawW + 8}" height="${frameH}"
-                rx="4" fill="none" stroke="#3a3a4a" stroke-width="1" stroke-dasharray="6,4"/>`;
+      // Left SL (front)
+      h += panel(slLeftX, frontY, slW, panelH, 'rgba(255,140,78,0.15)', '#ff8c4e', 'LEFT SL');
 
-      // ---- Opening dimension line (top) ----
-      html += drawDimLine(padX, padX + drawW, padTop - 18, `Opening: ${Math.round(O)} mm`, '#e8e8f0');
+      // Right SL (front)
+      h += panel(srLeftX, frontY, srW, panelH, 'rgba(255,140,78,0.15)', '#ff8c4e', 'RIGHT SL');
 
-      // ---- Left Sidelight (front track) ----
-      html += drawPanel(slLeftX, frontY, sW, panelH, 'rgba(255,140,78,0.15)', '#ff8c4e', 'LEFT SL');
+      // Door (back track — open position)
+      h += panel(doorLeftX, backY, Math.max(0, doorRightX - doorLeftX), panelH,
+                 'rgba(78,168,255,0.2)', '#4ea8ff', 'DOOR (OPEN)');
 
-      // ---- Right Sidelight (front track) ----
-      html += drawPanel(slRightX, frontY, sW, panelH, 'rgba(255,140,78,0.15)', '#ff8c4e', 'RIGHT SL');
-
-      // ---- Door panel (back track — slid open behind right sidelight) ----
-      html += drawPanel(doorLeftX, backY, Math.max(0, doorRightX - doorLeftX), panelH, 'rgba(78,168,255,0.2)', '#4ea8ff', 'DOOR (OPEN)');
-
-      // ---- Projection zone ----
+      // Projection zone
       if (P > 0 && pW > 2) {
-        const projX = wtRightX - pW;
-        const projZoneY = frameY;
-        html += `<rect x="${projX}" y="${projZoneY}" width="${pW}" height="${frameH}"
-                  rx="2" fill="rgba(244,114,182,0.08)" stroke="#f472b6" stroke-width="1" stroke-dasharray="4,3"/>`;
-        // Projection dim line
-        html += drawDimLine(projX, wtRightX, padTop - 18 + 22, `Proj: ${Math.round(P)} mm`, '#f472b6');
+        h += `<rect x="${doorLeftX}" y="${frontY-8}" width="${pW}" height="${panelH*2+trackGap+16}"
+              rx="2" fill="rgba(244,114,182,0.08)" stroke="#f472b6" stroke-width="1" stroke-dasharray="4,3"/>`;
+        if (pW > 20) {
+          h += dimLine(doorLeftX, srLeftX, topDimY + 22, `Proj: ${Math.round(P)} mm`, '#f472b6');
+        }
       }
 
-      // ---- Walk-through dimension ----
-      const dimBaseY = backY + panelH + 26;
+      // Walk-through arrow in gap
+      if (wW > 30) {
+        const ay = frontY + panelH / 2;
+        h += `<line x1="${slLeftEndX+8}" y1="${ay}" x2="${srLeftX-8}" y2="${ay}"
+              stroke="#34d399" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.35"/>`;
+        h += `<polygon points="${slLeftEndX+8},${ay} ${slLeftEndX+16},${ay-4} ${slLeftEndX+16},${ay+4}" fill="#34d399" opacity="0.35"/>`;
+        h += `<polygon points="${srLeftX-8},${ay} ${srLeftX-16},${ay-4} ${srLeftX-16},${ay+4}" fill="#34d399" opacity="0.35"/>`;
+      }
+
+      // Dimension lines below
+      const dimY = backY + panelH + 24;
       if (W > 0) {
-        html += drawDimLine(wtLeftX, wtRightX, dimBaseY, `Walk-through: ${Math.round(W)} mm`, '#34d399');
+        h += dimLine(slLeftEndX, srLeftX, dimY, `Walk-through: ${Math.round(W)} mm`, '#34d399');
       }
-
-      // ---- Clear Opening dimension ----
-      if (CO > 0 && CO < W) {
-        const clearLeftX = wtLeftX;
-        const clearRightX = wtRightX - pW;
-        html += drawDimLine(clearLeftX, clearRightX, dimBaseY + 22,
-          `Clear Opening: ${Math.round(CO)} mm`, '#fbbf24');
+      if (CO > 0 && CO !== W) {
+        const clearRightX = srLeftX - pW;
+        h += dimLine(slLeftEndX, clearRightX, dimY + 22, `Clear Opening: ${Math.round(CO)} mm`, '#fbbf24');
       } else if (CO > 0) {
-        html += drawDimLine(wtLeftX, wtRightX, dimBaseY + 22,
-          `Clear Opening: ${Math.round(CO)} mm`, '#fbbf24');
+        h += dimLine(slLeftEndX, srLeftX, dimY + 22, `Clear Opening: ${Math.round(CO)} mm`, '#fbbf24');
       }
 
-      // ---- Sidelight dimension ----
-      html += drawDimLine(slLeftX, slLeftEndX, dimBaseY + 44, `SL: ${Math.round(S)} mm`, '#ff8c4e');
-      html += drawDimLine(slRightX, slRightEndX, dimBaseY + 44, `SL: ${Math.round(S)} mm`, '#ff8c4e');
+      // Track labels
+      h += `<text x="${PAD_X-8}" y="${frontY+panelH/2+4}" text-anchor="end" font-size="10" font-weight="600" fill="#ff8c4e" opacity="0.7">FRONT</text>`;
+      h += `<text x="${PAD_X-8}" y="${backY+panelH/2+4}" text-anchor="end" font-size="10" font-weight="600" fill="#4ea8ff" opacity="0.7">BACK</text>`;
 
-      // ---- Door dimension ----
-      html += drawDimLine(doorLeftX, doorRightX, dimBaseY + 66,
-        `Door: ${Math.round(D)} mm`, '#4ea8ff');
-
-      // ---- Track labels ----
-      html += `<text x="${padX - 8}" y="${frontY + panelH / 2 + 4}" text-anchor="end"
-                font-size="10" font-weight="600" fill="#ff8c4e" opacity="0.7">FRONT</text>`;
-      html += `<text x="${padX - 8}" y="${backY + panelH / 2 + 4}" text-anchor="end"
-                font-size="10" font-weight="600" fill="#4ea8ff" opacity="0.7">BACK</text>`;
-
-      // ---- Walk-through arrow (visual indicator in the gap) ----
-      if (wW > 40) {
-        const arrowY = frontY + panelH / 2;
-        const arrowMid = (wtLeftX + wtRightX) / 2;
-        html += `<line x1="${wtLeftX + 8}" y1="${arrowY}" x2="${wtRightX - 8}" y2="${arrowY}"
-                  stroke="#34d399" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.4"/>`;
-        // Arrow heads
-        html += `<polygon points="${wtLeftX + 8},${arrowY} ${wtLeftX + 16},${arrowY - 4} ${wtLeftX + 16},${arrowY + 4}"
-                  fill="#34d399" opacity="0.4"/>`;
-        html += `<polygon points="${wtRightX - 8},${arrowY} ${wtRightX - 16},${arrowY - 4} ${wtRightX - 16},${arrowY + 4}"
-                  fill="#34d399" opacity="0.4"/>`;
-      }
-
-      svg.innerHTML = html;
+      openSvg.innerHTML = h;
     }
 
-    function drawPanel(x, y, w, h, fill, stroke, label) {
-      let html = '';
-      html += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
-      // Hatching
-      for (let hx = x + 12; hx < x + w - 4; hx += 16) {
-        html += `<line x1="${hx}" y1="${y}" x2="${hx}" y2="${y + h}" stroke="${stroke}" stroke-width="0.5" opacity="0.25"/>`;
-      }
-      // Label (only if wide enough)
-      if (w > 60) {
-        html += `<text x="${x + w / 2}" y="${y + h / 2 + 5}" text-anchor="middle"
-                  font-size="11" font-weight="700" fill="${stroke}">${label}</text>`;
-      }
-      return html;
+    // ========== DRAG HANDLING ==========
+    let dragTarget = null;   // 'sl', 'sr', 'door-l', 'door-r'
+    let dragStartSvgX = 0;
+    let dragStartValue = 0;
+    let dragStartValue2 = 0; // for door, store D
+
+    function onDragStart(e) {
+      const target = e.target.closest('[data-handle]');
+      if (!target) return;
+      e.preventDefault();
+      dragTarget = target.getAttribute('data-handle');
+      dragStartSvgX = getSvgPoint(e, closedSvg);
+
+      if (dragTarget === 'sl') dragStartValue = SL;
+      else if (dragTarget === 'sr') dragStartValue = SR;
+      else if (dragTarget === 'door-l' || dragTarget === 'door-r') dragStartValue = D;
+
+      document.body.style.cursor = 'col-resize';
     }
 
-    function drawDimLine(x1, x2, y, label, color) {
-      if (x2 <= x1) return '';
-      const tickH = 6;
-      let html = '';
-      html += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color}" stroke-width="1.5"/>`;
-      html += `<line x1="${x1}" y1="${y - tickH}" x2="${x1}" y2="${y + tickH}" stroke="${color}" stroke-width="1.5"/>`;
-      html += `<line x1="${x2}" y1="${y - tickH}" x2="${x2}" y2="${y + tickH}" stroke="${color}" stroke-width="1.5"/>`;
-      const midX = (x1 + x2) / 2;
-      html += `<text x="${midX}" y="${y - 6}" text-anchor="middle" font-size="11" font-weight="600" fill="${color}">${label}</text>`;
-      return html;
+    function onDragMove(e) {
+      if (!dragTarget) return;
+      e.preventDefault();
+      const svgX = getSvgPoint(e, closedSvg);
+      const openingX = svgXToOpening(svgX);
+
+      if (dragTarget === 'sl') {
+        // Left SL right edge: openingX = new SL
+        SL = Math.round(Math.max(50, Math.min(O - SR - 100, openingX)));
+      } else if (dragTarget === 'sr') {
+        // Right SR left edge: openingX = O - new SR
+        SR = Math.round(Math.max(50, Math.min(O - SL - 100, O - openingX)));
+      } else if (dragTarget === 'door-l') {
+        // Door left edge position in opening coords = SL - V = (O + SL - D - SR) / 2
+        // New door-left = openingX, so: (O + SL - D_new - SR) / 2 = openingX
+        // D_new = O + SL - SR - 2 * openingX
+        const newD = Math.round(O + SL - SR - 2 * openingX);
+        D = Math.max(200, Math.min(O, newD));
+      } else if (dragTarget === 'door-r') {
+        // Door right edge in opening coords = (O + SL + D - SR) / 2... wait
+        // Door right = O - SR + V = O - SR + (SL + D + SR - O)/2 = (O - SR + SL + D + SR - O)/2 + (O - SR)... let me recalculate
+        // Door right = O - SR + V, where V = (SL + D + SR - O)/2
+        // Door right = O - SR + (SL + D + SR - O)/2 = (2O - 2SR + SL + D + SR - O)/2 = (O + SL + D - SR)/2
+        // So: (O + SL + D_new - SR) / 2 = openingX → D_new = 2 * openingX - O - SL + SR
+        const newD = Math.round(2 * openingX - O - SL + SR);
+        D = Math.max(200, Math.min(O, newD));
+      }
+
+      syncInputsFromState();
+      fullUpdate();
     }
 
-    // Event listeners
-    elOpening.addEventListener('input', onInputChange);
-    elWalkthrough.addEventListener('input', onInputChange);
-    elProjection.addEventListener('input', onInputChange);
-    elSlider.addEventListener('input', () => {
-      updateResults();
-    });
+    function onDragEnd(e) {
+      if (!dragTarget) return;
+      dragTarget = null;
+      document.body.style.cursor = '';
+    }
 
-    // Initial render
-    updateSliderBounds();
-    updateResults();
-    storedDoorWidth = parseInt(elSlider.value);
+    // Mouse events on the closed diagram SVG
+    closedSvg.addEventListener('mousedown', onDragStart);
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+
+    // Touch events
+    closedSvg.addEventListener('touchstart', onDragStart, { passive: false });
+    document.addEventListener('touchmove', onDragMove, { passive: false });
+    document.addEventListener('touchend', onDragEnd);
+
+    // ========== INIT ==========
+    fullUpdate();
   </script>
 </body>
 </html>
