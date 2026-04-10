@@ -271,7 +271,7 @@
         <div class="input-group">
           <label class="color-sl" for="inputSL">Left Sidelight</label>
           <div class="input-wrap">
-            <input type="number" id="inputSL" value="700" min="50" max="5000" step="1">
+            <input type="number" id="inputSL" value="700" min="0" max="5000" step="1">
             <span class="input-unit">mm</span>
           </div>
         </div>
@@ -285,7 +285,7 @@
         <div class="input-group">
           <label class="color-sl" for="inputSR">Right Sidelight</label>
           <div class="input-wrap">
-            <input type="number" id="inputSR" value="700" min="50" max="5000" step="1">
+            <input type="number" id="inputSR" value="700" min="0" max="5000" step="1">
             <span class="input-unit">mm</span>
           </div>
         </div>
@@ -446,7 +446,7 @@
       fullUpdate();
     }
     function onSLChange() {
-      SL = Math.max(50, parseInt(elSL.value) || 700);
+      SL = Math.max(0, parseInt(elSL.value) || 700);
       resetOverlaps();
       fullUpdate();
     }
@@ -456,7 +456,7 @@
       fullUpdate();
     }
     function onSRChange() {
-      SR = Math.max(50, parseInt(elSR.value) || 700);
+      SR = Math.max(0, parseInt(elSR.value) || 700);
       resetOverlaps();
       fullUpdate();
     }
@@ -756,11 +756,11 @@
 
       if (dragTarget === 'sl') {
         // Left SL right edge — SL changes, door untouched
-        SL = Math.max(50, Math.min(O - SR - 100, openingX));
+        SL = Math.max(0, Math.min(O - SR - 100, openingX));
         resetOverlaps();
       } else if (dragTarget === 'sr') {
         // Right SR left edge — SR changes, door untouched
-        SR = Math.max(50, Math.min(O - SL - 100, O - openingX));
+        SR = Math.max(0, Math.min(O - SL - 100, O - openingX));
         resetOverlaps();
       } else if (dragTarget === 'door-l') {
         // Drag LEFT edge only — right edge stays fixed, SL/SR locked
