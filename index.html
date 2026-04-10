@@ -60,16 +60,14 @@
     }
 
     .header-logo {
-      width: 40px;
-      height: 40px;
-      background: var(--white);
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      font-size: 18px;
-      color: #000;
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+    }
+
+    .header-logo svg {
+      width: 100%;
+      height: 100%;
     }
 
     .header-title {
@@ -661,7 +659,25 @@
   <!-- Header -->
   <header class="header">
     <div class="header-brand">
-      <div class="header-logo">FD</div>
+      <div class="header-logo">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="0" width="100" height="100" fill="#000" rx="4"/>
+          <rect x="3" y="3" width="94" height="94" fill="none" stroke="#fff" stroke-width="4" rx="2"/>
+          <!-- F (top-left) -->
+          <rect x="14" y="14" width="28" height="5" rx="2" fill="#fff"/>
+          <rect x="14" y="14" width="5" height="32" rx="2" fill="#fff"/>
+          <rect x="14" y="28" width="20" height="5" rx="2" fill="#fff"/>
+          <!-- O (top-right) -->
+          <circle cx="72" cy="30" r="14" fill="none" stroke="#fff" stroke-width="5.5"/>
+          <!-- X (bottom-left) -->
+          <g transform="translate(28, 72)">
+            <line x1="-14" y1="-14" x2="14" y2="14" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+            <line x1="14" y1="-14" x2="-14" y2="14" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+          </g>
+          <!-- D (bottom-right) -->
+          <path d="M58,58 L58,86 L70,86 C80,86 86,80 86,72 C86,64 80,58 70,58 Z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
+        </svg>
+      </div>
       <div>
         <div class="header-title">Ceiling Grid Calculator</div>
         <div class="header-subtitle">Fit Out By Design</div>
