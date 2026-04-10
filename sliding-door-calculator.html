@@ -31,6 +31,10 @@
       --overlap-bg: rgba(192, 132, 252, 0.12);
       --walkthrough-color: #34d399;
       --walkthrough-bg: rgba(52, 211, 153, 0.12);
+      --clear-color: #fbbf24;
+      --clear-bg: rgba(251, 191, 36, 0.12);
+      --projection-color: #f472b6;
+      --projection-bg: rgba(244, 114, 182, 0.12);
       --opening-color: #e8e8f0;
       --radius: 6px;
       --radius-lg: 12px;
@@ -66,7 +70,7 @@
 
     /* Layout */
     .app-container {
-      max-width: 900px;
+      max-width: 960px;
       margin: 0 auto;
       padding: 24px 20px 60px;
       display: flex;
@@ -93,7 +97,7 @@
     /* Input group */
     .input-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 16px;
     }
     .input-group label {
@@ -255,7 +259,7 @@
     /* Results grid */
     .results-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 12px;
     }
     .result-card {
@@ -315,11 +319,27 @@
     .result-card.walkthrough .result-value { color: var(--walkthrough-color); }
     .result-card.walkthrough .result-unit { color: color-mix(in srgb, var(--walkthrough-color) 60%, transparent); }
 
+    .result-card.clear-opening {
+      border-color: color-mix(in srgb, var(--clear-color) 40%, transparent);
+      background: var(--clear-bg);
+    }
+    .result-card.clear-opening .result-label { color: var(--clear-color); }
+    .result-card.clear-opening .result-value { color: var(--clear-color); }
+    .result-card.clear-opening .result-unit { color: color-mix(in srgb, var(--clear-color) 60%, transparent); }
+
+    .result-card.projection {
+      border-color: color-mix(in srgb, var(--projection-color) 40%, transparent);
+      background: var(--projection-bg);
+    }
+    .result-card.projection .result-label { color: var(--projection-color); }
+    .result-card.projection .result-value { color: var(--projection-color); }
+    .result-card.projection .result-unit { color: color-mix(in srgb, var(--projection-color) 60%, transparent); }
+
     /* Diagram */
     .diagram-area {
       position: relative;
       width: 100%;
-      height: 280px;
+      height: 320px;
       background: var(--surface-raised);
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -349,7 +369,7 @@
     }
 
     /* Responsive */
-    @media (max-width: 640px) {
+    @media (max-width: 700px) {
       .app-container { padding: 16px 12px 40px; }
       .card { padding: 16px; }
       .input-row { grid-template-columns: 1fr; }
@@ -357,7 +377,7 @@
       .slider-value-display .value { font-size: 26px; }
       .result-card .result-value { font-size: 20px; }
       .header h1 { font-size: 18px; }
-      .diagram-area { height: 220px; }
+      .diagram-area { height: 260px; }
     }
   </style>
 </head>
@@ -383,6 +403,13 @@
           <label for="walkthroughWidth">Desired Walk-through Width</label>
           <div class="input-wrap">
             <input type="number" id="walkthroughWidth" value="1000" min="200" max="9000" step="1">
+            <span class="input-unit">mm</span>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="projectionInput">Door Projection (when open)</label>
+          <div class="input-wrap">
+            <input type="number" id="projectionInput" value="50" min="0" max="500" step="1">
             <span class="input-unit">mm</span>
           </div>
         </div>
@@ -423,22 +450,32 @@
       <div class="results-grid">
         <div class="result-card door">
           <div class="result-label">Door Width</div>
-          <div class="result-value" id="resultDoor">1250</div>
+          <div class="result-value" id="resultDoor">0</div>
           <div class="result-unit">mm</div>
         </div>
         <div class="result-card sidelight">
-          <div class="result-label">Sidelight</div>
-          <div class="result-value" id="resultSidelight">1400</div>
+          <div class="result-label">Sidelight (each)</div>
+          <div class="result-value" id="resultSidelight">0</div>
           <div class="result-unit">mm</div>
         </div>
         <div class="result-card overlap">
-          <div class="result-label">Overlap</div>
-          <div class="result-value" id="resultOverlap">250</div>
+          <div class="result-label">Overlap (per side)</div>
+          <div class="result-value" id="resultOverlap">0</div>
           <div class="result-unit">mm</div>
         </div>
         <div class="result-card walkthrough">
           <div class="result-label">Walk-through</div>
-          <div class="result-value" id="resultWalkthrough">1000</div>
+          <div class="result-value" id="resultWalkthrough">0</div>
+          <div class="result-unit">mm</div>
+        </div>
+        <div class="result-card projection">
+          <div class="result-label">Projection</div>
+          <div class="result-value" id="resultProjection">0</div>
+          <div class="result-unit">mm</div>
+        </div>
+        <div class="result-card clear-opening">
+          <div class="result-label">Clear Opening</div>
+          <div class="result-value" id="resultClearOpening">0</div>
           <div class="result-unit">mm</div>
         </div>
       </div>
@@ -446,9 +483,9 @@
 
     <!-- Diagram -->
     <div class="card">
-      <div class="card-title">Visual Diagram — Door Closed</div>
+      <div class="card-title">Visual Diagram — Door Open Position</div>
       <div class="diagram-area">
-        <svg class="diagram-svg" id="diagramSvg" viewBox="0 0 800 280"></svg>
+        <svg class="diagram-svg" id="diagramSvg" viewBox="0 0 860 320"></svg>
       </div>
     </div>
 
@@ -456,10 +493,13 @@
     <div class="info-note">
       <span class="icon">i</span>
       <div>
-        <strong>How it works:</strong> The total opening is filled by the door panel and sidelight (fixed panel),
-        which overlap in the centre. When the door slides open behind the sidelight, the walk-through width is
-        the clear space remaining.<br>
-        <strong>Formula:</strong> Opening = Door + Sidelight &minus; Overlap &nbsp;|&nbsp; Walk-through = Opening &minus; Sidelight
+        <strong>How it works:</strong> The total opening is filled by two sidelights (fixed panels) and a sliding door,
+        which overlap at each meeting stile. When the door slides open behind the right sidelight, the walk-through
+        is the clear gap between the two sidelights. The projection is how far the door extends past the sidelight
+        into the walk-through when open.<br>
+        <strong>Formulas:</strong> Opening = 2 &times; Sidelight + Door &minus; 2 &times; Overlap &nbsp;|&nbsp;
+        Walk-through = Opening &minus; 2 &times; Sidelight &nbsp;|&nbsp;
+        Clear Opening = Walk-through &minus; Projection
       </div>
     </div>
   </div>
@@ -467,11 +507,12 @@
   <script>
     // State
     let sliderMode = 'door'; // 'door' or 'sidelight'
-    let storedDoorWidth = null; // persists door width when switching to sidelight mode
+    let storedDoorWidth = null;
 
     // DOM refs
     const elOpening = document.getElementById('openingWidth');
     const elWalkthrough = document.getElementById('walkthroughWidth');
+    const elProjection = document.getElementById('projectionInput');
     const elSlider = document.getElementById('panelSlider');
     const elSliderValueDisplay = document.getElementById('sliderValueDisplay');
     const elSliderLabel = document.getElementById('sliderLabel');
@@ -484,8 +525,10 @@
     const elResultSidelight = document.getElementById('resultSidelight');
     const elResultOverlap = document.getElementById('resultOverlap');
     const elResultWalkthrough = document.getElementById('resultWalkthrough');
+    const elResultProjection = document.getElementById('resultProjection');
+    const elResultClearOpening = document.getElementById('resultClearOpening');
 
-    const MIN_OVERLAP = 30; // mm minimum overlap
+    const MIN_OVERLAP = 30; // mm minimum overlap per side
 
     function getOpening() {
       return Math.max(500, parseInt(elOpening.value) || 2400);
@@ -495,54 +538,61 @@
       return Math.max(200, parseInt(elWalkthrough.value) || 1000);
     }
 
+    function getProjection() {
+      return Math.max(0, parseInt(elProjection.value) || 0);
+    }
+
     function clamp(val, min, max) {
       return Math.max(min, Math.min(max, val));
     }
 
-    // Calculate everything based on current inputs + slider
-    // Relationships:
-    //   Opening = Door + Sidelight - Overlap
-    //   Walk-through = Opening - Sidelight (clear space when door slides open)
-    //   Overlap = Door - Walk-through = Door + Sidelight - Opening
+    // Geometry with two equal sidelights:
+    //   O = 2S + D - 2V           (opening = 2 sidelights + door - 2 overlaps)
+    //   W = O - 2S = D - 2V       (walk-through = gap between sidelights)
+    //   V = (D - W) / 2           (overlap per side)
+    //   S = (O - W) / 2           (each sidelight)
+    //   Clear Opening = W - P     (walk-through minus projection)
     function calculate() {
       const O = getOpening();
+      const P = getProjection();
       let D, S, V, W;
 
       if (sliderMode === 'door') {
-        // Door width controlled by slider; walk-through fixed from input
-        W = Math.min(getWalkthrough(), O - 100);
+        // Door width from slider; walk-through fixed from input
+        W = Math.min(getWalkthrough(), O - 200); // each sidelight at least 100
         D = parseInt(elSlider.value) || 1200;
-        S = O - W;           // sidelight determined by opening & walk-through
-        V = D + S - O;       // overlap = D - W
-        storedDoorWidth = D;  // remember for sidelight mode
+        S = (O - W) / 2;
+        V = (D - W) / 2;
+        storedDoorWidth = D;
       } else {
-        // Sidelight width controlled by slider; door width stays fixed
-        S = parseInt(elSlider.value) || 1200;
-        W = O - S;
-        D = storedDoorWidth || (W + MIN_OVERLAP);
-        V = D + S - O;
-        // If overlap drops below minimum, grow the door to maintain it
+        // Sidelight width from slider (both equal); door width stays fixed
+        S = parseInt(elSlider.value) || 700;
+        W = O - 2 * S;
+        D = storedDoorWidth || (W + 2 * MIN_OVERLAP);
+        V = (D - W) / 2;
+        // If overlap drops below minimum, grow door
         if (V < MIN_OVERLAP) {
           V = MIN_OVERLAP;
-          D = O - S + V;
+          D = W + 2 * V;
         }
       }
 
       V = Math.max(0, V);
-      return { O, D, S, V, W };
+      const CO = Math.max(0, W - P); // clear opening
+
+      return { O, D, S, V, W, P, CO };
     }
 
     function updateSliderBounds() {
       const O = getOpening();
-      const W = getWalkthrough();
+      const W = Math.min(getWalkthrough(), O - 200);
 
       if (sliderMode === 'door') {
-        // Door slider bounds
-        // Min door: walk-through + minimum overlap
-        const minD = Math.min(O, Math.max(200, W + MIN_OVERLAP));
-        // Max door: opening - 100 (sidelight at least 100mm)
-        // Also: S = O - W, V = D + S - O = D - W
-        // Max D could be O (but then V = O - W = S, door covers everything)
+        // Min door: walk-through + 2 * min overlap
+        const minD = Math.max(200, W + 2 * MIN_OVERLAP);
+        // Max door: O - 2*100 + 2*V... simplify: sidelights at least 100 each
+        // S = (O - W)/2 is fixed, so max D is when it gets very large
+        // Practically: D can't exceed O (door wider than opening makes no sense)
         const maxD = Math.max(minD, O - 100);
 
         elSlider.min = minD;
@@ -552,18 +602,16 @@
         elSliderMax.textContent = maxD + ' mm';
         elSliderLabel.textContent = 'Door Width';
       } else {
-        // Sidelight slider bounds
-        // Min sidelight: 100mm
+        // Sidelight slider (each sidelight is this value)
         const minS = 100;
-        // Max sidelight: O - 200 (walk-through at least 200)
-        const maxS = Math.max(minS, O - 200);
+        const maxS = Math.max(minS, Math.floor((O - 200) / 2)); // walk-through at least 200
 
         elSlider.min = minS;
         elSlider.max = maxS;
         elSlider.value = clamp(parseInt(elSlider.value) || Math.round((minS + maxS) / 2), minS, maxS);
         elSliderMin.textContent = minS + ' mm';
         elSliderMax.textContent = maxS + ' mm';
-        elSliderLabel.textContent = 'Sidelight Width';
+        elSliderLabel.textContent = 'Sidelight Width (each)';
       }
     }
 
@@ -574,6 +622,8 @@
       elResultSidelight.textContent = Math.round(vals.S);
       elResultOverlap.textContent = Math.round(vals.V);
       elResultWalkthrough.textContent = Math.round(vals.W);
+      elResultProjection.textContent = Math.round(vals.P);
+      elResultClearOpening.textContent = Math.round(vals.CO);
       elSliderValueDisplay.textContent = parseInt(elSlider.value);
 
       drawDiagram(vals);
@@ -588,9 +638,9 @@
       updateSliderBounds();
 
       if (mode === 'door') {
-        elSlider.value = clamp(vals.D, parseInt(elSlider.min), parseInt(elSlider.max));
+        elSlider.value = clamp(Math.round(vals.D), parseInt(elSlider.min), parseInt(elSlider.max));
       } else {
-        elSlider.value = clamp(vals.S, parseInt(elSlider.min), parseInt(elSlider.max));
+        elSlider.value = clamp(Math.round(vals.S), parseInt(elSlider.min), parseInt(elSlider.max));
       }
 
       updateResults();
@@ -601,118 +651,152 @@
       updateResults();
     }
 
-    // Diagram drawing
+    // ---- DIAGRAM: Door Open Position ----
+    // Layout: [Left SL] ... walk-through gap ... [Door behind Right SL]
+    // The door is shown on the back track, slid to the right, overlapping/behind the right sidelight.
+    // The projection is how far the door extends LEFT past the right sidelight's inner edge.
     function drawDiagram(vals) {
       const svg = document.getElementById('diagramSvg');
-      const { O, D, S, V, W } = vals;
+      const { O, D, S, V, W, P, CO } = vals;
 
-      // Layout constants
-      const padX = 60;
-      const padTop = 50;
-      const panelY = 90;
-      const panelH = 50;
-      const gap = 18; // vertical gap between door and sidelight tracks
-
-      const svgW = 800;
+      const padX = 70;
+      const padTop = 52;
+      const svgW = 860;
       const drawW = svgW - padX * 2;
 
-      // Scale: map O to drawW
+      const panelH = 44;
+      const trackGap = 16;
+      const frontY = 100;
+      const backY = frontY + panelH + trackGap;
+
+      // Scale
       const scale = drawW / O;
-      const dW = D * scale;
       const sW = S * scale;
-      const vW = V * scale;
+      const dW = D * scale;
+      const pW = P * scale;
       const wW = W * scale;
 
-      // Positions (door on the left, sidelight on the right, overlapping in middle)
-      const doorX = padX;
-      const doorEndX = doorX + dW;
-      const sidelightX = padX + drawW - sW;
-      const sidelightEndX = padX + drawW;
+      // Positions — door OPEN
+      // Left sidelight: left edge of opening
+      const slLeftX = padX;
+      const slLeftEndX = padX + sW;
 
-      // Overlap region
-      const overlapStartX = sidelightX;
-      const overlapEndX = doorEndX;
+      // Right sidelight: right edge of opening
+      const slRightEndX = padX + drawW;
+      const slRightX = slRightEndX - sW;
+
+      // Walk-through gap
+      const wtLeftX = slLeftEndX;
+      const wtRightX = slRightX;
+
+      // Door (open, slid to the right behind right sidelight)
+      // Door's right edge aligns with right sidelight's right edge
+      // Door extends left by its full width, so left edge = slRightEndX - dW
+      // Projection = how far door's left edge extends past the right sidelight's inner edge into the walk-through
+      // doorLeftX should be: slRightX - P (door extends P into walk-through past the sidelight inner edge)
+      // So: doorLeftX = wtRightX - pW
+      const doorRightX = slRightEndX;
+      const doorLeftX = wtRightX - pW;
 
       let html = '';
 
-      // Background frame
-      html += `<rect x="${padX - 4}" y="${panelY - 10}" width="${drawW + 8}" height="${panelH * 2 + gap + 20}"
+      // ---- Frame outline ----
+      const frameY = frontY - 8;
+      const frameH = panelH * 2 + trackGap + 16;
+      html += `<rect x="${padX - 4}" y="${frameY}" width="${drawW + 8}" height="${frameH}"
                 rx="4" fill="none" stroke="#3a3a4a" stroke-width="1" stroke-dasharray="6,4"/>`;
 
-      // Opening dimension line at top
-      html += drawDimLine(padX, padX + drawW, padTop - 16, `Opening: ${O} mm`, '#e8e8f0');
+      // ---- Opening dimension line (top) ----
+      html += drawDimLine(padX, padX + drawW, padTop - 18, `Opening: ${Math.round(O)} mm`, '#e8e8f0');
 
-      // Sidelight panel (back track — draw first so door is on top)
-      const slY = panelY + panelH + gap;
-      html += `<rect x="${sidelightX}" y="${slY}" width="${sW}" height="${panelH}"
-                rx="3" fill="rgba(255,140,78,0.15)" stroke="#ff8c4e" stroke-width="2"/>`;
-      // Sidelight hatching
-      for (let hx = sidelightX + 12; hx < sidelightX + sW - 4; hx += 16) {
-        html += `<line x1="${hx}" y1="${slY}" x2="${hx}" y2="${slY + panelH}" stroke="#ff8c4e" stroke-width="0.5" opacity="0.3"/>`;
-      }
-      html += `<text x="${sidelightX + sW / 2}" y="${slY + panelH / 2 + 5}" text-anchor="middle"
-                font-size="13" font-weight="700" fill="#ff8c4e">SIDELIGHT</text>`;
+      // ---- Left Sidelight (front track) ----
+      html += drawPanel(slLeftX, frontY, sW, panelH, 'rgba(255,140,78,0.15)', '#ff8c4e', 'LEFT SL');
 
-      // Door panel (front track)
-      html += `<rect x="${doorX}" y="${panelY}" width="${dW}" height="${panelH}"
-                rx="3" fill="rgba(78,168,255,0.2)" stroke="#4ea8ff" stroke-width="2"/>`;
-      // Door fill pattern
-      for (let hx = doorX + 12; hx < doorX + dW - 4; hx += 16) {
-        html += `<line x1="${hx}" y1="${panelY}" x2="${hx}" y2="${panelY + panelH}" stroke="#4ea8ff" stroke-width="0.5" opacity="0.3"/>`;
-      }
-      html += `<text x="${doorX + dW / 2}" y="${panelY + panelH / 2 + 5}" text-anchor="middle"
-                font-size="13" font-weight="700" fill="#4ea8ff">DOOR</text>`;
+      // ---- Right Sidelight (front track) ----
+      html += drawPanel(slRightX, frontY, sW, panelH, 'rgba(255,140,78,0.15)', '#ff8c4e', 'RIGHT SL');
 
-      // Overlap indicator
-      if (V > 0 && overlapEndX > overlapStartX) {
-        const olY = panelY - 2;
-        const olH = panelH * 2 + gap + 4;
-        html += `<rect x="${overlapStartX}" y="${olY}" width="${Math.max(0, overlapEndX - overlapStartX)}" height="${olH}"
-                  rx="2" fill="rgba(192,132,252,0.08)" stroke="#c084fc" stroke-width="1" stroke-dasharray="4,3"/>`;
+      // ---- Door panel (back track — slid open behind right sidelight) ----
+      html += drawPanel(doorLeftX, backY, Math.max(0, doorRightX - doorLeftX), panelH, 'rgba(78,168,255,0.2)', '#4ea8ff', 'DOOR (OPEN)');
+
+      // ---- Projection zone ----
+      if (P > 0 && pW > 2) {
+        const projX = wtRightX - pW;
+        const projZoneY = frameY;
+        html += `<rect x="${projX}" y="${projZoneY}" width="${pW}" height="${frameH}"
+                  rx="2" fill="rgba(244,114,182,0.08)" stroke="#f472b6" stroke-width="1" stroke-dasharray="4,3"/>`;
+        // Projection dim line
+        html += drawDimLine(projX, wtRightX, padTop - 18 + 22, `Proj: ${Math.round(P)} mm`, '#f472b6');
       }
 
-      // Dimension lines below
-      const dimY = slY + panelH + 30;
-
-      // Door dimension
-      html += drawDimLine(doorX, doorEndX, dimY, `Door: ${Math.round(D)} mm`, '#4ea8ff');
-
-      // Sidelight dimension
-      html += drawDimLine(sidelightX, sidelightEndX, dimY + 22, `Sidelight: ${Math.round(S)} mm`, '#ff8c4e');
-
-      // Overlap dimension (if visible)
-      if (V > 0 && overlapEndX > overlapStartX + 5) {
-        html += drawDimLine(overlapStartX, overlapEndX, padTop - 16 + 22, `Overlap: ${Math.round(V)} mm`, '#c084fc');
-      }
-
-      // Walk-through arrow
-      const wtStartX = padX;
-      const wtEndX = padX + wW;
+      // ---- Walk-through dimension ----
+      const dimBaseY = backY + panelH + 26;
       if (W > 0) {
-        const wtY = panelY + panelH / 2;
-        // Show walk-through label
-        html += `<text x="${padX + drawW / 2}" y="${dimY + 48}" text-anchor="middle"
-                  font-size="12" font-weight="600" fill="#34d399">Walk-through: ${Math.round(W)} mm (when door open)</text>`;
+        html += drawDimLine(wtLeftX, wtRightX, dimBaseY, `Walk-through: ${Math.round(W)} mm`, '#34d399');
       }
 
-      // Track labels
-      html += `<text x="${padX - 8}" y="${panelY + panelH / 2 + 4}" text-anchor="end"
-                font-size="10" font-weight="600" fill="#4ea8ff" opacity="0.7">FRONT</text>`;
-      html += `<text x="${padX - 8}" y="${slY + panelH / 2 + 4}" text-anchor="end"
-                font-size="10" font-weight="600" fill="#ff8c4e" opacity="0.7">BACK</text>`;
+      // ---- Clear Opening dimension ----
+      if (CO > 0 && CO < W) {
+        const clearLeftX = wtLeftX;
+        const clearRightX = wtRightX - pW;
+        html += drawDimLine(clearLeftX, clearRightX, dimBaseY + 22,
+          `Clear Opening: ${Math.round(CO)} mm`, '#fbbf24');
+      } else if (CO > 0) {
+        html += drawDimLine(wtLeftX, wtRightX, dimBaseY + 22,
+          `Clear Opening: ${Math.round(CO)} mm`, '#fbbf24');
+      }
+
+      // ---- Sidelight dimension ----
+      html += drawDimLine(slLeftX, slLeftEndX, dimBaseY + 44, `SL: ${Math.round(S)} mm`, '#ff8c4e');
+      html += drawDimLine(slRightX, slRightEndX, dimBaseY + 44, `SL: ${Math.round(S)} mm`, '#ff8c4e');
+
+      // ---- Door dimension ----
+      html += drawDimLine(doorLeftX, doorRightX, dimBaseY + 66,
+        `Door: ${Math.round(D)} mm`, '#4ea8ff');
+
+      // ---- Track labels ----
+      html += `<text x="${padX - 8}" y="${frontY + panelH / 2 + 4}" text-anchor="end"
+                font-size="10" font-weight="600" fill="#ff8c4e" opacity="0.7">FRONT</text>`;
+      html += `<text x="${padX - 8}" y="${backY + panelH / 2 + 4}" text-anchor="end"
+                font-size="10" font-weight="600" fill="#4ea8ff" opacity="0.7">BACK</text>`;
+
+      // ---- Walk-through arrow (visual indicator in the gap) ----
+      if (wW > 40) {
+        const arrowY = frontY + panelH / 2;
+        const arrowMid = (wtLeftX + wtRightX) / 2;
+        html += `<line x1="${wtLeftX + 8}" y1="${arrowY}" x2="${wtRightX - 8}" y2="${arrowY}"
+                  stroke="#34d399" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.4"/>`;
+        // Arrow heads
+        html += `<polygon points="${wtLeftX + 8},${arrowY} ${wtLeftX + 16},${arrowY - 4} ${wtLeftX + 16},${arrowY + 4}"
+                  fill="#34d399" opacity="0.4"/>`;
+        html += `<polygon points="${wtRightX - 8},${arrowY} ${wtRightX - 16},${arrowY - 4} ${wtRightX - 16},${arrowY + 4}"
+                  fill="#34d399" opacity="0.4"/>`;
+      }
 
       svg.innerHTML = html;
     }
 
+    function drawPanel(x, y, w, h, fill, stroke, label) {
+      let html = '';
+      html += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+      // Hatching
+      for (let hx = x + 12; hx < x + w - 4; hx += 16) {
+        html += `<line x1="${hx}" y1="${y}" x2="${hx}" y2="${y + h}" stroke="${stroke}" stroke-width="0.5" opacity="0.25"/>`;
+      }
+      // Label (only if wide enough)
+      if (w > 60) {
+        html += `<text x="${x + w / 2}" y="${y + h / 2 + 5}" text-anchor="middle"
+                  font-size="11" font-weight="700" fill="${stroke}">${label}</text>`;
+      }
+      return html;
+    }
+
     function drawDimLine(x1, x2, y, label, color) {
+      if (x2 <= x1) return '';
       const tickH = 6;
       let html = '';
-      // Line
       html += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color}" stroke-width="1.5"/>`;
-      // End ticks
       html += `<line x1="${x1}" y1="${y - tickH}" x2="${x1}" y2="${y + tickH}" stroke="${color}" stroke-width="1.5"/>`;
       html += `<line x1="${x2}" y1="${y - tickH}" x2="${x2}" y2="${y + tickH}" stroke="${color}" stroke-width="1.5"/>`;
-      // Label
       const midX = (x1 + x2) / 2;
       html += `<text x="${midX}" y="${y - 6}" text-anchor="middle" font-size="11" font-weight="600" fill="${color}">${label}</text>`;
       return html;
@@ -721,6 +805,7 @@
     // Event listeners
     elOpening.addEventListener('input', onInputChange);
     elWalkthrough.addEventListener('input', onInputChange);
+    elProjection.addEventListener('input', onInputChange);
     elSlider.addEventListener('input', () => {
       updateResults();
     });
@@ -728,7 +813,6 @@
     // Initial render
     updateSliderBounds();
     updateResults();
-    // Store initial door width
     storedDoorWidth = parseInt(elSlider.value);
   </script>
 </body>
