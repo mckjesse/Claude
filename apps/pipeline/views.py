@@ -39,6 +39,7 @@ from .serializers import (
     OpportunitySerializer,
     QuoteSerializer,
 )
+from .services import activity
 from .services import dashboard as dashboard_service
 from .services import reports as reports_service
 from .services import scoping
@@ -159,11 +160,26 @@ class OpportunityViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         self._enforce_admin_field_protection(serializer)
-        serializer.save()
+        with transaction.atomic():
+            opp = serializer.save()
+            activity.opportunity_created(opp, self.request.user)
 
     def perform_update(self, serializer):
         self._enforce_admin_field_protection(serializer)
-        serializer.save()
+        instance = serializer.instance
+        baseline = activity.snapshot(
+            instance, activity.OPPORTUNITY_TRACKED_FIELDS
+        )
+        old_stage = instance.stage
+        with transaction.atomic():
+            opp = serializer.save()
+            changed = activity.diff(opp, baseline)
+            user = self.request.user
+            if opp.stage != old_stage:
+                activity.opportunity_stage_changed(
+                    opp, user, old_stage, opp.stage
+                )
+            activity.opportunity_updated(opp, user, changed)
 
     @action(detail=True, methods=["post"])
     def mark_won(self, request, pk=None):
@@ -182,6 +198,9 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                     "updated_at",
                 ]
             )
+            activity.opportunity_marked_won(
+                opp, request.user, opp.final_awarded_value
+            )
         return Response(self.get_serializer(opp).data)
 
     @action(detail=True, methods=["post"])
@@ -197,6 +216,12 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             opp.stage = Opportunity.Stage.LOST
             opp.status = Opportunity.Status.CLOSED
             opp.save(update_fields=["stage", "status", "updated_at"])
+            activity.opportunity_marked_lost(
+                opp,
+                request.user,
+                payload.validated_data["reason_category"],
+                payload.validated_data.get("competitor_name", ""),
+            )
         return Response(self.get_serializer(opp).data)
 
 
@@ -219,6 +244,20 @@ class QuoteViewSet(viewsets.ModelViewSet):
             "opportunity",
             "opportunity__company",
         )
+
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            quote = serializer.save()
+            activity.quote_created(quote, self.request.user)
+
+    def perform_update(self, serializer):
+        baseline = activity.snapshot(
+            serializer.instance, activity.QUOTE_TRACKED_FIELDS
+        )
+        with transaction.atomic():
+            quote = serializer.save()
+            changed = activity.diff(quote, baseline)
+            activity.quote_updated(quote, self.request.user, changed)
 
 
 class FollowUpTaskViewSet(viewsets.ModelViewSet):
@@ -259,7 +298,24 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
                     "You can only create follow-ups on opportunities "
                     "where you are the estimator or the assigned user."
                 )
-        serializer.save()
+        with transaction.atomic():
+            task = serializer.save()
+            activity.followup_created(task, user)
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        baseline = activity.snapshot(instance, activity.FOLLOWUP_TRACKED_FIELDS)
+        old_status = instance.status
+        with transaction.atomic():
+            task = serializer.save()
+            user = self.request.user
+            changed = activity.diff(task, baseline)
+            if (
+                old_status != FollowUpTask.Status.COMPLETED
+                and task.status == FollowUpTask.Status.COMPLETED
+            ):
+                activity.followup_completed(task, user)
+            activity.followup_updated(task, user, changed)
 
 
 class ActivityLogViewSet(viewsets.ModelViewSet):
