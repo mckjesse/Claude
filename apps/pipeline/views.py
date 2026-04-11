@@ -3,6 +3,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .filters import FollowUpTaskFilter, OpportunityFilter
 from .models import (
@@ -25,6 +26,8 @@ from .serializers import (
     OpportunitySerializer,
     QuoteSerializer,
 )
+from .services import dashboard as dashboard_service
+from .services import reports as reports_service
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -185,3 +188,60 @@ class LossReasonViewSet(viewsets.ModelViewSet):
     filterset_fields = ["reason_category"]
     ordering_fields = ["recorded_at"]
     ordering = ["-recorded_at"]
+
+
+# ---------------------------------------------------------------------------
+# Dashboard + reporting endpoints
+#
+# These are thin wrappers around the service layer. Business logic lives in
+# apps/pipeline/services/. Views just hand the authenticated user to the
+# service and return the result.
+# ---------------------------------------------------------------------------
+class DashboardView(APIView):
+    """GET /api/dashboard/ — aggregated snapshot for the landing page."""
+
+    def get(self, request):
+        return Response(dashboard_service.build_dashboard(request.user))
+
+
+class PipelineByStageReportView(APIView):
+    def get(self, request):
+        return Response(reports_service.pipeline_by_stage(request.user))
+
+
+class PipelineByEstimatorReportView(APIView):
+    def get(self, request):
+        return Response(reports_service.pipeline_by_estimator(request.user))
+
+
+class OverdueFollowupsReportView(APIView):
+    def get(self, request):
+        return Response(reports_service.overdue_followups_report(request.user))
+
+
+class WinRateByEstimatorReportView(APIView):
+    def get(self, request):
+        return Response(reports_service.win_rate_by_estimator(request.user))
+
+
+class WinRateByCompanyReportView(APIView):
+    def get(self, request):
+        return Response(reports_service.win_rate_by_company(request.user))
+
+
+class LossReasonsReportView(APIView):
+    def get(self, request):
+        return Response(reports_service.loss_reasons_report(request.user))
+
+
+class StaleOpportunitiesReportView(APIView):
+    def get(self, request):
+        try:
+            days = int(request.query_params.get("days", 14))
+        except (TypeError, ValueError):
+            days = 14
+        if days < 1:
+            days = 14
+        return Response(
+            reports_service.stale_opportunities(request.user, days=days)
+        )
