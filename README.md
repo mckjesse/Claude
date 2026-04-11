@@ -103,3 +103,110 @@ apps/pipeline/     Core domain models (companies, opportunities, quotes, ...)
 - `project_manager`
 - `admin`
 - `read_only` (default)
+
+## Seed demo data
+
+```bash
+python manage.py seed_demo           # idempotent, safe to re-run
+python manage.py seed_demo --reset   # wipe pipeline data first
+```
+
+Creates five demo users (all with password `demo12345`): `director`,
+`estimator1`, `estimator2`, `projects`, `officeadmin`. Plus realistic
+Australian commercial fit-out sample data: 10 companies, 15 contacts,
+25 opportunities across all stages, quotes, follow-ups, loss reasons,
+and backdated activity logs. Seed uses a fixed random seed so each run
+produces the same content.
+
+## Tests
+
+```bash
+python manage.py test                # run the full suite
+python manage.py test apps.pipeline  # scoped
+```
+
+The test database role needs `CREATEDB`:
+```sql
+ALTER ROLE foxd CREATEDB;
+```
+
+## Deployment (Render)
+
+The backend ships as a Docker image. Render builds and runs it directly
+from the repository.
+
+### What the Dockerfile does
+
+1. `pip install -r requirements.txt`
+2. `collectstatic --noinput` at build time (WhiteNoise serves static
+   files in production — no nginx, no CDN required for the Django admin
+   or the DRF browsable API).
+3. Copies the source and runs `entrypoint.sh` on container start.
+
+### What `entrypoint.sh` does
+
+1. `python manage.py migrate --noinput`
+2. `exec gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers $WEB_CONCURRENCY`
+
+Running migrations on container start is safe for a single-instance web
+service. If you scale the service above one instance, move the migrate
+step into a Render **pre-deploy command** so only one process applies
+migrations per deploy.
+
+### Required environment variables
+
+| Variable | Required | Example | Notes |
+|---|---|---|---|
+| `SECRET_KEY` | yes | `...` | Long random string. Use Render's "Generate" button. |
+| `DEBUG` | yes | `False` | Never `True` in production. |
+| `ALLOWED_HOSTS` | yes | `foxd-backend.onrender.com,api.foxd.example` | Comma-separated. Include every hostname that resolves to the service. |
+| `DATABASE_URL` | yes | *(auto)* | Render wires this automatically when you link a Postgres database to the service. |
+| `CORS_ALLOWED_ORIGINS` | yes | `https://foxd.example.com` | Comma-separated React frontend origins. |
+| `CSRF_TRUSTED_ORIGINS` | yes | `https://foxd.example.com` | Comma-separated. Must include frontend origin and any backend hostname that serves forms. |
+| `WEB_CONCURRENCY` | no | `3` | Gunicorn worker count. Default 3. |
+| `PORT` | no | *(auto)* | Render injects this automatically. |
+
+The discrete `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`
+variables from `.env.example` are **only** used when `DATABASE_URL` is
+blank — they exist for local development convenience. Do not set them
+on Render; just link a Postgres database and `DATABASE_URL` will be
+provided.
+
+### Recommended Render configuration
+
+- **Service type**: Web Service
+- **Environment**: Docker
+- **Dockerfile path**: `./Dockerfile`
+- **Health check path**: `/admin/login/` (returns 200 for unauthenticated
+  GET)
+- **Instance type**: start with the smallest paid tier; Render's free
+  Postgres + free web service is fine for staging.
+- **Pre-deploy command**: *(blank — entrypoint handles migrations)*
+- **Start command**: *(blank — uses the Dockerfile `CMD`)*
+- **Link a Render Postgres database** to the service so `DATABASE_URL`
+  is populated automatically.
+
+### Deployment checklist
+
+Before clicking **Deploy**:
+
+- [ ] `SECRET_KEY` set to a fresh random value (not the dev default).
+- [ ] `DEBUG=False`.
+- [ ] `ALLOWED_HOSTS` includes the Render hostname.
+- [ ] Render Postgres database linked → `DATABASE_URL` visible in the
+      service's environment.
+- [ ] `CORS_ALLOWED_ORIGINS` includes the production React origin.
+- [ ] `CSRF_TRUSTED_ORIGINS` includes the production React origin.
+- [ ] React app is built with `credentials: "include"` and sends
+      `X-CSRFToken` on unsafe methods.
+- [ ] A superuser has been created — either via `render shell` then
+      `python manage.py createsuperuser`, or by running `seed_demo`
+      which creates predictable demo users.
+
+### Local development unchanged
+
+Everything in the **Local setup** section above still works exactly as
+before. The Docker image is for production; `python manage.py runserver`
+remains the local dev loop. Production security headers only switch on
+when `DEBUG=False`, so HTTP cookies and non-HSTS behaviour stay intact
+for local work.
