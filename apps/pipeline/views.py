@@ -2,8 +2,11 @@ from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from apps.users.models import AppUser
 
 from .filters import FollowUpTaskFilter, OpportunityFilter
 from .models import (
@@ -14,6 +17,16 @@ from .models import (
     LossReason,
     Opportunity,
     Quote,
+)
+from .permissions import (
+    ActivityLogPermission,
+    CompanyPermission,
+    ContactPermission,
+    FollowUpTaskPermission,
+    LossReasonPermission,
+    OpportunityPermission,
+    QuotePermission,
+    is_relevant_opportunity,
 )
 from .serializers import (
     ActivityLogSerializer,
@@ -28,11 +41,28 @@ from .serializers import (
 )
 from .services import dashboard as dashboard_service
 from .services import reports as reports_service
+from .services import scoping
+
+# ---------------------------------------------------------------------------
+# Fields on Opportunity that admins are never allowed to touch directly.
+# Enforced in ``OpportunityViewSet._enforce_admin_field_protection``.
+# Admins can still edit every other field (project_name, code, company,
+# contact, scope text, dates, etc).
+# ---------------------------------------------------------------------------
+ADMIN_OPPORTUNITY_PROTECTED_FIELDS = frozenset(
+    {
+        "estimated_contract_value",
+        "estimated_margin_percent",
+        "probability_percent",
+        "final_awarded_value",
+        "stage",
+    }
+)
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
-    queryset = Company.objects.all()
     serializer_class = CompanySerializer
+    permission_classes = [CompanyPermission]
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -42,11 +72,15 @@ class CompanyViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "primary_email", "suburb", "state"]
     ordering_fields = ["name", "created_at", "updated_at"]
     ordering = ["name"]
+    queryset = Company.objects.all()
+
+    def get_queryset(self):
+        return scoping.scoped_companies(self.request.user)
 
 
 class ContactViewSet(viewsets.ModelViewSet):
-    queryset = Contact.objects.select_related("company")
     serializer_class = ContactSerializer
+    permission_classes = [ContactPermission]
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -56,19 +90,15 @@ class ContactViewSet(viewsets.ModelViewSet):
     search_fields = ["first_name", "last_name", "email", "company__name"]
     ordering_fields = ["last_name", "first_name", "created_at"]
     ordering = ["last_name", "first_name"]
+    queryset = Contact.objects.all()
+
+    def get_queryset(self):
+        return scoping.scoped_contacts(self.request.user).select_related("company")
 
 
 class OpportunityViewSet(viewsets.ModelViewSet):
-    queryset = (
-        Opportunity.objects.select_related(
-            "company",
-            "primary_contact",
-            "estimator",
-            "assigned_user",
-        )
-        .prefetch_related("quotes", "tasks")
-    )
     serializer_class = OpportunitySerializer
+    permission_classes = [OpportunityPermission]
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -92,6 +122,48 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         "updated_at",
     ]
     ordering = ["-created_at"]
+    queryset = Opportunity.objects.all()
+
+    def get_queryset(self):
+        return (
+            scoping.scoped_opportunities(self.request.user)
+            .select_related(
+                "company",
+                "primary_contact",
+                "estimator",
+                "assigned_user",
+            )
+            .prefetch_related("quotes", "tasks")
+        )
+
+    # ------------------------------------------------------------------
+    # Admin field-level protection
+    #
+    # Admins can help administer opportunities (metadata, scope text,
+    # dates, assignments) but must never set or change pricing or stage.
+    # Rather than split the serializer, we inspect validated_data on
+    # create/update and reject protected fields with PermissionDenied.
+    # ------------------------------------------------------------------
+    def _enforce_admin_field_protection(self, serializer):
+        user = self.request.user
+        if user.is_superuser:
+            return
+        if getattr(user, "role", None) != AppUser.Role.ADMIN:
+            return
+        protected = set(serializer.validated_data) & ADMIN_OPPORTUNITY_PROTECTED_FIELDS
+        if protected:
+            raise PermissionDenied(
+                "Admins cannot modify pricing or stage fields: "
+                + ", ".join(sorted(protected))
+            )
+
+    def perform_create(self, serializer):
+        self._enforce_admin_field_protection(serializer)
+        serializer.save()
+
+    def perform_update(self, serializer):
+        self._enforce_admin_field_protection(serializer)
+        serializer.save()
 
     @action(detail=True, methods=["post"])
     def mark_won(self, request, pk=None):
@@ -129,11 +201,8 @@ class OpportunityViewSet(viewsets.ModelViewSet):
 
 
 class QuoteViewSet(viewsets.ModelViewSet):
-    queryset = Quote.objects.select_related(
-        "opportunity",
-        "opportunity__company",
-    )
     serializer_class = QuoteSerializer
+    permission_classes = [QuotePermission]
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -143,16 +212,18 @@ class QuoteViewSet(viewsets.ModelViewSet):
     search_fields = ["quote_reference", "opportunity__project_name"]
     ordering_fields = ["revision_number", "submission_date", "created_at"]
     ordering = ["opportunity", "-revision_number"]
+    queryset = Quote.objects.all()
+
+    def get_queryset(self):
+        return scoping.scoped_quotes(self.request.user).select_related(
+            "opportunity",
+            "opportunity__company",
+        )
 
 
 class FollowUpTaskViewSet(viewsets.ModelViewSet):
-    queryset = FollowUpTask.objects.select_related(
-        "opportunity",
-        "opportunity__company",
-        "assigned_to_user",
-        "related_quote",
-    )
     serializer_class = FollowUpTaskSerializer
+    permission_classes = [FollowUpTaskPermission]
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -162,14 +233,38 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
     search_fields = ["subject", "details", "opportunity__project_name"]
     ordering_fields = ["due_date", "priority", "status", "created_at"]
     ordering = ["due_date", "due_time"]
+    queryset = FollowUpTask.objects.all()
+
+    def get_queryset(self):
+        return scoping.scoped_followups(self.request.user).select_related(
+            "opportunity",
+            "opportunity__company",
+            "assigned_to_user",
+            "related_quote",
+        )
+
+    def perform_create(self, serializer):
+        # Estimators can only attach follow-ups to opportunities that are
+        # "relevant" to them (same rule as has_object_permission for
+        # update/delete). Directors, admins and superusers are unrestricted.
+        user = self.request.user
+        role = getattr(user, "role", None)
+        if (
+            not user.is_superuser
+            and role == AppUser.Role.ESTIMATOR
+        ):
+            opp = serializer.validated_data.get("opportunity")
+            if not is_relevant_opportunity(opp, user):
+                raise PermissionDenied(
+                    "You can only create follow-ups on opportunities "
+                    "where you are the estimator or the assigned user."
+                )
+        serializer.save()
 
 
 class ActivityLogViewSet(viewsets.ModelViewSet):
-    queryset = ActivityLog.objects.select_related(
-        "opportunity",
-        "created_by_user",
-    )
     serializer_class = ActivityLogSerializer
+    permission_classes = [ActivityLogPermission]
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -179,15 +274,28 @@ class ActivityLogViewSet(viewsets.ModelViewSet):
     search_fields = ["description", "opportunity__project_name"]
     ordering_fields = ["created_at"]
     ordering = ["-created_at"]
+    queryset = ActivityLog.objects.all()
+
+    def get_queryset(self):
+        return scoping.scoped_activity(self.request.user).select_related(
+            "opportunity",
+            "created_by_user",
+        )
 
 
 class LossReasonViewSet(viewsets.ModelViewSet):
-    queryset = LossReason.objects.select_related("opportunity")
     serializer_class = LossReasonSerializer
+    permission_classes = [LossReasonPermission]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["reason_category"]
     ordering_fields = ["recorded_at"]
     ordering = ["-recorded_at"]
+    queryset = LossReason.objects.all()
+
+    def get_queryset(self):
+        return scoping.scoped_loss_reasons(self.request.user).select_related(
+            "opportunity"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -195,7 +303,8 @@ class LossReasonViewSet(viewsets.ModelViewSet):
 #
 # These are thin wrappers around the service layer. Business logic lives in
 # apps/pipeline/services/. Views just hand the authenticated user to the
-# service and return the result.
+# service and return the result. The service layer itself calls through
+# scoping.scoped_*() so visibility rules apply here too.
 # ---------------------------------------------------------------------------
 class DashboardView(APIView):
     """GET /api/dashboard/ — aggregated snapshot for the landing page."""
