@@ -44,6 +44,8 @@ class Company(TimestampedModel):
 
     class Meta:
         ordering = ["name"]
+        verbose_name = "Company"
+        verbose_name_plural = "Companies"
 
     def __str__(self):
         return self.name
@@ -177,6 +179,8 @@ class Opportunity(TimestampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name = "Opportunity"
+        verbose_name_plural = "Opportunities"
 
     def __str__(self):
         return self.project_name
