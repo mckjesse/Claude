@@ -1,6 +1,6 @@
 from django.contrib.auth import authenticate, login, logout
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -9,12 +9,18 @@ from rest_framework.views import APIView
 from .serializers import AppUserSerializer, LoginSerializer
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class LoginView(APIView):
     """
     POST /api/users/login/
 
     Authenticates against Django's auth backend and starts a session.
     The browser receives a session cookie; no tokens are issued.
+
+    DRF wraps APIViews in ``csrf_exempt`` and its ``SessionAuthentication``
+    only enforces CSRF once a user is already authenticated, which would
+    leave login itself open to login-CSRF. ``csrf_protect`` above restores
+    the middleware check so anonymous POSTs must carry a valid token.
     """
 
     permission_classes = [AllowAny]
