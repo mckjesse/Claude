@@ -53,10 +53,9 @@ body {
 }
 
 .brand-logo {
-  font-weight: 900;
-  font-size: 1.1rem;
-  letter-spacing: 0.1em;
-  color: var(--accent);
+  height: 36px;
+  width: 36px;
+  border-radius: 4px;
 }
 
 .brand-divider {
