@@ -22,7 +22,19 @@ def _csv(value: str) -> list[str]:
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-change-me")
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
+
+# ALLOWED_HOSTS is a comma-separated list of *hostnames only* — no
+# scheme, no path (e.g. "foxd.onrender.com,api.example.com").
 ALLOWED_HOSTS = _csv(os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1"))
+
+# Render injects RENDER_EXTERNAL_HOSTNAME automatically for every web
+# service (e.g. "foxd-backend.onrender.com"). Adding it here means the
+# service responds correctly on its Render URL without having to list
+# the hostname manually in the dashboard. The variable is only set on
+# Render, so local development is unaffected.
+_RENDER_HOST = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
+if _RENDER_HOST and _RENDER_HOST not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_RENDER_HOST)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -154,9 +166,15 @@ CORS_ALLOWED_ORIGINS = _csv(
 )
 CORS_ALLOW_CREDENTIALS = True
 
+# CSRF_TRUSTED_ORIGINS is a comma-separated list of *full origins* —
+# scheme + host (e.g. "https://foxd.onrender.com,https://foxd.example").
 CSRF_TRUSTED_ORIGINS = _csv(
     os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 )
+if _RENDER_HOST:
+    _render_origin = f"https://{_RENDER_HOST}"
+    if _render_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_render_origin)
 
 # React must be able to read the csrftoken cookie to echo it in the
 # X-CSRFToken header, so this one is not HttpOnly.
