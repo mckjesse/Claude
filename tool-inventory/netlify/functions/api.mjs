@@ -52,6 +52,20 @@ export default async (req, context) => {
         break;
       }
 
+      case "addToolsBulk": {
+        for (const t of body.tools) {
+          data.tools.push({
+            id: uid(),
+            toolCode: t.toolCode,
+            name: t.name,
+            type: t.type,
+            projectId: null,
+            createdAt: new Date().toISOString(),
+          });
+        }
+        break;
+      }
+
       case "deleteTool": {
         data.tools = data.tools.filter(t => t.id !== body.id);
         break;

@@ -74,6 +74,8 @@
           </select>
         </div>
         <button type="submit" class="btn btn-primary">Add Tool</button>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('csv-file').click()">Upload CSV</button>
+        <input type="file" id="csv-file" accept=".csv" hidden>
       </form>
 
       <div class="table-wrap">
@@ -196,6 +198,25 @@
       <div class="modal-actions">
         <button class="btn btn-secondary" id="move-cancel">Cancel</button>
         <button class="btn btn-primary" id="move-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CSV preview modal -->
+  <div class="modal-overlay" id="csv-modal">
+    <div class="modal" style="width:560px">
+      <h3>Import Tools from CSV</h3>
+      <p>Expected columns: <strong>tool_code, name, type</strong> (plant or equipment)</p>
+      <div id="csv-status"></div>
+      <div class="table-wrap" style="max-height:300px;overflow-y:auto;margin:0.75rem 0" id="csv-preview-wrap">
+        <table>
+          <thead><tr><th>Code</th><th>Name</th><th>Type</th><th>Status</th></tr></thead>
+          <tbody id="csv-preview-tbody"></tbody>
+        </table>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="csv-cancel">Cancel</button>
+        <button class="btn btn-primary" id="csv-import">Import</button>
       </div>
     </div>
   </div>

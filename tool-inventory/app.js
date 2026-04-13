@@ -325,6 +325,102 @@ document.getElementById('modal-cancel').addEventListener('click', () => {
   confirmCallback = null;
 });
 
+// ── CSV Upload ──
+let csvRows = []; // parsed rows ready to import
+
+document.getElementById('csv-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = ''; // reset so same file can be re-selected
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const text = ev.target.result;
+    parseAndPreviewCSV(text);
+  };
+  reader.readAsText(file);
+});
+
+function parseAndPreviewCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) {
+    alert('CSV file is empty or has no data rows.');
+    return;
+  }
+
+  // Parse header to find column indices
+  const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+  const codeIdx = header.findIndex(h => h === 'tool_code' || h === 'toolcode' || h === 'code');
+  const nameIdx = header.findIndex(h => h === 'name' || h === 'tool_name' || h === 'toolname');
+  const typeIdx = header.findIndex(h => h === 'type' || h === 'category');
+
+  if (codeIdx === -1 || nameIdx === -1) {
+    alert('CSV must have "tool_code" and "name" columns. Type column is optional (defaults to equipment).');
+    return;
+  }
+
+  const existingCodes = new Set(data.tools.map(t => t.toolCode.toLowerCase()));
+  csvRows = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+    const code = cols[codeIdx]?.trim();
+    const name = cols[nameIdx]?.trim();
+    let type = (cols[typeIdx] || '').trim().toLowerCase();
+    if (type !== 'plant' && type !== 'equipment') type = 'equipment';
+
+    if (!code || !name) continue;
+
+    const isDuplicate = existingCodes.has(code.toLowerCase());
+    existingCodes.add(code.toLowerCase()); // catch dupes within the CSV too
+
+    csvRows.push({ toolCode: code, name, type, duplicate: isDuplicate });
+  }
+
+  if (csvRows.length === 0) {
+    alert('No valid rows found in CSV.');
+    return;
+  }
+
+  // Render preview
+  const tbody = document.getElementById('csv-preview-tbody');
+  const newCount = csvRows.filter(r => !r.duplicate).length;
+  const dupeCount = csvRows.filter(r => r.duplicate).length;
+
+  document.getElementById('csv-status').innerHTML =
+    `<span style="color:var(--success)">${newCount} new</span>` +
+    (dupeCount > 0 ? ` &middot; <span style="color:var(--plant-text)">${dupeCount} duplicate (skipped)</span>` : '');
+
+  tbody.innerHTML = csvRows.map(r => `<tr${r.duplicate ? ' style="opacity:0.4"' : ''}>
+    <td>${r.toolCode}</td>
+    <td>${r.name}</td>
+    <td><span class="badge badge-${r.type}">${r.type}</span></td>
+    <td>${r.duplicate ? '<span style="color:var(--plant-text)">Duplicate</span>' : '<span style="color:var(--success)">New</span>'}</td>
+  </tr>`).join('');
+
+  document.getElementById('csv-preview-wrap').style.display = csvRows.length ? '' : 'none';
+  document.getElementById('csv-import').disabled = newCount === 0;
+  document.getElementById('csv-modal').classList.add('active');
+}
+
+document.getElementById('csv-import').addEventListener('click', async () => {
+  const toImport = csvRows.filter(r => !r.duplicate).map(r => ({
+    toolCode: r.toolCode,
+    name: r.name,
+    type: r.type,
+  }));
+  document.getElementById('csv-modal').classList.remove('active');
+  if (toImport.length === 0) return;
+
+  await saveData('addToolsBulk', { tools: toImport });
+  csvRows = [];
+});
+
+document.getElementById('csv-cancel').addEventListener('click', () => {
+  document.getElementById('csv-modal').classList.remove('active');
+  csvRows = [];
+});
+
 // ── Polling for live updates ──
 setInterval(loadData, 5000);
 
