@@ -52,12 +52,15 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # CorsMiddleware must sit above any middleware that can generate a
+    # response (e.g. WhiteNoise, CommonMiddleware) so that CORS headers
+    # are attached to every response — django-cors-headers docs.
+    "corsheaders.middleware.CorsMiddleware",
     # WhiteNoise serves static files in production. Must come right after
     # SecurityMiddleware and before any middleware that might serve
     # responses.
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -195,6 +198,15 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+    # Frontend and backend live on different domains in production
+    # (e.g. foxd-crm.lovable.app + crm-backend-pza6.onrender.com). The
+    # browser will only send the session + csrftoken cookies on those
+    # cross-site requests when SameSite=None is combined with Secure=True.
+    # Local dev keeps the Lax default above because SameSite=None over
+    # plain HTTP is rejected by browsers.
+    SESSION_COOKIE_SAMESITE = "None"
+    CSRF_COOKIE_SAMESITE = "None"
 
     SECURE_HSTS_SECONDS = 60 * 60  # 1 hour — bump once validated in prod
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
