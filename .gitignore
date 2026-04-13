@@ -9,3 +9,7 @@ venv/
 *.log
 staticfiles/
 media/
+
+# Tool Inventory app
+tool-inventory/node_modules/
+tool-inventory/dist/
