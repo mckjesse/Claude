@@ -1,24 +1,28 @@
 """
 Django settings for the FOXD Tender Pipeline backend.
 
-Single-file settings, driven by environment variables via python-decouple.
-Production hardening is gated on DEBUG=False so local development is
-unaffected.
+Single-file settings, driven by environment variables loaded from a .env
+file beside manage.py via python-dotenv. Production hardening is gated
+on DEBUG=False so local development is unaffected.
 """
+import os
 from pathlib import Path
 
 import dj_database_url
-from decouple import Csv, config
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = config("SECRET_KEY", default="dev-insecure-change-me")
-DEBUG = config("DEBUG", default=False, cast=bool)
-ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1",
-    cast=Csv(),
-)
+
+def _csv(value: str) -> list[str]:
+    """Split a comma-separated env value into a list, stripping whitespace."""
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-change-me")
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
+ALLOWED_HOSTS = _csv(os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1"))
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -75,7 +79,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # resulting config. Otherwise we fall back to the discrete DB_* variables
 # which are convenient for local development.
 # ---------------------------------------------------------------------------
-DATABASE_URL = config("DATABASE_URL", default="")
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 if DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.parse(
@@ -88,11 +92,11 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": config("DB_NAME", default="foxd_tender"),
-            "USER": config("DB_USER", default="postgres"),
-            "PASSWORD": config("DB_PASSWORD", default=""),
-            "HOST": config("DB_HOST", default="localhost"),
-            "PORT": config("DB_PORT", default="5432"),
+            "NAME": os.getenv("DB_NAME", "foxd_pipeline"),
+            "USER": os.getenv("DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
         }
     }
 
@@ -145,17 +149,13 @@ REST_FRAMEWORK = {
 # ---------------------------------------------------------------------------
 # CORS / CSRF for a separate React frontend
 # ---------------------------------------------------------------------------
-CORS_ALLOWED_ORIGINS = config(
-    "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:3000,http://127.0.0.1:3000",
-    cast=Csv(),
+CORS_ALLOWED_ORIGINS = _csv(
+    os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 )
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = config(
-    "CSRF_TRUSTED_ORIGINS",
-    default="http://localhost:3000,http://127.0.0.1:3000",
-    cast=Csv(),
+CSRF_TRUSTED_ORIGINS = _csv(
+    os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 )
 
 # React must be able to read the csrftoken cookie to echo it in the
