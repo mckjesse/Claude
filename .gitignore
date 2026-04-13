@@ -13,3 +13,4 @@ media/
 # Tool Inventory app
 tool-inventory/node_modules/
 tool-inventory/dist/
+tool-inventory/data/

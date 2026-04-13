@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { useRealtime } from '../hooks/useRealtime';
 import ToolForm from '../components/ToolForm';
 import AssignReturnModal from '../components/AssignReturnModal';
@@ -13,24 +13,15 @@ export default function Tools() {
   const locationFilter = searchParams.get('location');
 
   const fetchTools = useCallback(async () => {
-    let query = supabase
-      .from('tools')
-      .select('*, projects:current_project_id(name, project_code)')
-      .order('created_at', { ascending: false });
-
-    if (locationFilter) {
-      query = query.eq('current_location_type', locationFilter);
-    }
-
-    const { data } = await query;
-    setTools(data || []);
+    const data = await api.getTools(locationFilter);
+    setTools(data);
     setLoading(false);
   }, [locationFilter]);
 
   useEffect(() => { fetchTools(); }, [fetchTools]);
 
-  const handleRealtime = useCallback(() => { fetchTools(); }, [fetchTools]);
-  useRealtime('tools', handleRealtime);
+  const refresh = useCallback(() => { fetchTools(); }, [fetchTools]);
+  useRealtime('tools', refresh);
 
   if (loading) return <p>Loading...</p>;
 
@@ -66,7 +57,7 @@ export default function Tools() {
                 <td>
                   {tool.current_location_type === 'warehouse'
                     ? 'Warehouse'
-                    : tool.projects?.name || 'Project'}
+                    : tool.project_name || 'Project'}
                 </td>
                 <td>
                   {tool.current_location_type === 'warehouse' ? (

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 export default function AssignReturnModal({ tool, onClose, onDone }) {
   const [projects, setProjects] = useState([]);
@@ -13,12 +13,7 @@ export default function AssignReturnModal({ tool, onClose, onDone }) {
 
   useEffect(() => {
     if (!isReturn) {
-      supabase
-        .from('projects')
-        .select('id, name, project_code')
-        .eq('status', 'active')
-        .order('name')
-        .then(({ data }) => setProjects(data || []));
+      api.getProjects().then(setProjects);
     }
   }, [isReturn]);
 
@@ -27,44 +22,24 @@ export default function AssignReturnModal({ tool, onClose, onDone }) {
     setSaving(true);
     setError(null);
 
-    const toLocationType = isReturn ? 'warehouse' : 'project';
-    const toProjectId = isReturn ? null : selectedProjectId;
-
-    // Insert movement record
-    const { error: moveErr } = await supabase.from('tool_movements').insert({
-      tool_id: tool.id,
-      from_location_type: tool.current_location_type,
-      from_project_id: tool.current_project_id,
-      to_location_type: toLocationType,
-      to_project_id: toProjectId,
-      moved_by: movedBy.trim() || null,
-      note: note.trim() || null,
-    });
-
-    if (moveErr) {
-      setError(moveErr.message);
+    try {
+      if (isReturn) {
+        await api.returnTool(tool.id, {
+          moved_by: movedBy.trim() || null,
+          note: note.trim() || null,
+        });
+      } else {
+        await api.assignTool(tool.id, {
+          project_id: Number(selectedProjectId),
+          moved_by: movedBy.trim() || null,
+          note: note.trim() || null,
+        });
+      }
+      onDone?.();
+    } catch (err) {
+      setError(err.message);
       setSaving(false);
-      return;
     }
-
-    // Update tool location
-    const { error: updateErr } = await supabase
-      .from('tools')
-      .update({
-        current_location_type: toLocationType,
-        current_project_id: toProjectId,
-        status: isReturn ? 'available' : 'assigned',
-      })
-      .eq('id', tool.id);
-
-    if (updateErr) {
-      setError(updateErr.message);
-      setSaving(false);
-      return;
-    }
-
-    setSaving(false);
-    onDone?.();
   };
 
   return (
@@ -84,11 +59,13 @@ export default function AssignReturnModal({ tool, onClose, onDone }) {
                 required
               >
                 <option value="">Select a project...</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.project_code})
-                  </option>
-                ))}
+                {projects
+                  .filter((p) => p.status === 'active')
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.project_code})
+                    </option>
+                  ))}
               </select>
             </label>
           )}

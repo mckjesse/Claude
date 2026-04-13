@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 export default function ProjectForm({ onCreated }) {
   const [form, setForm] = useState({ project_code: '', name: '', site_address: '' });
@@ -11,19 +11,15 @@ export default function ProjectForm({ onCreated }) {
     setError(null);
     setSaving(true);
 
-    const { error: err } = await supabase.from('projects').insert({
-      project_code: form.project_code.trim(),
-      name: form.name.trim(),
-      site_address: form.site_address.trim() || null,
-    });
-
-    setSaving(false);
-    if (err) {
-      setError(err.message.includes('duplicate') ? 'Project code already exists.' : err.message);
-      return;
+    try {
+      await api.createProject(form);
+      setForm({ project_code: '', name: '', site_address: '' });
+      onCreated?.();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
     }
-    setForm({ project_code: '', name: '', site_address: '' });
-    onCreated?.();
   };
 
   return (

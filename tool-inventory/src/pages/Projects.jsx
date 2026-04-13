@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import ProjectForm from '../components/ProjectForm';
 
 export default function Projects() {
@@ -8,12 +8,8 @@ export default function Projects() {
   const [loading, setLoading] = useState(true);
 
   const fetchProjects = useCallback(async () => {
-    const { data } = await supabase
-      .from('projects')
-      .select('*, tools(id)')
-      .order('created_at', { ascending: false });
-
-    setProjects(data || []);
+    const data = await api.getProjects();
+    setProjects(data);
     setLoading(false);
   }, []);
 
@@ -48,7 +44,7 @@ export default function Projects() {
                 <td>{p.name}</td>
                 <td>{p.site_address || '—'}</td>
                 <td className="capitalize">{p.status.replace('_', ' ')}</td>
-                <td>{p.tools?.length || 0}</td>
+                <td>{p.tool_count}</td>
                 <td>
                   <Link to={`/projects/${p.id}`} className="btn-sm">
                     View

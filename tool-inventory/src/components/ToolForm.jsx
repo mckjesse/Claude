@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 export default function ToolForm({ onCreated }) {
   const [form, setForm] = useState({ tool_code: '', name: '', category: 'equipment' });
@@ -11,19 +11,15 @@ export default function ToolForm({ onCreated }) {
     setError(null);
     setSaving(true);
 
-    const { error: err } = await supabase.from('tools').insert({
-      tool_code: form.tool_code.trim(),
-      name: form.name.trim(),
-      category: form.category,
-    });
-
-    setSaving(false);
-    if (err) {
-      setError(err.message.includes('duplicate') ? 'Tool code already exists.' : err.message);
-      return;
+    try {
+      await api.createTool(form);
+      setForm({ tool_code: '', name: '', category: 'equipment' });
+      onCreated?.();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
     }
-    setForm({ tool_code: '', name: '', category: 'equipment' });
-    onCreated?.();
   };
 
   return (

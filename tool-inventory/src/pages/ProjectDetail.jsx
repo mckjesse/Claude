@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { useRealtime } from '../hooks/useRealtime';
 import AssignReturnModal from '../components/AssignReturnModal';
 
@@ -12,24 +12,19 @@ export default function ProjectDetail() {
   const [modalTool, setModalTool] = useState(null);
 
   const fetchData = useCallback(async () => {
-    const [projectRes, toolsRes] = await Promise.all([
-      supabase.from('projects').select('*').eq('id', id).single(),
-      supabase
-        .from('tools')
-        .select('*')
-        .eq('current_project_id', id)
-        .order('name'),
+    const [proj, projTools] = await Promise.all([
+      api.getProject(id),
+      api.getProjectTools(id),
     ]);
-
-    setProject(projectRes.data);
-    setTools(toolsRes.data || []);
+    setProject(proj);
+    setTools(projTools);
     setLoading(false);
   }, [id]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleRealtime = useCallback(() => { fetchData(); }, [fetchData]);
-  useRealtime('tools', handleRealtime);
+  const refresh = useCallback(() => { fetchData(); }, [fetchData]);
+  useRealtime('tools', refresh);
 
   if (loading) return <p>Loading...</p>;
   if (!project) return <p>Project not found.</p>;

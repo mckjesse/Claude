@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { useRealtime } from '../hooks/useRealtime';
 
-function locationLabel(type, project) {
+function locationLabel(type, projectName) {
   if (type === 'warehouse') return 'Warehouse';
-  return project?.name || 'Project';
+  return projectName || 'Project';
 }
 
 export default function MovementHistory() {
@@ -12,25 +12,15 @@ export default function MovementHistory() {
   const [loading, setLoading] = useState(true);
 
   const fetchMovements = useCallback(async () => {
-    const { data } = await supabase
-      .from('tool_movements')
-      .select(`
-        *,
-        tools(name, tool_code),
-        from_project:from_project_id(name),
-        to_project:to_project_id(name)
-      `)
-      .order('moved_at', { ascending: false })
-      .limit(100);
-
-    setMovements(data || []);
+    const data = await api.getMovements();
+    setMovements(data);
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchMovements(); }, [fetchMovements]);
 
-  const handleRealtime = useCallback(() => { fetchMovements(); }, [fetchMovements]);
-  useRealtime('tool_movements', handleRealtime);
+  const refresh = useCallback(() => { fetchMovements(); }, [fetchMovements]);
+  useRealtime('movements', refresh);
 
   if (loading) return <p>Loading...</p>;
 
@@ -56,9 +46,9 @@ export default function MovementHistory() {
             {movements.map((m) => (
               <tr key={m.id}>
                 <td>{new Date(m.moved_at).toLocaleString()}</td>
-                <td>{m.tools?.name} ({m.tools?.tool_code})</td>
-                <td>{locationLabel(m.from_location_type, m.from_project)}</td>
-                <td>{locationLabel(m.to_location_type, m.to_project)}</td>
+                <td>{m.tool_name} ({m.tool_code})</td>
+                <td>{locationLabel(m.from_location_type, m.from_project_name)}</td>
+                <td>{locationLabel(m.to_location_type, m.to_project_name)}</td>
                 <td>{m.moved_by || '—'}</td>
                 <td>{m.note || '—'}</td>
               </tr>

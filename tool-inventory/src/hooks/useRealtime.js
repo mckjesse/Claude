@@ -1,26 +1,47 @@
 import { useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+
+// Single shared EventSource — all hooks share one SSE connection
+let eventSource = null;
+let listeners = new Map(); // event -> Set<callback>
+
+function ensureConnection() {
+  if (eventSource) return;
+  eventSource = new EventSource('/api/events');
+  eventSource.onerror = () => {
+    // Reconnect after 3s on error
+    eventSource?.close();
+    eventSource = null;
+    setTimeout(ensureConnection, 3000);
+  };
+}
+
+function subscribe(event, callback) {
+  ensureConnection();
+  if (!listeners.has(event)) {
+    listeners.set(event, new Set());
+    // Register the SSE listener for this event type
+    eventSource.addEventListener(event, (e) => {
+      const cbs = listeners.get(event);
+      if (cbs) cbs.forEach((cb) => cb(JSON.parse(e.data)));
+    });
+  }
+  listeners.get(event).add(callback);
+}
+
+function unsubscribe(event, callback) {
+  const cbs = listeners.get(event);
+  if (cbs) {
+    cbs.delete(callback);
+  }
+}
 
 /**
- * Subscribe to realtime changes on a Supabase table.
- * Calls `onChange` whenever an INSERT, UPDATE, or DELETE occurs.
- * The callback receives the event type and new/old record.
+ * Subscribe to a realtime event from the server.
+ * `event` matches the event name broadcast by the server (e.g. 'tools', 'movements').
  */
-export function useRealtime(table, onChangeCallback) {
+export function useRealtime(event, callback) {
   useEffect(() => {
-    const channel = supabase
-      .channel(`realtime-${table}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table },
-        (payload) => {
-          onChangeCallback(payload.eventType, payload.new, payload.old);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [table, onChangeCallback]);
+    subscribe(event, callback);
+    return () => unsubscribe(event, callback);
+  }, [event, callback]);
 }
