@@ -1,12 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tool Inventory</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tool Inventory</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="header">
+    <div class="brand">
+      <span class="brand-logo">FOXD</span>
+      <span class="brand-divider"></span>
+      <span class="brand-title">Tool Inventory</span>
+    </div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-page="dashboard">Dashboard</button>
+      <button class="nav-tab" data-page="tools">Tools</button>
+      <button class="nav-tab" data-page="projects">Projects</button>
+      <button class="nav-tab" data-page="allocations">Allocations</button>
+    </nav>
+  </header>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <section class="page active" id="page-dashboard">
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Total Tools</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-warehouse">0</div>
+          <div class="stat-label">In Warehouse</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-assigned">0</div>
+          <div class="stat-label">Assigned</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-projects">0</div>
+          <div class="stat-label">Active Projects</div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <h2>Inventory Overview</h2>
+        <input type="text" id="dashboard-search" class="search-input" placeholder="Search tools or projects...">
+      </div>
+
+      <div id="dashboard-cards" class="cards-grid"></div>
+    </section>
+
+    <!-- TOOLS -->
+    <section class="page" id="page-tools">
+      <h2>Tools Registry</h2>
+      <form id="tool-form" class="form-row">
+        <div class="form-group">
+          <label>Tool Code</label>
+          <input type="text" id="tool-code" placeholder="e.g. EXC-001" required>
+        </div>
+        <div class="form-group">
+          <label>Tool Name</label>
+          <input type="text" id="tool-name" placeholder="e.g. Excavator" required>
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="tool-type">
+            <option value="plant">Plant</option>
+            <option value="equipment">Equipment</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Tool</button>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Location</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tools-tbody"></tbody>
+        </table>
+        <div class="empty-state" id="tools-empty">No tools registered yet.</div>
+      </div>
+    </section>
+
+    <!-- PROJECTS -->
+    <section class="page" id="page-projects">
+      <h2>Projects</h2>
+      <form id="project-form" class="form-row">
+        <div class="form-group">
+          <label>Project Code</label>
+          <input type="text" id="project-code" placeholder="e.g. PRJ-001" required>
+        </div>
+        <div class="form-group">
+          <label>Project Name</label>
+          <input type="text" id="project-name" placeholder="e.g. Main Street Build" required>
+        </div>
+        <div class="form-group">
+          <label>Site Address</label>
+          <input type="text" id="project-address" placeholder="Optional">
+        </div>
+        <button type="submit" class="btn btn-primary">Add Project</button>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Name</th>
+              <th>Site Address</th>
+              <th>Tools</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="projects-tbody"></tbody>
+        </table>
+        <div class="empty-state" id="projects-empty">No projects yet.</div>
+      </div>
+    </section>
+
+    <!-- ALLOCATIONS -->
+    <section class="page" id="page-allocations">
+      <h2>Allocations</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Tool</th>
+              <th>Type</th>
+              <th>Current Location</th>
+              <th>Move To</th>
+            </tr>
+          </thead>
+          <tbody id="allocations-tbody"></tbody>
+        </table>
+        <div class="empty-state" id="allocations-empty">No tools to allocate.</div>
+      </div>
+
+      <h2 style="margin-top:2rem;">Movement History</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Tool</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Moved By</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+        <div class="empty-state" id="history-empty">No movement history yet.</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Confirm modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <p id="modal-message"></p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+        <button class="btn btn-danger" id="modal-confirm">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Move modal (for moved_by / note) -->
+  <div class="modal-overlay" id="move-modal">
+    <div class="modal">
+      <h3 id="move-modal-title">Move Tool</h3>
+      <div class="form-group" style="margin-bottom:0.75rem">
+        <label>Moved By</label>
+        <input type="text" id="move-by" placeholder="Name (optional)">
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label>Note</label>
+        <input type="text" id="move-note" placeholder="Optional note">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="move-cancel">Cancel</button>
+        <button class="btn btn-primary" id="move-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
 </html>
