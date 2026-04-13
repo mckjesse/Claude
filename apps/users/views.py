@@ -53,6 +53,23 @@ class LogoutView(APIView):
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
+class CsrfView(APIView):
+    """
+    GET /api/users/csrf/
+
+    Always returns 200 and sets the ``csrftoken`` cookie. The React app
+    should call this once before the first POST (typically before showing
+    the login form) so the CSRF token is available for the
+    ``X-CSRFToken`` header.
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response({"detail": "CSRF cookie set."})
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class CurrentUserView(APIView):
     """
     GET /api/users/me/
