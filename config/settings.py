@@ -87,19 +87,18 @@ WSGI_APPLICATION = "config.wsgi.application"
 # ---------------------------------------------------------------------------
 # Database
 #
-# If DATABASE_URL is set (the Render convention) we parse it and use the
-# resulting config. Otherwise we fall back to the discrete DB_* variables
-# which are convenient for local development.
+# Production (Render) provides DATABASE_URL when a Postgres instance is
+# linked to the service; parsing that takes precedence. If DATABASE_URL
+# is unset or unparseable we fall back to the discrete DB_* variables
+# used for local development.
 # ---------------------------------------------------------------------------
-DATABASE_URL = os.getenv("DATABASE_URL", "")
-if DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=not DEBUG,
-        )
-    }
+_db_from_url = dj_database_url.config(
+    default="",
+    conn_max_age=600,
+    ssl_require=not DEBUG,
+)
+if _db_from_url:
+    DATABASES = {"default": _db_from_url}
 else:
     DATABASES = {
         "default": {
