@@ -59,10 +59,6 @@
       <h2>Tools Registry</h2>
       <form id="tool-form" class="form-row">
         <div class="form-group">
-          <label>Tool Code</label>
-          <input type="text" id="tool-code" placeholder="e.g. EXC-001" required>
-        </div>
-        <div class="form-group">
           <label>Tool Name</label>
           <input type="text" id="tool-name" placeholder="e.g. Excavator" required>
         </div>
@@ -82,7 +78,6 @@
         <table>
           <thead>
             <tr>
-              <th>Code</th>
               <th>Name</th>
               <th>Type</th>
               <th>Location</th>
@@ -139,7 +134,6 @@
         <table>
           <thead>
             <tr>
-              <th>Code</th>
               <th>Tool</th>
               <th>Type</th>
               <th>Current Location</th>
@@ -206,11 +200,11 @@
   <div class="modal-overlay" id="csv-modal">
     <div class="modal" style="width:560px">
       <h3>Import Tools from CSV</h3>
-      <p>Expected columns: <strong>tool_code, name, type</strong> (plant or equipment)</p>
+      <p>Expected columns: <strong>name, type</strong> (plant or equipment)</p>
       <div id="csv-status"></div>
       <div class="table-wrap" style="max-height:300px;overflow-y:auto;margin:0.75rem 0" id="csv-preview-wrap">
         <table>
-          <thead><tr><th>Code</th><th>Name</th><th>Type</th><th>Status</th></tr></thead>
+          <thead><tr><th>Name</th><th>Type</th><th>Status</th></tr></thead>
           <tbody id="csv-preview-tbody"></tbody>
         </table>
       </div>

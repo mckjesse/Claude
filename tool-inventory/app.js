@@ -66,7 +66,7 @@ function renderDashboard() {
 
   // Warehouse card
   const wTools = warehouseTools.filter(t =>
-    !search || t.name.toLowerCase().includes(search) || t.toolCode.toLowerCase().includes(search) || 'warehouse'.includes(search)
+    !search || t.name.toLowerCase().includes(search) || 'warehouse'.includes(search)
   );
   if (!search || wTools.length > 0 || 'warehouse'.includes(search)) {
     html += buildCard('Warehouse', wTools);
@@ -76,7 +76,7 @@ function renderDashboard() {
   data.projects.forEach(p => {
     const pTools = data.tools
       .filter(t => t.projectId === p.id)
-      .filter(t => !search || t.name.toLowerCase().includes(search) || t.toolCode.toLowerCase().includes(search) || p.name.toLowerCase().includes(search));
+      .filter(t => !search || t.name.toLowerCase().includes(search) || p.name.toLowerCase().includes(search));
     if (!search || pTools.length > 0 || p.name.toLowerCase().includes(search)) {
       html += buildCard(p.name, pTools, p.projectCode);
     }
@@ -98,7 +98,7 @@ function buildCard(name, tools, code) {
   } else {
     tools.forEach(t => {
       toolRows += `<div class="tool-row">
-        <span>${t.name} <span style="color:var(--text-muted)">(${t.toolCode})</span></span>
+        <span>${t.name}</span>
         <span class="badge badge-${t.type}">${t.type}</span>
       </div>`;
     });
@@ -132,7 +132,6 @@ function renderTools() {
       : 'Warehouse';
     const locBadge = t.projectId ? 'badge-assigned' : 'badge-warehouse';
     return `<tr>
-      <td>${t.toolCode}</td>
       <td>${t.name}</td>
       <td><span class="badge badge-${t.type}">${t.type}</span></td>
       <td><span class="badge ${locBadge}">${loc}</span></td>
@@ -143,13 +142,11 @@ function renderTools() {
 
 document.getElementById('tool-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const toolCode = document.getElementById('tool-code').value.trim();
   const name = document.getElementById('tool-name').value.trim();
   const type = document.getElementById('tool-type').value;
-  if (!toolCode || !name) return;
+  if (!name) return;
 
-  await saveData('addTool', { toolCode, name, type });
-  document.getElementById('tool-code').value = '';
+  await saveData('addTool', { name, type });
   document.getElementById('tool-name').value = '';
 });
 
@@ -236,7 +233,6 @@ function renderAllocations() {
     });
 
     return `<tr>
-      <td>${t.toolCode}</td>
       <td>${t.name}</td>
       <td><span class="badge badge-${t.type}">${t.type}</span></td>
       <td><span class="badge ${locBadge}">${currentLoc}</span></td>
@@ -297,7 +293,7 @@ function renderHistory() {
   const sorted = [...data.history].reverse();
   tbody.innerHTML = sorted.map(h => `<tr>
     <td>${new Date(h.date).toLocaleString()}</td>
-    <td>${h.toolName} <span style="color:var(--text-muted)">(${h.toolCode || ''})</span></td>
+    <td>${h.toolName}</td>
     <td>${h.from}</td>
     <td>${h.to}</td>
     <td>${h.movedBy || '—'}</td>
@@ -350,31 +346,29 @@ function parseAndPreviewCSV(text) {
 
   // Parse header to find column indices
   const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
-  const codeIdx = header.findIndex(h => h === 'tool_code' || h === 'toolcode' || h === 'code');
-  const nameIdx = header.findIndex(h => h === 'name' || h === 'tool_name' || h === 'toolname');
+  const nameIdx = header.findIndex(h => h === 'name' || h === 'tool_name' || h === 'toolname' || h === 'tool');
   const typeIdx = header.findIndex(h => h === 'type' || h === 'category');
 
-  if (codeIdx === -1 || nameIdx === -1) {
-    alert('CSV must have "tool_code" and "name" columns. Type column is optional (defaults to equipment).');
+  if (nameIdx === -1) {
+    alert('CSV must have a "name" column. Type column is optional (defaults to equipment).');
     return;
   }
 
-  const existingCodes = new Set(data.tools.map(t => t.toolCode.toLowerCase()));
+  const existingNames = new Set(data.tools.map(t => t.name.toLowerCase()));
   csvRows = [];
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
-    const code = cols[codeIdx]?.trim();
     const name = cols[nameIdx]?.trim();
     let type = (cols[typeIdx] || '').trim().toLowerCase();
     if (type !== 'plant' && type !== 'equipment') type = 'equipment';
 
-    if (!code || !name) continue;
+    if (!name) continue;
 
-    const isDuplicate = existingCodes.has(code.toLowerCase());
-    existingCodes.add(code.toLowerCase()); // catch dupes within the CSV too
+    const isDuplicate = existingNames.has(name.toLowerCase());
+    existingNames.add(name.toLowerCase());
 
-    csvRows.push({ toolCode: code, name, type, duplicate: isDuplicate });
+    csvRows.push({ name, type, duplicate: isDuplicate });
   }
 
   if (csvRows.length === 0) {
@@ -392,7 +386,6 @@ function parseAndPreviewCSV(text) {
     (dupeCount > 0 ? ` &middot; <span style="color:var(--plant-text)">${dupeCount} duplicate (skipped)</span>` : '');
 
   tbody.innerHTML = csvRows.map(r => `<tr${r.duplicate ? ' style="opacity:0.4"' : ''}>
-    <td>${r.toolCode}</td>
     <td>${r.name}</td>
     <td><span class="badge badge-${r.type}">${r.type}</span></td>
     <td>${r.duplicate ? '<span style="color:var(--plant-text)">Duplicate</span>' : '<span style="color:var(--success)">New</span>'}</td>
@@ -405,7 +398,6 @@ function parseAndPreviewCSV(text) {
 
 document.getElementById('csv-import').addEventListener('click', async () => {
   const toImport = csvRows.filter(r => !r.duplicate).map(r => ({
-    toolCode: r.toolCode,
     name: r.name,
     type: r.type,
   }));

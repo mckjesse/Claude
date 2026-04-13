@@ -42,7 +42,6 @@ export default async (req, context) => {
       case "addTool": {
         const tool = {
           id: uid(),
-          toolCode: body.toolCode,
           name: body.name,
           type: body.type,
           projectId: null,
@@ -56,7 +55,6 @@ export default async (req, context) => {
         for (const t of body.tools) {
           data.tools.push({
             id: uid(),
-            toolCode: t.toolCode,
             name: t.name,
             type: t.type,
             projectId: null,
@@ -92,7 +90,6 @@ export default async (req, context) => {
               id: uid(),
               toolId: t.id,
               toolName: t.name,
-              toolCode: t.toolCode,
               from: fromName,
               to: "Warehouse",
               movedBy: null,
@@ -117,7 +114,6 @@ export default async (req, context) => {
           id: uid(),
           toolId: tool.id,
           toolName: tool.name,
-          toolCode: tool.toolCode,
           from: fromName,
           to: toName,
           movedBy: body.movedBy || null,
