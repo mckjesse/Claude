@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login, logout
+from django.middleware.csrf import get_token
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from rest_framework import status
@@ -57,16 +58,22 @@ class CsrfView(APIView):
     """
     GET /api/users/csrf/
 
-    Always returns 200 and sets the ``csrftoken`` cookie. The React app
-    should call this once before the first POST (typically before showing
-    the login form) so the CSRF token is available for the
-    ``X-CSRFToken`` header.
+    Sets the ``csrftoken`` cookie and also returns the token in the
+    JSON body. The cookie is required for Django's CSRF middleware to
+    validate subsequent POSTs, and the body copy lets a cross-origin
+    frontend read the token directly — on a different origin it cannot
+    read the backend's cookies via ``document.cookie``.
     """
 
     permission_classes = [AllowAny]
 
     def get(self, request):
-        return Response({"detail": "CSRF cookie set."})
+        return Response(
+            {
+                "detail": "CSRF cookie set.",
+                "csrfToken": get_token(request),
+            }
+        )
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
