@@ -60,11 +60,11 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    # CorsMiddleware must sit above any middleware that can generate a
-    # response (e.g. WhiteNoise, CommonMiddleware) so that CORS headers
-    # are attached to every response — django-cors-headers docs.
+    # CorsMiddleware must sit at the very top so CORS headers are
+    # attached to every response, including redirects from
+    # SecurityMiddleware and static files served by WhiteNoise.
     "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
     # WhiteNoise serves static files in production. Must come right after
     # SecurityMiddleware and before any middleware that might serve
     # responses.
@@ -191,8 +191,17 @@ if _RENDER_HOST:
 # X-CSRFToken header, so this one is not HttpOnly.
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False
-SESSION_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SAMESITE = "Lax"
+
+# Cross-site session auth: the frontend (foxd-crm.lovable.app) and the
+# backend (crm-backend-pza6.onrender.com) live on different domains, so
+# the browser will only store and send the session + csrftoken cookies
+# when SameSite=None is combined with Secure=True. Set unconditionally
+# so the cookie policy does not depend on DEBUG being flipped correctly
+# at deploy time.
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
 
 # ---------------------------------------------------------------------------
 # Production hardening
@@ -205,17 +214,6 @@ if not DEBUG:
     # original scheme via this header. Without it, Django sees http://
     # and refuses to set secure cookies.
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-
-    # Frontend and backend live on different domains in production
-    # (e.g. foxd-crm.lovable.app + crm-backend-pza6.onrender.com). The
-    # browser will only send the session + csrftoken cookies on those
-    # cross-site requests when SameSite=None is combined with Secure=True.
-    # Local dev keeps the Lax default above because SameSite=None over
-    # plain HTTP is rejected by browsers.
-    SESSION_COOKIE_SAMESITE = "None"
-    CSRF_COOKIE_SAMESITE = "None"
 
     SECURE_HSTS_SECONDS = 60 * 60  # 1 hour — bump once validated in prod
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
