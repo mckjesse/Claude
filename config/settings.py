@@ -16,8 +16,17 @@ load_dotenv(BASE_DIR / ".env")
 
 
 def _csv(value: str) -> list[str]:
-    """Split a comma-separated env value into a list, stripping whitespace."""
-    return [item.strip() for item in value.split(",") if item.strip()]
+    """
+    Split a comma-separated env value into a list, stripping whitespace
+    and any trailing slash from each item. Trailing slashes are a common
+    copy-paste artefact that silently break Django's exact-match origin
+    comparison for CORS and CSRF.
+    """
+    return [
+        item.strip().rstrip("/")
+        for item in value.split(",")
+        if item.strip()
+    ]
 
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-change-me")
