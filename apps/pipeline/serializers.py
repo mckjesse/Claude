@@ -46,6 +46,24 @@ class OpportunityMinimalSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class OpportunityForFollowUpSerializer(OpportunityMinimalSerializer):
+    """Minimal opportunity summary plus the parent company name.
+
+    Used by FollowUpTaskSerializer so the frontend can render a task row
+    with project + builder name without an extra request. Requires the
+    viewset queryset to ``select_related("opportunity__company")`` to
+    avoid an N+1 — already in place on FollowUpTaskViewSet.
+    """
+
+    company_name = serializers.CharField(
+        source="company.name", read_only=True, allow_null=True
+    )
+
+    class Meta(OpportunityMinimalSerializer.Meta):
+        fields = OpportunityMinimalSerializer.Meta.fields + ("company_name",)
+        read_only_fields = fields
+
+
 class QuoteMinimalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quote
@@ -168,7 +186,7 @@ class QuoteSerializer(serializers.ModelSerializer):
 
 
 class FollowUpTaskSerializer(serializers.ModelSerializer):
-    opportunity_detail = OpportunityMinimalSerializer(
+    opportunity_detail = OpportunityForFollowUpSerializer(
         source="opportunity", read_only=True
     )
     assigned_to_user_detail = UserMinimalSerializer(
