@@ -203,6 +203,14 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_SECURE = True
 
+# Explicitly leave the cookie Domain attribute unset. With Domain=None
+# the browser scopes the cookie to the exact host that set it (the
+# backend's Render hostname), which is what we want for cross-site
+# session auth. Setting Domain to anything else — or letting a stale
+# env var override this — makes the browser silently drop the cookie.
+SESSION_COOKIE_DOMAIN = None
+CSRF_COOKIE_DOMAIN = None
+
 # ---------------------------------------------------------------------------
 # Production hardening
 #
