@@ -202,9 +202,11 @@ class QuoteAutomationTests(APITestCase):
         self.assertEqual(resp.data["count"], 1)
         row = resp.data["results"][0]
         self.assertEqual(row["revision_number"], 1)
-        # nested opportunity with project_id alias
-        self.assertEqual(row["opportunity"]["id"], opp_id)
-        self.assertEqual(row["opportunity"]["project_id"], "QA-API")
+        # opportunity is a plain FK id; opportunity_detail carries the
+        # nested summary with the project_id alias.
+        self.assertEqual(row["opportunity"], opp_id)
+        self.assertEqual(row["opportunity_detail"]["id"], opp_id)
+        self.assertEqual(row["opportunity_detail"]["project_id"], "QA-API")
         # friendly aliases
         self.assertEqual(Decimal(row["value"]), Decimal("500000.00"))
         self.assertIn("submitted_at", row)

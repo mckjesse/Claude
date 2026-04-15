@@ -350,6 +350,7 @@ class ActivityLogViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return scoping.scoped_activity(self.request.user).select_related(
             "opportunity",
+            "opportunity__company",
             "created_by_user",
         )
 
@@ -365,7 +366,8 @@ class LossReasonViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return scoping.scoped_loss_reasons(self.request.user).select_related(
-            "opportunity"
+            "opportunity",
+            "opportunity__company",
         )
 
 

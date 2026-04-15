@@ -65,22 +65,29 @@ class OpportunityMinimalSerializer(serializers.ModelSerializer):
 
 class OpportunitySummarySerializer(serializers.ModelSerializer):
     """
-    Canonical nested representation of an Opportunity when referenced
-    from a related model (follow-up, quote, activity log, loss reason).
+    Canonical nested summary of an Opportunity when referenced from a
+    related model (follow-up, quote, activity log, loss reason).
 
     Shape:
         {
-            "id": 7,                        # internal PK, used for FK writes
+            "id": 7,
             "project_name": "ARB Global HQ",
-            "project_id": "PRJ-1042"        # aliased from project_code
+            "project_id": "PRJ-1042",      # aliased from project_code
+            "company_name": "Acme Builders"
         }
+
+    Requires the consumer viewset to select_related("opportunity__company")
+    so ``company_name`` is read from the joined row with no extra query.
     """
 
     project_id = serializers.CharField(source="project_code", read_only=True)
+    company_name = serializers.CharField(
+        source="company.name", read_only=True, allow_null=True
+    )
 
     class Meta:
         model = Opportunity
-        fields = ("id", "project_name", "project_id")
+        fields = ("id", "project_name", "project_id", "company_name")
         read_only_fields = fields
 
 
@@ -149,6 +156,11 @@ class ContactSerializer(serializers.ModelSerializer):
 
 
 class OpportunitySerializer(serializers.ModelSerializer):
+    # project_id is a read-only JSON alias for project_code — the DB
+    # column name stays project_code to avoid collision with Django's
+    # integer id. Writes still use project_code.
+    project_id = serializers.CharField(source="project_code", read_only=True)
+
     company_detail = CompanyForOpportunitySerializer(source="company", read_only=True)
     primary_contact_detail = ContactMinimalSerializer(
         source="primary_contact", read_only=True
@@ -209,6 +221,11 @@ class OpportunitySerializer(serializers.ModelSerializer):
 
 
 class QuoteSerializer(serializers.ModelSerializer):
+    # Writable opportunity stays a plain FK id. Frontends link to the
+    # parent opportunity via the `opportunity` value directly.
+    opportunity_detail = OpportunitySummarySerializer(
+        source="opportunity", read_only=True
+    )
     # Friendly aliases for the frontend:
     # ``value``        — read-only alias for ``quoted_value_ex_gst``
     # ``submitted_at`` — read-only alias for ``submission_date``
@@ -224,14 +241,6 @@ class QuoteSerializer(serializers.ModelSerializer):
         model = Quote
         fields = "__all__"
 
-    def to_representation(self, instance):
-        # Writable ``opportunity`` accepts a PK id on POST/PATCH; on read
-        # the key carries the nested summary so the frontend doesn't
-        # need a second request to display the project.
-        data = super().to_representation(instance)
-        data["opportunity"] = OpportunitySummarySerializer(instance.opportunity).data
-        return data
-
     def validate_revision_number(self, value):
         if value < 1:
             raise serializers.ValidationError("Must be a positive integer (>= 1).")
@@ -239,6 +248,11 @@ class QuoteSerializer(serializers.ModelSerializer):
 
 
 class FollowUpTaskSerializer(serializers.ModelSerializer):
+    # Writable opportunity stays a plain FK id (frontend uses it directly
+    # for routing and cache keys). The nested summary lives beside it.
+    opportunity_detail = OpportunitySummarySerializer(
+        source="opportunity", read_only=True
+    )
     assigned_to_user_detail = UserMinimalSerializer(
         source="assigned_to_user", read_only=True
     )
@@ -252,14 +266,6 @@ class FollowUpTaskSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "assigned_to_user": {"required": True, "allow_null": False},
         }
-
-    def to_representation(self, instance):
-        # Writable ``opportunity`` accepts a PK id on POST/PATCH; on read
-        # the key carries the nested summary so the frontend doesn't
-        # need a second request to display the project.
-        data = super().to_representation(instance)
-        data["opportunity"] = OpportunitySummarySerializer(instance.opportunity).data
-        return data
 
     def get_is_overdue(self, obj):
         if obj.status in (
@@ -283,6 +289,9 @@ class FollowUpTaskSerializer(serializers.ModelSerializer):
 
 
 class ActivityLogSerializer(serializers.ModelSerializer):
+    opportunity_detail = OpportunitySummarySerializer(
+        source="opportunity", read_only=True
+    )
     created_by_user_detail = UserMinimalSerializer(
         source="created_by_user", read_only=True
     )
@@ -291,21 +300,15 @@ class ActivityLogSerializer(serializers.ModelSerializer):
         model = ActivityLog
         fields = "__all__"
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data["opportunity"] = OpportunitySummarySerializer(instance.opportunity).data
-        return data
-
 
 class LossReasonSerializer(serializers.ModelSerializer):
+    opportunity_detail = OpportunitySummarySerializer(
+        source="opportunity", read_only=True
+    )
+
     class Meta:
         model = LossReason
         fields = "__all__"
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data["opportunity"] = OpportunitySummarySerializer(instance.opportunity).data
-        return data
 
 
 # ---------------------------------------------------------------------------
