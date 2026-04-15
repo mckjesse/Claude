@@ -63,6 +63,27 @@ class OpportunityMinimalSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class OpportunitySummarySerializer(serializers.ModelSerializer):
+    """
+    Canonical nested representation of an Opportunity when referenced
+    from a related model (follow-up, quote, activity log, loss reason).
+
+    Shape:
+        {
+            "id": 7,                        # internal PK, used for FK writes
+            "project_name": "ARB Global HQ",
+            "project_id": "PRJ-1042"        # aliased from project_code
+        }
+    """
+
+    project_id = serializers.CharField(source="project_code", read_only=True)
+
+    class Meta:
+        model = Opportunity
+        fields = ("id", "project_name", "project_id")
+        read_only_fields = fields
+
+
 class OpportunityForFollowUpSerializer(OpportunityMinimalSerializer):
     """Minimal opportunity summary plus the parent company name.
 
@@ -188,13 +209,17 @@ class OpportunitySerializer(serializers.ModelSerializer):
 
 
 class QuoteSerializer(serializers.ModelSerializer):
-    opportunity_detail = OpportunityMinimalSerializer(
-        source="opportunity", read_only=True
-    )
-
     class Meta:
         model = Quote
         fields = "__all__"
+
+    def to_representation(self, instance):
+        # Writable ``opportunity`` accepts a PK id on POST/PATCH; on read
+        # the key carries the nested summary so the frontend doesn't
+        # need a second request to display the project.
+        data = super().to_representation(instance)
+        data["opportunity"] = OpportunitySummarySerializer(instance.opportunity).data
+        return data
 
     def validate_revision_number(self, value):
         if value < 1:
@@ -203,9 +228,6 @@ class QuoteSerializer(serializers.ModelSerializer):
 
 
 class FollowUpTaskSerializer(serializers.ModelSerializer):
-    opportunity_detail = OpportunityForFollowUpSerializer(
-        source="opportunity", read_only=True
-    )
     assigned_to_user_detail = UserMinimalSerializer(
         source="assigned_to_user", read_only=True
     )
@@ -219,6 +241,14 @@ class FollowUpTaskSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "assigned_to_user": {"required": True, "allow_null": False},
         }
+
+    def to_representation(self, instance):
+        # Writable ``opportunity`` accepts a PK id on POST/PATCH; on read
+        # the key carries the nested summary so the frontend doesn't
+        # need a second request to display the project.
+        data = super().to_representation(instance)
+        data["opportunity"] = OpportunitySummarySerializer(instance.opportunity).data
+        return data
 
     def get_is_overdue(self, obj):
         if obj.status in (
@@ -250,15 +280,21 @@ class ActivityLogSerializer(serializers.ModelSerializer):
         model = ActivityLog
         fields = "__all__"
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["opportunity"] = OpportunitySummarySerializer(instance.opportunity).data
+        return data
+
 
 class LossReasonSerializer(serializers.ModelSerializer):
-    opportunity_detail = OpportunityMinimalSerializer(
-        source="opportunity", read_only=True
-    )
-
     class Meta:
         model = LossReason
         fields = "__all__"
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["opportunity"] = OpportunitySummarySerializer(instance.opportunity).data
+        return data
 
 
 # ---------------------------------------------------------------------------
