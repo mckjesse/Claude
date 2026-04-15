@@ -32,6 +32,23 @@ class CompanyMinimalSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class CompanyForOpportunitySerializer(CompanyMinimalSerializer):
+    """Minimal company summary plus contact details.
+
+    Used by OpportunitySerializer.company_detail so the opportunity page
+    can render the builder/client name and contact details without an
+    extra request. Other consumers of CompanyMinimalSerializer keep the
+    narrower shape.
+    """
+
+    class Meta(CompanyMinimalSerializer.Meta):
+        fields = CompanyMinimalSerializer.Meta.fields + (
+            "primary_email",
+            "primary_phone",
+        )
+        read_only_fields = fields
+
+
 class ContactMinimalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
@@ -111,7 +128,7 @@ class ContactSerializer(serializers.ModelSerializer):
 
 
 class OpportunitySerializer(serializers.ModelSerializer):
-    company_detail = CompanyMinimalSerializer(source="company", read_only=True)
+    company_detail = CompanyForOpportunitySerializer(source="company", read_only=True)
     primary_contact_detail = ContactMinimalSerializer(
         source="primary_contact", read_only=True
     )
