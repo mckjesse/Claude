@@ -209,6 +209,17 @@ class OpportunitySerializer(serializers.ModelSerializer):
 
 
 class QuoteSerializer(serializers.ModelSerializer):
+    # Friendly aliases for the frontend:
+    # ``value``        — read-only alias for ``quoted_value_ex_gst``
+    # ``submitted_at`` — read-only alias for ``submission_date``
+    value = serializers.DecimalField(
+        source="quoted_value_ex_gst",
+        max_digits=14,
+        decimal_places=2,
+        read_only=True,
+    )
+    submitted_at = serializers.DateField(source="submission_date", read_only=True)
+
     class Meta:
         model = Quote
         fields = "__all__"

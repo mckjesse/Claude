@@ -41,6 +41,7 @@ from .serializers import (
 )
 from .services import activity
 from .services import dashboard as dashboard_service
+from .services import quote_automation
 from .services import reports as reports_service
 from .services import scoping
 
@@ -162,7 +163,14 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         self._enforce_admin_field_protection(serializer)
         with transaction.atomic():
             opp = serializer.save()
-            activity.opportunity_created(opp, self.request.user)
+            user = self.request.user
+            activity.opportunity_created(opp, user)
+            quote_automation.sync_quote_from_opportunity(
+                opp,
+                user=user,
+                old_stage=None,
+                old_value=None,
+            )
 
     def perform_update(self, serializer):
         self._enforce_admin_field_protection(serializer)
@@ -171,6 +179,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             instance, activity.OPPORTUNITY_TRACKED_FIELDS
         )
         old_stage = instance.stage
+        old_value = instance.estimated_contract_value
         with transaction.atomic():
             opp = serializer.save()
             changed = activity.diff(opp, baseline)
@@ -180,6 +189,12 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                     opp, user, old_stage, opp.stage
                 )
             activity.opportunity_updated(opp, user, changed)
+            quote_automation.sync_quote_from_opportunity(
+                opp,
+                user=user,
+                old_stage=old_stage,
+                old_value=old_value,
+            )
 
     @action(detail=True, methods=["post"])
     def mark_won(self, request, pk=None):
