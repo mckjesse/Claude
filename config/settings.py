@@ -65,10 +65,6 @@ MIDDLEWARE = [
     # SecurityMiddleware and static files served by WhiteNoise.
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    # CorsMiddleware must sit above any middleware that can generate a
-    # response (e.g. WhiteNoise, CommonMiddleware) so that CORS headers
-    # are attached to every response — django-cors-headers docs.
-    "corsheaders.middleware.CorsMiddleware",
     # WhiteNoise serves static files in production. Must come right after
     # SecurityMiddleware and before any middleware that might serve
     # responses.
