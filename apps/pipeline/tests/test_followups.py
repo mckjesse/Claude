@@ -23,7 +23,10 @@ class FollowUpCompletionTests(APITestCase):
             name="FUCo", company_type=Company.Type.BUILDER,
         )
         cls.opp = Opportunity.objects.create(
-            project_name="FUOpp", company=cls.company, estimator=cls.director,
+            project_name="FUOpp",
+            project_code="FU-001",
+            company=cls.company,
+            estimator=cls.director,
         )
 
     def setUp(self):
@@ -103,6 +106,7 @@ class FollowUpEstimatorRelevanceTests(APITestCase):
         # Relevant for Eli — Eli is the estimator.
         cls.relevant_opp = Opportunity.objects.create(
             project_name="Eli Opp",
+            project_code="REL-ELI",
             company=cls.company,
             estimator=cls.eli,
             assigned_user=cls.eli,
@@ -110,6 +114,7 @@ class FollowUpEstimatorRelevanceTests(APITestCase):
         # Relevant for Frank only — Eli is neither estimator nor assigned.
         cls.irrelevant_opp = Opportunity.objects.create(
             project_name="Frank Opp",
+            project_code="REL-FRANK",
             company=cls.company,
             estimator=cls.frank,
             assigned_user=cls.frank,

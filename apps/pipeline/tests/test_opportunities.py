@@ -48,6 +48,38 @@ class OpportunityCreationTests(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("company", resp.data)
 
+    def test_create_opportunity_requires_project_code(self):
+        # project_code is the Project ID — the canonical human identifier.
+        resp = self.client.post(
+            "/api/opportunities/",
+            {"project_name": "No ID", "company": self.company.id},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("project_code", resp.data)
+
+    def test_project_code_must_be_unique(self):
+        self.client.post(
+            "/api/opportunities/",
+            {
+                "project_name": "First",
+                "project_code": "UNIQ-1",
+                "company": self.company.id,
+            },
+            format="json",
+        )
+        resp = self.client.post(
+            "/api/opportunities/",
+            {
+                "project_name": "Dupe",
+                "project_code": "UNIQ-1",
+                "company": self.company.id,
+            },
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("project_code", resp.data)
+
 
 class OpportunityValidationTests(APITestCase):
     @classmethod
@@ -63,6 +95,7 @@ class OpportunityValidationTests(APITestCase):
         self.client.force_authenticate(user=self.director)
         self.opp = Opportunity.objects.create(
             project_name="Validation Target",
+            project_code="VAL-001",
             company=self.company,
             estimator=self.director,
         )
@@ -100,6 +133,7 @@ class MarkWonTests(APITestCase):
         self.client.force_authenticate(user=self.director)
         self.opp = Opportunity.objects.create(
             project_name="WinTarget",
+            project_code="WIN-001",
             company=self.company,
             estimator=self.director,
         )
@@ -148,6 +182,7 @@ class MarkLostTests(APITestCase):
         self.client.force_authenticate(user=self.director)
         self.opp = Opportunity.objects.create(
             project_name="LossTarget",
+            project_code="LOSS-001",
             company=self.company,
             estimator=self.director,
         )

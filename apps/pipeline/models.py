@@ -112,7 +112,10 @@ class Opportunity(TimestampedModel):
         CLOSED = "closed", "Closed"
 
     project_name = models.CharField(max_length=255)
-    project_code = models.CharField(max_length=100, blank=True)
+    # project_code is the human-facing "Project ID" displayed throughout
+    # the UI (labels, reports, URLs). The internal primary key `id`
+    # remains the technical identifier for foreign keys and relations.
+    project_code = models.CharField(max_length=100, unique=True)
 
     company = models.ForeignKey(
         Company,

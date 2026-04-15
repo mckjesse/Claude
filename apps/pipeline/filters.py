@@ -30,6 +30,7 @@ class OpportunityFilter(django_filters.FilterSet):
     class Meta:
         model = Opportunity
         fields = [
+            "project_code",   # Project ID — exact-match lookup
             "company",
             "estimator",
             "assigned_user",
