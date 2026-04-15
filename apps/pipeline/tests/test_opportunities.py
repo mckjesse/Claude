@@ -167,6 +167,19 @@ class MarkWonTests(APITestCase):
         self.assertEqual(self.opp.status, Opportunity.Status.CLOSED)
         self.assertEqual(self.opp.final_awarded_value, Decimal("500000.00"))
 
+    def test_direct_patch_to_won_auto_closes_status(self):
+        # PATCH stage=won with final_awarded_value should still force
+        # status=closed, even though this path bypasses mark_won.
+        resp = self.client.patch(
+            f"/api/opportunities/{self.opp.id}/",
+            {"stage": Opportunity.Stage.WON, "final_awarded_value": "123000.00"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.opp.refresh_from_db()
+        self.assertEqual(self.opp.stage, Opportunity.Stage.WON)
+        self.assertEqual(self.opp.status, Opportunity.Status.CLOSED)
+
 
 class MarkLostTests(APITestCase):
     @classmethod
@@ -246,3 +259,36 @@ class MarkLostTests(APITestCase):
         lr = LossReason.objects.get(opportunity=self.opp)
         self.assertEqual(lr.reason_category, LossReason.Category.SCOPE)
         self.assertEqual(lr.competitor_name, "Updated Rival")
+
+    def test_direct_patch_to_lost_is_rejected_without_existing_reason(self):
+        # Direct PATCH must not be able to set stage=lost without a
+        # LossReason being recorded. Callers are forced through
+        # POST /mark_lost/.
+        resp = self.client.patch(
+            f"/api/opportunities/{self.opp.id}/",
+            {"stage": Opportunity.Stage.LOST},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("stage", resp.data)
+        self.opp.refresh_from_db()
+        # State is unchanged
+        self.assertNotEqual(self.opp.stage, Opportunity.Stage.LOST)
+
+    def test_direct_patch_to_lost_works_when_reason_already_exists(self):
+        # Having already marked lost via the canonical action, a
+        # follow-up PATCH that re-states stage=lost is harmless.
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/mark_lost/",
+            {"reason_category": LossReason.Category.PRICE},
+            format="json",
+        )
+        resp = self.client.patch(
+            f"/api/opportunities/{self.opp.id}/",
+            {"stage": Opportunity.Stage.LOST, "notes": "post-loss note"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.opp.refresh_from_db()
+        self.assertEqual(self.opp.stage, Opportunity.Stage.LOST)
+        self.assertEqual(self.opp.status, Opportunity.Status.CLOSED)

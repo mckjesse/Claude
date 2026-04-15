@@ -261,6 +261,33 @@ class OpportunitySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"final_awarded_value": "Required when stage is 'won'."}
             )
+
+        # Marking lost via a direct PATCH would leave the opportunity
+        # without a LossReason. Force callers through the mark_lost
+        # action, which requires a reason_category and writes the
+        # LossReason atomically.
+        if stage == Opportunity.Stage.LOST:
+            has_reason = self.instance is not None and hasattr(
+                self.instance, "loss_reason"
+            )
+            if not has_reason:
+                raise serializers.ValidationError(
+                    {
+                        "stage": (
+                            "An opportunity can only be moved to 'lost' via "
+                            "POST /api/opportunities/{id}/mark_lost/ — a "
+                            "loss reason must be recorded at the same time."
+                        )
+                    }
+                )
+
+        # Terminal stages always imply closed status. Auto-set it here
+        # so every path through the serializer (direct PATCH, POST)
+        # lands in a consistent state — the mark_won / mark_lost actions
+        # already force closed on their own path.
+        if stage in (Opportunity.Stage.WON, Opportunity.Stage.LOST):
+            attrs["status"] = Opportunity.Status.CLOSED
+
         return attrs
 
 
