@@ -12,9 +12,14 @@ Business rule:
 Value source:
 - For won opportunities the authoritative amount is ``final_awarded_value``.
 - For every other eligible stage it is ``estimated_contract_value``.
+
+Logging: this module logs at INFO on every call so production
+deployments can prove the trigger fired and see the decision branch
+taken. Greppable prefix: ``quote_automation``.
 """
 from __future__ import annotations
 
+import logging
 from decimal import Decimal
 from typing import Optional
 
@@ -22,6 +27,8 @@ from apps.users.models import AppUser
 
 from ..models import Opportunity, Quote
 from . import activity
+
+logger = logging.getLogger(__name__)
 
 _ELIGIBLE_STAGES: set[str] = {
     Opportunity.Stage.PRICING,
@@ -47,35 +54,50 @@ def sync_quote_from_opportunity(
     Ensure the Quote list for ``opportunity`` reflects its current
     pricing state. Returns the newly created Quote if one was written,
     else ``None``.
-
-    Idempotent — safe to call from any save path. On ordinary edits
-    that change neither the stage (into an eligible one) nor the
-    quoting value, this is a no-op.
     """
-    if opportunity.stage not in _ELIGIBLE_STAGES:
+    pk = opportunity.pk
+    stage = opportunity.stage
+
+    if stage not in _ELIGIBLE_STAGES:
+        logger.info(
+            "quote_automation: skip opp=%s stage=%s reason=ineligible_stage",
+            pk, stage,
+        )
         return None
 
     value = _value_for_quote(opportunity)
     if value is None or value <= 0:
+        logger.info(
+            "quote_automation: skip opp=%s stage=%s reason=value_missing_or_zero value=%r",
+            pk, stage, value,
+        )
         return None
 
     latest = opportunity.quotes.order_by("-revision_number").first()
 
-    # First quote.
     if latest is None:
+        logger.info(
+            "quote_automation: creating rev=1 opp=%s stage=%s value=%s",
+            pk, stage, value,
+        )
         return _create_quote(opportunity, revision=1, value=value, user=user)
 
-    # Only create a new revision when the quoting value has materially
-    # changed. Strict Decimal equality — deliberate; "materially" is
-    # whatever the user-facing value is.
     if value != latest.quoted_value_ex_gst:
+        new_rev = latest.revision_number + 1
+        logger.info(
+            "quote_automation: creating rev=%s opp=%s stage=%s "
+            "old_value=%s new_value=%s",
+            new_rev, pk, stage, latest.quoted_value_ex_gst, value,
+        )
         return _create_quote(
-            opportunity,
-            revision=latest.revision_number + 1,
-            value=value,
-            user=user,
+            opportunity, revision=new_rev, value=value, user=user
         )
 
+    logger.info(
+        "quote_automation: skip opp=%s stage=%s reason=value_unchanged value=%s "
+        "latest_rev=%s",
+        pk, stage, value, latest.revision_number,
+    )
     return None
 
 
@@ -105,8 +127,10 @@ def _create_quote(
             else None
         ),
     )
-    # Keep the opportunity's activity feed consistent with manual quote
-    # creation. Safe even when user is None (an unauthenticated path
-    # would never reach here, but the helper tolerates it anyway).
     activity.quote_created(quote, user)
+    logger.info(
+        "quote_automation: wrote Quote(id=%s, opp=%s, rev=%s, value=%s, status=%s)",
+        quote.id, opp.pk, quote.revision_number, value, quote_status,
+    )
     return quote
+
