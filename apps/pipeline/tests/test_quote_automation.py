@@ -154,7 +154,8 @@ class QuoteAutomationTests(APITestCase):
             quotes.last().quoted_value_ex_gst, Decimal("600000.00")
         )
 
-    def test_resubmission_creates_next_revision_without_value_change(self):
+    def test_resubmission_without_value_change_does_not_create_new_revision(self):
+        # Rule: new revisions are value-driven, not transition-driven.
         opp_id = self._create_opp(
             project_code="QA-R",
             stage=Opportunity.Stage.PRICING,
@@ -165,30 +166,78 @@ class QuoteAutomationTests(APITestCase):
             {"stage": Opportunity.Stage.SUBMITTED},
             format="json",
         )
-        quotes = self._quotes(opp_id)
-        self.assertEqual(quotes.count(), 2)
-        self.assertEqual(quotes.last().quote_status, Quote.QuoteStatus.SUBMITTED)
+        self.assertEqual(self._quotes(opp_id).count(), 1)
 
-    def test_second_resubmission_after_followup_creates_another_revision(self):
+    def test_zero_value_does_not_create_quote(self):
         opp_id = self._create_opp(
-            project_code="QA-R2",
-            stage=Opportunity.Stage.SUBMITTED,
+            project_code="QA-Z",
+            stage=Opportunity.Stage.PRICING,
+            value=Decimal("0.00"),
+        )
+        self.assertEqual(self._quotes(opp_id).count(), 0)
+
+    def test_mark_won_creates_first_quote_when_none_exists(self):
+        # Jump straight from lead → won via mark_won: the quote should
+        # still be created with the awarded value.
+        opp_id = self._create_opp(
+            project_code="QA-MW",
+            stage=Opportunity.Stage.LEAD,
             value=Decimal("500000.00"),
         )
-        # submitted → follow_up (no new quote — ineligible stage)
-        self.client.patch(
-            f"/api/opportunities/{opp_id}/",
-            {"stage": Opportunity.Stage.FOLLOW_UP},
+        self.assertEqual(self._quotes(opp_id).count(), 0)
+        resp = self.client.post(
+            f"/api/opportunities/{opp_id}/mark_won/",
+            {"final_awarded_value": "475000.00"},
             format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        quotes = self._quotes(opp_id)
+        self.assertEqual(quotes.count(), 1)
+        q = quotes.first()
+        self.assertEqual(q.quoted_value_ex_gst, Decimal("475000.00"))
+        self.assertEqual(q.quote_status, Quote.QuoteStatus.ACCEPTED)
+
+    def test_mark_won_creates_new_revision_when_awarded_value_differs(self):
+        # Opp already has a pricing-stage rev 1 at 500k. Marking won at
+        # 475k should add rev 2 using the awarded value.
+        opp_id = self._create_opp(
+            project_code="QA-MW2",
+            stage=Opportunity.Stage.PRICING,
+            value=Decimal("500000.00"),
         )
         self.assertEqual(self._quotes(opp_id).count(), 1)
-        # follow_up → submitted (resubmission)
-        self.client.patch(
-            f"/api/opportunities/{opp_id}/",
-            {"stage": Opportunity.Stage.SUBMITTED},
+        self.client.post(
+            f"/api/opportunities/{opp_id}/mark_won/",
+            {"final_awarded_value": "475000.00"},
             format="json",
         )
-        self.assertEqual(self._quotes(opp_id).count(), 2)
+        quotes = self._quotes(opp_id)
+        self.assertEqual(quotes.count(), 2)
+        self.assertEqual(
+            quotes.last().quoted_value_ex_gst, Decimal("475000.00")
+        )
+        self.assertEqual(
+            quotes.last().quote_status, Quote.QuoteStatus.ACCEPTED
+        )
+
+    def test_mark_lost_creates_first_quote_when_none_exists(self):
+        opp_id = self._create_opp(
+            project_code="QA-ML",
+            stage=Opportunity.Stage.LEAD,
+            value=Decimal("500000.00"),
+        )
+        self.assertEqual(self._quotes(opp_id).count(), 0)
+        resp = self.client.post(
+            f"/api/opportunities/{opp_id}/mark_lost/",
+            {"reason_category": "price"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        quotes = self._quotes(opp_id)
+        self.assertEqual(quotes.count(), 1)
+        self.assertEqual(
+            quotes.first().quote_status, Quote.QuoteStatus.UNSUCCESSFUL
+        )
 
     # ----- API shape check --------------------------------------------
     def test_quotes_endpoint_returns_auto_created_quote(self):

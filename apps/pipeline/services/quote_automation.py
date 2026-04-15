@@ -2,16 +2,16 @@
 Automatic Quote creation driven by Opportunity workflow.
 
 Business rule:
-- When an Opportunity enters stage "pricing" or "submitted" and has a
-  value, keep a Quote record in sync with the opportunity.
-- First time an eligible opportunity reaches these stages:
-  create revision 1.
-- Subsequent times:
-  only create a new revision when the quote value changes or when the
-  opportunity transitions INTO "submitted" from another stage
-  (a resubmission event).
-- Ordinary edits that change neither the value nor the eligible stage
-  do not create duplicates.
+- An opportunity whose stage is one of {pricing, submitted, won, lost}
+  and whose quoting value is > 0 always has at least one Quote.
+  * First time: revision 1.
+  * Subsequent times: a new revision only when the quoting value
+    differs from the latest quote. Unrelated edits never create a
+    duplicate.
+
+Value source:
+- For won opportunities the authoritative amount is ``final_awarded_value``.
+- For every other eligible stage it is ``estimated_contract_value``.
 """
 from __future__ import annotations
 
@@ -26,6 +26,15 @@ from . import activity
 _ELIGIBLE_STAGES: set[str] = {
     Opportunity.Stage.PRICING,
     Opportunity.Stage.SUBMITTED,
+    Opportunity.Stage.WON,
+    Opportunity.Stage.LOST,
+}
+
+_STATUS_FOR_STAGE: dict[str, str] = {
+    Opportunity.Stage.PRICING: Quote.QuoteStatus.DRAFT,
+    Opportunity.Stage.SUBMITTED: Quote.QuoteStatus.SUBMITTED,
+    Opportunity.Stage.WON: Quote.QuoteStatus.ACCEPTED,
+    Opportunity.Stage.LOST: Quote.QuoteStatus.UNSUCCESSFUL,
 }
 
 
@@ -33,71 +42,71 @@ def sync_quote_from_opportunity(
     opportunity: Opportunity,
     *,
     user: Optional[AppUser] = None,
-    old_stage: Optional[str] = None,
-    old_value: Optional[Decimal] = None,
 ) -> Optional[Quote]:
     """
-    Ensure the Quote list for ``opportunity`` reflects the current
-    pricing workflow. Returns the newly created Quote if one was
-    created, else None.
+    Ensure the Quote list for ``opportunity`` reflects its current
+    pricing state. Returns the newly created Quote if one was written,
+    else ``None``.
 
-    Callers pass ``old_stage`` and ``old_value`` (the values before
-    ``opportunity`` was saved) so we can detect resubmission and
-    material value changes without doing our own pre-save snapshot.
+    Idempotent — safe to call from any save path. On ordinary edits
+    that change neither the stage (into an eligible one) nor the
+    quoting value, this is a no-op.
     """
     if opportunity.stage not in _ELIGIBLE_STAGES:
         return None
-    if opportunity.estimated_contract_value is None:
+
+    value = _value_for_quote(opportunity)
+    if value is None or value <= 0:
         return None
 
-    latest = (
-        opportunity.quotes.order_by("-revision_number").first()
-    )
+    latest = opportunity.quotes.order_by("-revision_number").first()
 
-    # First quote for this opportunity.
+    # First quote.
     if latest is None:
-        return _create_quote(opportunity, revision=1, user=user)
+        return _create_quote(opportunity, revision=1, value=value, user=user)
 
-    value_changed = (
-        opportunity.estimated_contract_value != latest.quoted_value_ex_gst
-    )
-    transitioned_into_submitted = (
-        opportunity.stage == Opportunity.Stage.SUBMITTED
-        and old_stage != Opportunity.Stage.SUBMITTED
-    )
-    if value_changed or transitioned_into_submitted:
+    # Only create a new revision when the quoting value has materially
+    # changed. Strict Decimal equality — deliberate; "materially" is
+    # whatever the user-facing value is.
+    if value != latest.quoted_value_ex_gst:
         return _create_quote(
             opportunity,
             revision=latest.revision_number + 1,
+            value=value,
             user=user,
         )
 
     return None
 
 
+def _value_for_quote(opp: Opportunity) -> Optional[Decimal]:
+    if opp.stage == Opportunity.Stage.WON and opp.final_awarded_value is not None:
+        return opp.final_awarded_value
+    return opp.estimated_contract_value
+
+
 def _create_quote(
     opp: Opportunity,
     *,
     revision: int,
+    value: Decimal,
     user: Optional[AppUser],
 ) -> Quote:
-    is_submitted_stage = opp.stage == Opportunity.Stage.SUBMITTED
+    quote_status = _STATUS_FOR_STAGE.get(opp.stage, Quote.QuoteStatus.DRAFT)
     quote = Quote.objects.create(
         opportunity=opp,
         revision_number=revision,
-        quoted_value_ex_gst=opp.estimated_contract_value,
+        quoted_value_ex_gst=value,
         quote_reference=f"{opp.project_code}-R{revision}",
-        quote_status=(
-            Quote.QuoteStatus.SUBMITTED
-            if is_submitted_stage
-            else Quote.QuoteStatus.DRAFT
-        ),
+        quote_status=quote_status,
         submission_date=(
-            opp.submission_date if is_submitted_stage else None
+            opp.submission_date
+            if opp.stage == Opportunity.Stage.SUBMITTED
+            else None
         ),
     )
     # Keep the opportunity's activity feed consistent with manual quote
-    # creation. Doing it here (not via QuoteViewSet.perform_create) is
-    # correct because the service is the single creation path.
+    # creation. Safe even when user is None (an unauthenticated path
+    # would never reach here, but the helper tolerates it anyway).
     activity.quote_created(quote, user)
     return quote

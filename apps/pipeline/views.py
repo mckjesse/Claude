@@ -170,12 +170,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             opp = serializer.save()
             user = self.request.user
             activity.opportunity_created(opp, user)
-            quote_automation.sync_quote_from_opportunity(
-                opp,
-                user=user,
-                old_stage=None,
-                old_value=None,
-            )
+            quote_automation.sync_quote_from_opportunity(opp, user=user)
 
     def perform_update(self, serializer):
         self._enforce_admin_field_protection(serializer)
@@ -184,7 +179,6 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             instance, activity.OPPORTUNITY_TRACKED_FIELDS
         )
         old_stage = instance.stage
-        old_value = instance.estimated_contract_value
         with transaction.atomic():
             opp = serializer.save()
             changed = activity.diff(opp, baseline)
@@ -194,12 +188,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                     opp, user, old_stage, opp.stage
                 )
             activity.opportunity_updated(opp, user, changed)
-            quote_automation.sync_quote_from_opportunity(
-                opp,
-                user=user,
-                old_stage=old_stage,
-                old_value=old_value,
-            )
+            quote_automation.sync_quote_from_opportunity(opp, user=user)
 
     @action(detail=True, methods=["post"])
     def mark_won(self, request, pk=None):
@@ -221,6 +210,9 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             activity.opportunity_marked_won(
                 opp, request.user, opp.final_awarded_value
             )
+            quote_automation.sync_quote_from_opportunity(
+                opp, user=request.user
+            )
         return Response(self.get_serializer(opp).data)
 
     @action(detail=True, methods=["post"])
@@ -241,6 +233,9 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                 request.user,
                 payload.validated_data["reason_category"],
                 payload.validated_data.get("competitor_name", ""),
+            )
+            quote_automation.sync_quote_from_opportunity(
+                opp, user=request.user
             )
         return Response(self.get_serializer(opp).data)
 
