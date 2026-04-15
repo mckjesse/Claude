@@ -91,6 +91,29 @@ class OpportunitySummarySerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class LossReasonSummarySerializer(serializers.ModelSerializer):
+    """
+    Embedded view of a LossReason, used inline on an Opportunity so the
+    frontend can render loss-reason reporting without an extra request.
+    """
+
+    reason_label = serializers.CharField(
+        source="get_reason_category_display", read_only=True
+    )
+
+    class Meta:
+        model = LossReason
+        fields = (
+            "reason_category",
+            "reason_label",
+            "reason_detail",
+            "competitor_name",
+            "price_gap_notes",
+            "recorded_at",
+        )
+        read_only_fields = fields
+
+
 class OpportunityForFollowUpSerializer(OpportunityMinimalSerializer):
     """Minimal opportunity summary plus the parent company name.
 
@@ -172,6 +195,14 @@ class OpportunitySerializer(serializers.ModelSerializer):
     latest_quote = serializers.SerializerMethodField()
     next_followup = serializers.SerializerMethodField()
 
+    # Loss reason exposed inline so the frontend can group lost
+    # opportunities by category without a second request. Both fields
+    # are null when no LossReason exists for this opportunity.
+    #   loss_reason        — category key (e.g. "price") for grouping
+    #   loss_reason_detail — full nested summary with the display label
+    loss_reason = serializers.SerializerMethodField()
+    loss_reason_detail = serializers.SerializerMethodField()
+
     class Meta:
         model = Opportunity
         fields = "__all__"
@@ -196,6 +227,19 @@ class OpportunitySerializer(serializers.ModelSerializer):
             return None
         active.sort(key=lambda t: (t.due_date, t.due_time or dtime.min))
         return FollowUpTaskMinimalSerializer(active[0]).data
+
+    def get_loss_reason(self, obj):
+        # hasattr() correctly returns False for reverse OneToOne when no
+        # LossReason row exists — Django's RelatedObjectDoesNotExist
+        # extends AttributeError precisely for this purpose.
+        if not hasattr(obj, "loss_reason"):
+            return None
+        return obj.loss_reason.reason_category
+
+    def get_loss_reason_detail(self, obj):
+        if not hasattr(obj, "loss_reason"):
+            return None
+        return LossReasonSummarySerializer(obj.loss_reason).data
 
     # --- validation ------------------------------------------------------
     def validate_probability_percent(self, value):

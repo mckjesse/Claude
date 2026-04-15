@@ -134,6 +134,11 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                 "primary_contact",
                 "estimator",
                 "assigned_user",
+                # Reverse OneToOne to LossReason. Pulling it into the
+                # same query avoids an extra lookup per row when the
+                # frontend renders loss-reason reporting from the
+                # opportunity list.
+                "loss_reason",
             )
             .prefetch_related("quotes", "tasks")
         )
