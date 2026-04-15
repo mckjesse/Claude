@@ -34,6 +34,7 @@ class RolePermissionMatrixTests(APITestCase):
         )
         cls.opp = Opportunity.objects.create(
             project_name="Shared Opp",
+            project_code="PERM-001",
             company=cls.company,
             estimator=cls.director,
         )

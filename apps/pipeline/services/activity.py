@@ -42,8 +42,13 @@ OPPORTUNITY_TRACKED_FIELDS = (
     "submission_date",
     "expected_award_date",
     "scope_summary",
+    "inclusions_summary",
+    "exclusions_summary",
+    "notes",
     "sector",
     "tender_type",
+    "opportunity_source",
+    "site_suburb",
 )
 
 QUOTE_TRACKED_FIELDS = (
@@ -88,8 +93,13 @@ FIELD_LABELS: dict[str, str] = {
     "submission_date": "submission date",
     "expected_award_date": "expected award date",
     "scope_summary": "scope summary",
+    "inclusions_summary": "inclusions",
+    "exclusions_summary": "exclusions",
+    "notes": "notes",
     "sector": "sector",
     "tender_type": "tender type",
+    "opportunity_source": "opportunity source",
+    "site_suburb": "site suburb",
     # Quote
     "quote_reference": "quote reference",
     "quoted_value_ex_gst": "quoted value",

@@ -24,6 +24,7 @@ class DashboardAuthAndShapeTests(APITestCase):
         )
         Opportunity.objects.create(
             project_name="Open 1",
+            project_code="DSH-001",
             company=cls.company,
             estimator=cls.director,
             estimated_contract_value=Decimal("1000000.00"),
@@ -31,6 +32,7 @@ class DashboardAuthAndShapeTests(APITestCase):
         )
         Opportunity.objects.create(
             project_name="Open 2",
+            project_code="DSH-002",
             company=cls.company,
             estimator=cls.director,
             estimated_contract_value=Decimal("500000.00"),
@@ -93,6 +95,7 @@ class DashboardRowLevelVisibilityTests(APITestCase):
 
         Opportunity.objects.create(
             project_name="Live pricing",
+            project_code="VIS-001",
             company=cls.company,
             estimator=cls.director,
             estimated_contract_value=Decimal("750000.00"),
@@ -100,6 +103,7 @@ class DashboardRowLevelVisibilityTests(APITestCase):
         )
         Opportunity.objects.create(
             project_name="Live submitted",
+            project_code="VIS-002",
             company=cls.company,
             estimator=cls.director,
             estimated_contract_value=Decimal("900000.00"),
@@ -107,6 +111,7 @@ class DashboardRowLevelVisibilityTests(APITestCase):
         )
         Opportunity.objects.create(
             project_name="Won deal",
+            project_code="VIS-003",
             company=cls.company,
             estimator=cls.director,
             estimated_contract_value=Decimal("600000.00"),
@@ -116,6 +121,7 @@ class DashboardRowLevelVisibilityTests(APITestCase):
         )
         Opportunity.objects.create(
             project_name="Lost deal",
+            project_code="VIS-004",
             company=cls.company,
             estimator=cls.director,
             estimated_contract_value=Decimal("400000.00"),

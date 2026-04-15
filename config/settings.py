@@ -60,6 +60,10 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # CorsMiddleware must sit at the very top so CORS headers are
+    # attached to every response, including redirects from
+    # SecurityMiddleware and static files served by WhiteNoise.
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     # CorsMiddleware must sit above any middleware that can generate a
     # response (e.g. WhiteNoise, CommonMiddleware) so that CORS headers
@@ -191,8 +195,25 @@ if _RENDER_HOST:
 # X-CSRFToken header, so this one is not HttpOnly.
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False
-SESSION_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SAMESITE = "Lax"
+
+# Cross-site session auth: the frontend (foxd-crm.lovable.app) and the
+# backend (crm-backend-pza6.onrender.com) live on different domains, so
+# the browser will only store and send the session + csrftoken cookies
+# when SameSite=None is combined with Secure=True. Set unconditionally
+# so the cookie policy does not depend on DEBUG being flipped correctly
+# at deploy time.
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
+
+# Explicitly leave the cookie Domain attribute unset. With Domain=None
+# the browser scopes the cookie to the exact host that set it (the
+# backend's Render hostname), which is what we want for cross-site
+# session auth. Setting Domain to anything else — or letting a stale
+# env var override this — makes the browser silently drop the cookie.
+SESSION_COOKIE_DOMAIN = None
+CSRF_COOKIE_DOMAIN = None
 
 # ---------------------------------------------------------------------------
 # Production hardening
@@ -205,8 +226,6 @@ if not DEBUG:
     # original scheme via this header. Without it, Django sees http://
     # and refuses to set secure cookies.
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
 
     # Frontend and backend live on different domains in production
     # (e.g. foxd-crm.lovable.app + crm-backend-pza6.onrender.com). The

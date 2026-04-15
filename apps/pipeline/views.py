@@ -41,6 +41,7 @@ from .serializers import (
 )
 from .services import activity
 from .services import dashboard as dashboard_service
+from .services import quote_automation
 from .services import reports as reports_service
 from .services import scoping
 
@@ -133,6 +134,11 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                 "primary_contact",
                 "estimator",
                 "assigned_user",
+                # Reverse OneToOne to LossReason. Pulling it into the
+                # same query avoids an extra lookup per row when the
+                # frontend renders loss-reason reporting from the
+                # opportunity list.
+                "loss_reason",
             )
             .prefetch_related("quotes", "tasks")
         )
@@ -162,7 +168,9 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         self._enforce_admin_field_protection(serializer)
         with transaction.atomic():
             opp = serializer.save()
-            activity.opportunity_created(opp, self.request.user)
+            user = self.request.user
+            activity.opportunity_created(opp, user)
+            quote_automation.sync_quote_from_opportunity(opp, user=user)
 
     def perform_update(self, serializer):
         self._enforce_admin_field_protection(serializer)
@@ -180,6 +188,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                     opp, user, old_stage, opp.stage
                 )
             activity.opportunity_updated(opp, user, changed)
+            quote_automation.sync_quote_from_opportunity(opp, user=user)
 
     @action(detail=True, methods=["post"])
     def mark_won(self, request, pk=None):
@@ -201,6 +210,9 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             activity.opportunity_marked_won(
                 opp, request.user, opp.final_awarded_value
             )
+            quote_automation.sync_quote_from_opportunity(
+                opp, user=request.user
+            )
         return Response(self.get_serializer(opp).data)
 
     @action(detail=True, methods=["post"])
@@ -221,6 +233,9 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                 request.user,
                 payload.validated_data["reason_category"],
                 payload.validated_data.get("competitor_name", ""),
+            )
+            quote_automation.sync_quote_from_opportunity(
+                opp, user=request.user
             )
         return Response(self.get_serializer(opp).data)
 
@@ -335,6 +350,7 @@ class ActivityLogViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return scoping.scoped_activity(self.request.user).select_related(
             "opportunity",
+            "opportunity__company",
             "created_by_user",
         )
 
@@ -350,7 +366,8 @@ class LossReasonViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return scoping.scoped_loss_reasons(self.request.user).select_related(
-            "opportunity"
+            "opportunity",
+            "opportunity__company",
         )
 
 
