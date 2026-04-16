@@ -252,23 +252,42 @@ class OpportunitySerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        stage = attrs.get("stage", getattr(self.instance, "stage", None))
+        instance = self.instance
+        current_stage = getattr(instance, "stage", None) if instance else None
+        new_stage = attrs.get("stage", current_stage)
         final_value = attrs.get(
             "final_awarded_value",
-            getattr(self.instance, "final_awarded_value", None),
+            getattr(instance, "final_awarded_value", None) if instance else None,
         )
-        if stage == Opportunity.Stage.WON and final_value is None:
+
+        # Guard 1: you cannot freely PATCH out of a terminal stage.
+        # The only way back is through the explicit reopen action.
+        _TERMINAL = {Opportunity.Stage.WON, Opportunity.Stage.LOST}
+        if (
+            current_stage in _TERMINAL
+            and new_stage != current_stage
+        ):
+            raise serializers.ValidationError(
+                {
+                    "stage": (
+                        f"This opportunity is {current_stage}. "
+                        "Use POST /api/opportunities/{id}/reopen/ to "
+                        "reactivate it."
+                    )
+                }
+            )
+
+        # Guard 2: entering won requires final_awarded_value.
+        if new_stage == Opportunity.Stage.WON and final_value is None:
             raise serializers.ValidationError(
                 {"final_awarded_value": "Required when stage is 'won'."}
             )
 
-        # Marking lost via a direct PATCH would leave the opportunity
-        # without a LossReason. Force callers through the mark_lost
-        # action, which requires a reason_category and writes the
-        # LossReason atomically.
-        if stage == Opportunity.Stage.LOST:
-            has_reason = self.instance is not None and hasattr(
-                self.instance, "loss_reason"
+        # Guard 3: entering lost must go through mark_lost so a
+        # LossReason is recorded atomically.
+        if new_stage == Opportunity.Stage.LOST:
+            has_reason = instance is not None and hasattr(
+                instance, "loss_reason"
             )
             if not has_reason:
                 raise serializers.ValidationError(
@@ -281,11 +300,8 @@ class OpportunitySerializer(serializers.ModelSerializer):
                     }
                 )
 
-        # Terminal stages always imply closed status. Auto-set it here
-        # so every path through the serializer (direct PATCH, POST)
-        # lands in a consistent state — the mark_won / mark_lost actions
-        # already force closed on their own path.
-        if stage in (Opportunity.Stage.WON, Opportunity.Stage.LOST):
+        # Terminal stages always imply closed status.
+        if new_stage in _TERMINAL:
             attrs["status"] = Opportunity.Status.CLOSED
 
         return attrs

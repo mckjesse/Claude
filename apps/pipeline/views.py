@@ -239,6 +239,55 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             )
         return Response(self.get_serializer(opp).data)
 
+    @action(detail=True, methods=["post"])
+    def reopen(self, request, pk=None):
+        """
+        POST /api/opportunities/{id}/reopen/
+
+        Moves a won or lost opportunity back into the active pipeline.
+        The historical loss reason (if any) is preserved for audit —
+        it is NOT deleted. Existing quote records are left untouched
+        (no status change, no deletion) so the pricing history remains
+        intact.
+
+        Access: same roles that can use mark_won / mark_lost
+        (director and estimator).
+        """
+        opp = self.get_object()
+        if opp.stage not in (
+            Opportunity.Stage.WON,
+            Opportunity.Stage.LOST,
+        ):
+            return Response(
+                {
+                    "detail": (
+                        f"Only won or lost opportunities can be reopened. "
+                        f"This opportunity is currently '{opp.stage}'."
+                    )
+                },
+                status=400,
+            )
+        old_stage = opp.stage
+        with transaction.atomic():
+            opp.stage = Opportunity.Stage.FOLLOW_UP
+            opp.status = Opportunity.Status.OPEN
+            opp.save(update_fields=["stage", "status", "updated_at"])
+            activity.opportunity_stage_changed(
+                opp, request.user, old_stage, opp.stage
+            )
+            activity._log(
+                opportunity=opp,
+                entity_type="opportunity",
+                entity_id=opp.id,
+                activity_type="reopened",
+                description=(
+                    f"Opportunity reopened from {old_stage}. "
+                    f"Moved to {Opportunity.Stage.FOLLOW_UP.label}."
+                ),
+                user=request.user,
+            )
+        return Response(self.get_serializer(opp).data)
+
 
 class QuoteViewSet(viewsets.ModelViewSet):
     serializer_class = QuoteSerializer

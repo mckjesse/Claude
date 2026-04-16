@@ -292,3 +292,93 @@ class MarkLostTests(APITestCase):
         self.opp.refresh_from_db()
         self.assertEqual(self.opp.stage, Opportunity.Stage.LOST)
         self.assertEqual(self.opp.status, Opportunity.Status.CLOSED)
+
+    def test_direct_patch_out_of_lost_is_blocked(self):
+        # Trying to PATCH stage away from 'lost' must be rejected.
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/mark_lost/",
+            {"reason_category": LossReason.Category.PRICE},
+            format="json",
+        )
+        resp = self.client.patch(
+            f"/api/opportunities/{self.opp.id}/",
+            {"stage": Opportunity.Stage.LEAD},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("stage", resp.data)
+
+
+class ReopenTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.director = AppUser.objects.create_user(
+            username="reopen_dir", password="x", role=AppUser.Role.DIRECTOR,
+        )
+        cls.company = Company.objects.create(
+            name="ReopenCo", company_type=Company.Type.BUILDER,
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.director)
+        self.opp = Opportunity.objects.create(
+            project_name="ReopenTarget",
+            project_code=f"RE-{self.id()[-6:]}",
+            company=self.company,
+            estimator=self.director,
+            stage=Opportunity.Stage.LOST,
+            status=Opportunity.Status.CLOSED,
+        )
+        LossReason.objects.create(
+            opportunity=self.opp,
+            reason_category=LossReason.Category.PRICE,
+            reason_detail="Original loss.",
+        )
+
+    def test_reopen_sets_stage_follow_up_and_status_open(self):
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/reopen/", format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.opp.refresh_from_db()
+        self.assertEqual(self.opp.stage, Opportunity.Stage.FOLLOW_UP)
+        self.assertEqual(self.opp.status, Opportunity.Status.OPEN)
+
+    def test_reopen_preserves_loss_reason(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/reopen/", format="json",
+        )
+        lr = LossReason.objects.get(opportunity=self.opp)
+        self.assertEqual(lr.reason_category, LossReason.Category.PRICE)
+        self.assertEqual(lr.reason_detail, "Original loss.")
+
+    def test_reopen_creates_activity_entries(self):
+        from apps.pipeline.models import ActivityLog
+
+        before = ActivityLog.objects.filter(opportunity=self.opp).count()
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/reopen/", format="json",
+        )
+        after = ActivityLog.objects.filter(opportunity=self.opp).count()
+        self.assertEqual(after - before, 2)  # stage_changed + reopened
+
+    def test_reopen_rejects_non_terminal_opportunity(self):
+        self.opp.stage = Opportunity.Stage.PRICING
+        self.opp.status = Opportunity.Status.OPEN
+        self.opp.save()
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/reopen/", format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_reopen_works_on_won_opportunity(self):
+        self.opp.stage = Opportunity.Stage.WON
+        self.opp.final_awarded_value = "500000.00"
+        self.opp.save()
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/reopen/", format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.opp.refresh_from_db()
+        self.assertEqual(self.opp.stage, Opportunity.Stage.FOLLOW_UP)
+        self.assertEqual(self.opp.status, Opportunity.Status.OPEN)

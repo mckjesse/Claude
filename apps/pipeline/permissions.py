@@ -125,7 +125,7 @@ class OpportunityPermission(IsAuthenticatedActive):
         if action == "destroy":
             return False
 
-        if action in ("mark_won", "mark_lost"):
+        if action in ("mark_won", "mark_lost", "reopen"):
             return role == Role.ESTIMATOR
 
         if action in ("create", "update", "partial_update"):
