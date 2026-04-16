@@ -371,6 +371,25 @@ class LossReasonViewSet(viewsets.ModelViewSet):
         )
 
 
+class LossReasonChoicesView(APIView):
+    """
+    GET /api/loss-reason-choices/
+
+    Returns the list of valid loss-reason categories for the "Mark Lost"
+    modal dropdown. Each entry has a ``value`` (sent back to
+    ``POST /api/opportunities/{id}/mark_lost/`` as ``reason_category``)
+    and a ``label`` (human-readable, for display).
+    """
+
+    def get(self, request):
+        return Response(
+            [
+                {"value": choice.value, "label": choice.label}
+                for choice in LossReason.Category
+            ]
+        )
+
+
 # ---------------------------------------------------------------------------
 # Dashboard + reporting endpoints
 #
