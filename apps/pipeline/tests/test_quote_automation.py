@@ -260,3 +260,32 @@ class QuoteAutomationTests(APITestCase):
         self.assertEqual(Decimal(row["value"]), Decimal("500000.00"))
         self.assertIn("submitted_at", row)
         self.assertIn("created_at", row)
+
+    def test_explicit_field_mapping_from_opportunity(self):
+        # Verify the Opportunity → Quote field mapping writes every
+        # field we claim it writes. Uses direct ORM so it does not
+        # rely on the API layer.
+        from apps.pipeline.models import Opportunity
+        from apps.pipeline.services import quote_automation
+
+        opp = Opportunity.objects.create(
+            project_name="MapCheck",
+            project_code="MAP-001",
+            company=self.company,
+            estimator=self.director,
+            stage=Opportunity.Stage.PRICING,
+            estimated_contract_value=Decimal("640000.00"),
+            estimated_margin_percent=Decimal("12.50"),
+            submission_date="2026-05-15",
+        )
+        q = quote_automation.sync_quote_from_opportunity(
+            opp, user=self.director
+        )
+        self.assertIsNotNone(q)
+        self.assertEqual(q.opportunity_id, opp.id)
+        self.assertEqual(q.revision_number, 1)
+        self.assertEqual(q.quote_reference, "MAP-001-R1")
+        self.assertEqual(q.quoted_value_ex_gst, Decimal("640000.00"))
+        self.assertEqual(q.quoted_margin_percent, Decimal("12.50"))
+        self.assertEqual(str(q.submission_date), "2026-05-15")
+        self.assertEqual(q.quote_status, Quote.QuoteStatus.DRAFT)
