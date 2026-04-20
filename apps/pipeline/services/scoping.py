@@ -78,36 +78,59 @@ def scoped_opportunities(
     return qs
 
 
-def scoped_quotes(user) -> QuerySet[Quote]:
+def scoped_quotes(user, *, include_archived: bool = False) -> QuerySet[Quote]:
     if _sees_everything(user):
-        return Quote.objects.all()
-    if _role(user) == Role.PROJECT_MANAGER:
-        return Quote.objects.filter(opportunity__stage=Opportunity.Stage.WON)
-    return Quote.objects.none()
+        qs = Quote.objects.all()
+    elif _role(user) == Role.PROJECT_MANAGER:
+        qs = Quote.objects.filter(opportunity__stage=Opportunity.Stage.WON)
+    else:
+        qs = Quote.objects.none()
+    if not include_archived:
+        qs = qs.filter(opportunity__archived_at__isnull=True)
+    return qs
 
 
-def scoped_followups(user) -> QuerySet[FollowUpTask]:
+def scoped_followups(
+    user, *, include_archived: bool = False
+) -> QuerySet[FollowUpTask]:
     if _sees_everything(user):
-        return FollowUpTask.objects.all()
-    if _role(user) == Role.PROJECT_MANAGER:
-        return FollowUpTask.objects.filter(opportunity__stage=Opportunity.Stage.WON)
-    return FollowUpTask.objects.none()
+        qs = FollowUpTask.objects.all()
+    elif _role(user) == Role.PROJECT_MANAGER:
+        qs = FollowUpTask.objects.filter(
+            opportunity__stage=Opportunity.Stage.WON
+        )
+    else:
+        qs = FollowUpTask.objects.none()
+    if not include_archived:
+        qs = qs.filter(opportunity__archived_at__isnull=True)
+    return qs
 
 
 def scoped_activity(user) -> QuerySet[ActivityLog]:
+    """
+    Activity logs are an audit trail — they are never filtered by
+    archive state. Archiving an opportunity does NOT hide its activity
+    history; otherwise the "archived" event itself would vanish.
+    """
     if _sees_everything(user):
         return ActivityLog.objects.all()
     if _role(user) == Role.PROJECT_MANAGER:
-        return ActivityLog.objects.filter(opportunity__stage=Opportunity.Stage.WON)
+        return ActivityLog.objects.filter(
+            opportunity__stage=Opportunity.Stage.WON
+        )
     return ActivityLog.objects.none()
 
 
-def scoped_loss_reasons(user) -> QuerySet[LossReason]:
+def scoped_loss_reasons(
+    user, *, include_archived: bool = False
+) -> QuerySet[LossReason]:
     if _sees_everything(user):
-        return LossReason.objects.all()
-    # Project managers only see won opportunities, which never have a
-    # loss reason, so this is always empty for them.
-    return LossReason.objects.none()
+        qs = LossReason.objects.all()
+    else:
+        qs = LossReason.objects.none()
+    if not include_archived:
+        qs = qs.filter(opportunity__archived_at__isnull=True)
+    return qs
 
 
 # ---------------------------------------------------------------------------

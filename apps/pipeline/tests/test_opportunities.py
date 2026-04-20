@@ -404,6 +404,22 @@ class ArchiveAndDeleteTests(APITestCase):
             stage=Opportunity.Stage.PRICING,
             estimated_contract_value=Decimal("250000.00"),
         )
+        # Create child records so we can verify cascade filtering.
+        from apps.pipeline.models import FollowUpTask, Quote
+
+        self.quote = Quote.objects.create(
+            opportunity=self.opp,
+            revision_number=1,
+            quoted_value_ex_gst=Decimal("250000.00"),
+            quote_reference="ARC-001-R1",
+        )
+        self.task = FollowUpTask.objects.create(
+            opportunity=self.opp,
+            assigned_to_user=self.director,
+            subject="Chase builder",
+            task_type=FollowUpTask.TaskType.CALL,
+            due_date="2099-01-01",
+        )
 
     def test_archive_sets_fields_and_hides_from_list(self):
         resp = self.client.post(
@@ -513,3 +529,56 @@ class ArchiveAndDeleteTests(APITestCase):
             f"/api/opportunities/{self.opp.id}/archive/", format="json"
         )
         self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    # ---- child-record cascade filtering -----------------------------
+    def test_archive_hides_quotes_from_default_list(self):
+        resp = self.client.get("/api/quotes/")
+        ids_before = [r["id"] for r in resp.data["results"]]
+        self.assertIn(self.quote.id, ids_before)
+
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.get("/api/quotes/")
+        ids_after = [r["id"] for r in resp.data["results"]]
+        self.assertNotIn(self.quote.id, ids_after)
+
+    def test_archive_hides_followups_from_default_list(self):
+        resp = self.client.get("/api/followups/")
+        ids_before = [r["id"] for r in resp.data["results"]]
+        self.assertIn(self.task.id, ids_before)
+
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.get("/api/followups/")
+        ids_after = [r["id"] for r in resp.data["results"]]
+        self.assertNotIn(self.task.id, ids_after)
+
+    def test_archive_preserves_activity_log_visibility(self):
+        from apps.pipeline.models import ActivityLog
+
+        # The archive action itself creates an activity log entry.
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.get(
+            f"/api/activities/?opportunity={self.opp.id}"
+        )
+        self.assertGreater(resp.data["count"], 0)
+
+    def test_restore_unhides_quotes_and_followups(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/restore/", format="json"
+        )
+        resp_q = self.client.get("/api/quotes/")
+        resp_f = self.client.get("/api/followups/")
+        self.assertIn(
+            self.quote.id, [r["id"] for r in resp_q.data["results"]]
+        )
+        self.assertIn(
+            self.task.id, [r["id"] for r in resp_f.data["results"]]
+        )
