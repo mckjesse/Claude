@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
@@ -127,18 +128,27 @@ class OpportunityViewSet(viewsets.ModelViewSet):
     queryset = Opportunity.objects.all()
 
     def get_queryset(self):
+        # ``?archived=`` controls archive visibility on the list view:
+        #   (unset or any other value)  → active opportunities only
+        #   true                        → archived opportunities only
+        #   all                         → both active and archived
+        archived_param = (
+            self.request.query_params.get("archived", "").lower()
+        )
+        include_archived = archived_param in ("true", "all")
+        qs = scoping.scoped_opportunities(
+            self.request.user, include_archived=include_archived
+        )
+        if archived_param == "true":
+            qs = qs.filter(archived_at__isnull=False)
         return (
-            scoping.scoped_opportunities(self.request.user)
-            .select_related(
+            qs.select_related(
                 "company",
                 "primary_contact",
                 "estimator",
                 "assigned_user",
-                # Reverse OneToOne to LossReason. Pulling it into the
-                # same query avoids an extra lookup per row when the
-                # frontend renders loss-reason reporting from the
-                # opportunity list.
                 "loss_reason",
+                "archived_by",
             )
             .prefetch_related("quotes", "tasks")
         )
@@ -287,6 +297,96 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                 user=request.user,
             )
         return Response(self.get_serializer(opp).data)
+
+    def _get_opportunity_for_archive_path(self, request, pk):
+        """
+        Resolve an opportunity for archive / restore / destroy even
+        when it is already archived and therefore hidden by the
+        default queryset.
+        """
+        return (
+            scoping.scoped_opportunities(
+                request.user, include_archived=True
+            )
+            .filter(pk=pk)
+            .first()
+        )
+
+    @action(detail=True, methods=["post"])
+    def archive(self, request, pk=None):
+        """
+        POST /api/opportunities/{id}/archive/
+
+        Soft-delete: hides the opportunity from normal list / dashboard
+        / report queries without deleting any rows. Stage and status
+        are left alone (an open opportunity can be archived and will
+        come back open when restored; a lost opportunity stays lost).
+        """
+        opp = self._get_opportunity_for_archive_path(request, pk)
+        if opp is None:
+            return Response({"detail": "Not found."}, status=404)
+        if opp.archived_at is not None:
+            return Response(
+                {"detail": "Opportunity is already archived."},
+                status=400,
+            )
+        with transaction.atomic():
+            opp.archived_at = timezone.now()
+            opp.archived_by = request.user
+            opp.save(update_fields=["archived_at", "archived_by", "updated_at"])
+            activity.opportunity_archived(opp, request.user)
+        return Response(self.get_serializer(opp).data)
+
+    @action(detail=True, methods=["post"])
+    def restore(self, request, pk=None):
+        """
+        POST /api/opportunities/{id}/restore/
+
+        Undo archive. Stage and status are untouched — the opportunity
+        returns to the exact state it was in before archive.
+        """
+        opp = self._get_opportunity_for_archive_path(request, pk)
+        if opp is None:
+            return Response({"detail": "Not found."}, status=404)
+        if opp.archived_at is None:
+            return Response(
+                {"detail": "Opportunity is not archived."},
+                status=400,
+            )
+        with transaction.atomic():
+            opp.archived_at = None
+            opp.archived_by = None
+            opp.save(update_fields=["archived_at", "archived_by", "updated_at"])
+            activity.opportunity_restored(opp, request.user)
+        return Response(self.get_serializer(opp).data)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Hard DELETE. Only permitted on opportunities that have already
+        been archived — callers must go through POST /archive/ first.
+        That ensures the archive step is always logged in the activity
+        feed even if the admin eventually hard-deletes the row. The
+        permission class (OpportunityPermission) restricts this to
+        director + superuser.
+        """
+        opp = self._get_opportunity_for_archive_path(
+            request, kwargs.get("pk")
+        )
+        if opp is None:
+            return Response({"detail": "Not found."}, status=404)
+        if opp.archived_at is None:
+            return Response(
+                {
+                    "detail": (
+                        "Opportunity must be archived before it can be "
+                        "permanently deleted. "
+                        "POST /api/opportunities/{id}/archive/ first."
+                    )
+                },
+                status=400,
+            )
+        opp.delete()
+        return Response(status=204)
 
 
 class QuoteViewSet(viewsets.ModelViewSet):

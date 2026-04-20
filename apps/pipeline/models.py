@@ -180,6 +180,21 @@ class Opportunity(TimestampedModel):
         max_digits=14, decimal_places=2, null=True, blank=True
     )
 
+    # Soft delete / archive. ``archived_at is not None`` means the
+    # opportunity is hidden from normal list views, dashboard and
+    # reports, but the row (and all its related quotes, tasks,
+    # activity logs, loss reason) is still present for audit. Call
+    # the /archive/ and /restore/ actions to toggle; hard DELETE is
+    # still available to directors but requires archiving first.
+    archived_at = models.DateTimeField(null=True, blank=True)
+    archived_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="archived_opportunities",
+    )
+
     class Meta:
         ordering = ["-created_at"]
         verbose_name = "Opportunity"

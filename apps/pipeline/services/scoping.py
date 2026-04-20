@@ -59,12 +59,23 @@ def _sees_everything(user) -> bool:
 # ---------------------------------------------------------------------------
 # Pipeline objects
 # ---------------------------------------------------------------------------
-def scoped_opportunities(user) -> QuerySet[Opportunity]:
+def scoped_opportunities(
+    user, *, include_archived: bool = False
+) -> QuerySet[Opportunity]:
+    """
+    Row-level visible opportunities for ``user``. Archived opportunities
+    are excluded by default; pass ``include_archived=True`` to include
+    them (e.g. for the archived-opportunity restore UI).
+    """
     if _sees_everything(user):
-        return Opportunity.objects.all()
-    if _role(user) == Role.PROJECT_MANAGER:
-        return Opportunity.objects.filter(stage=Opportunity.Stage.WON)
-    return Opportunity.objects.none()
+        qs = Opportunity.objects.all()
+    elif _role(user) == Role.PROJECT_MANAGER:
+        qs = Opportunity.objects.filter(stage=Opportunity.Stage.WON)
+    else:
+        qs = Opportunity.objects.none()
+    if not include_archived:
+        qs = qs.filter(archived_at__isnull=True)
+    return qs
 
 
 def scoped_quotes(user) -> QuerySet[Quote]:

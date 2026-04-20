@@ -382,3 +382,134 @@ class ReopenTests(APITestCase):
         self.opp.refresh_from_db()
         self.assertEqual(self.opp.stage, Opportunity.Stage.FOLLOW_UP)
         self.assertEqual(self.opp.status, Opportunity.Status.OPEN)
+
+
+class ArchiveAndDeleteTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.director = AppUser.objects.create_user(
+            username="archive_dir", password="x", role=AppUser.Role.DIRECTOR,
+        )
+        cls.company = Company.objects.create(
+            name="ArchiveCo", company_type=Company.Type.BUILDER,
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.director)
+        self.opp = Opportunity.objects.create(
+            project_name="ArchiveTarget",
+            project_code="ARC-001",
+            company=self.company,
+            estimator=self.director,
+            stage=Opportunity.Stage.PRICING,
+            estimated_contract_value=Decimal("250000.00"),
+        )
+
+    def test_archive_sets_fields_and_hides_from_list(self):
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.opp.refresh_from_db()
+        self.assertIsNotNone(self.opp.archived_at)
+        self.assertEqual(self.opp.archived_by, self.director)
+        resp = self.client.get("/api/opportunities/")
+        self.assertNotIn(
+            self.opp.id, [r["id"] for r in resp.data["results"]]
+        )
+
+    def test_archive_preserves_stage_and_status(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        self.opp.refresh_from_db()
+        self.assertEqual(self.opp.stage, Opportunity.Stage.PRICING)
+        self.assertEqual(self.opp.status, Opportunity.Status.OPEN)
+
+    def test_archive_rejected_if_already_archived(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_list_archived_true_returns_archived_only(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.get("/api/opportunities/?archived=true")
+        self.assertIn(
+            self.opp.id, [r["id"] for r in resp.data["results"]]
+        )
+
+    def test_list_archived_all_returns_both(self):
+        active = Opportunity.objects.create(
+            project_name="StillActive",
+            project_code="ARC-002",
+            company=self.company,
+            estimator=self.director,
+        )
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.get("/api/opportunities/?archived=all")
+        ids = [r["id"] for r in resp.data["results"]]
+        self.assertIn(self.opp.id, ids)
+        self.assertIn(active.id, ids)
+
+    def test_restore_clears_archive_fields(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/restore/", format="json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.opp.refresh_from_db()
+        self.assertIsNone(self.opp.archived_at)
+        self.assertIsNone(self.opp.archived_by)
+
+    def test_restore_on_non_archived_is_rejected(self):
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/restore/", format="json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_on_non_archived_is_rejected(self):
+        resp = self.client.delete(f"/api/opportunities/{self.opp.id}/")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(
+            Opportunity.objects.filter(pk=self.opp.pk).exists()
+        )
+
+    def test_delete_works_after_archive(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.delete(f"/api/opportunities/{self.opp.id}/")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(
+            Opportunity.objects.filter(pk=self.opp.pk).exists()
+        )
+
+    def test_estimator_can_archive(self):
+        estimator = AppUser.objects.create_user(
+            username="est_arch", password="x", role=AppUser.Role.ESTIMATOR,
+        )
+        self.client.force_authenticate(user=estimator)
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_read_only_cannot_archive(self):
+        ro = AppUser.objects.create_user(
+            username="ro_arch", password="x", role=AppUser.Role.READ_ONLY,
+        )
+        self.client.force_authenticate(user=ro)
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
