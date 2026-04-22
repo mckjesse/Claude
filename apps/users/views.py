@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import AppUserSerializer, LoginSerializer
+from .models import AppUser
 
 
 @method_decorator(csrf_protect, name="dispatch")
@@ -51,6 +52,20 @@ class LogoutView(APIView):
     def post(self, request):
         logout(request)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserListView(APIView):
+    """
+    GET /api/users/
+
+    Returns all active users. Used by the frontend to populate
+    estimator / assigned_user dropdowns on the opportunity form.
+    Read-only, authenticated-only.
+    """
+
+    def get(self, request):
+        users = AppUser.objects.filter(is_active=True).order_by("username")
+        return Response(AppUserSerializer(users, many=True).data)
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
