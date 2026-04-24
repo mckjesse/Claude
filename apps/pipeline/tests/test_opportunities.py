@@ -58,7 +58,7 @@ class OpportunityCreationTests(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("project_code", resp.data)
 
-    def test_project_code_must_be_unique(self):
+    def test_same_project_code_same_company_is_blocked(self):
         self.client.post(
             "/api/opportunities/",
             {
@@ -78,7 +78,30 @@ class OpportunityCreationTests(APITestCase):
             format="json",
         )
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("project_code", resp.data)
+
+    def test_same_project_code_different_company_is_allowed(self):
+        other_company = Company.objects.create(
+            name="Other Builder", company_type=Company.Type.BUILDER,
+        )
+        self.client.post(
+            "/api/opportunities/",
+            {
+                "project_name": "Builder A bid",
+                "project_code": "MULTI-1",
+                "company": self.company.id,
+            },
+            format="json",
+        )
+        resp = self.client.post(
+            "/api/opportunities/",
+            {
+                "project_name": "Builder B bid",
+                "project_code": "MULTI-1",
+                "company": other_company.id,
+            },
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
 
 class OpportunityValidationTests(APITestCase):

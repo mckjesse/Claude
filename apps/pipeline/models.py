@@ -115,7 +115,9 @@ class Opportunity(TimestampedModel):
     # project_code is the human-facing "Project ID" displayed throughout
     # the UI (labels, reports, URLs). The internal primary key `id`
     # remains the technical identifier for foreign keys and relations.
-    project_code = models.CharField(max_length=100, unique=True)
+    # Not globally unique — FOXD may price the same project to multiple
+    # builders. Uniqueness is scoped to (project_code, company).
+    project_code = models.CharField(max_length=100)
 
     company = models.ForeignKey(
         Company,
@@ -199,6 +201,12 @@ class Opportunity(TimestampedModel):
         ordering = ["-created_at"]
         verbose_name = "Opportunity"
         verbose_name_plural = "Opportunities"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project_code", "company"],
+                name="unique_project_code_per_company",
+            ),
+        ]
 
     def __str__(self):
         return self.project_name
