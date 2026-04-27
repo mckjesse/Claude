@@ -42,6 +42,7 @@ from .serializers import (
 )
 from .services import activity
 from .services import dashboard as dashboard_service
+from .services import followup_automation
 from .services import quote_automation
 from .services import reports as reports_service
 from .services import scoping
@@ -181,6 +182,9 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             user = self.request.user
             activity.opportunity_created(opp, user)
             quote_automation.sync_quote_from_opportunity(opp, user=user)
+            followup_automation.sync_followup_from_opportunity(
+                opp, user=user, old_stage=None,
+            )
 
     def perform_update(self, serializer):
         self._enforce_admin_field_protection(serializer)
@@ -199,6 +203,9 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                 )
             activity.opportunity_updated(opp, user, changed)
             quote_automation.sync_quote_from_opportunity(opp, user=user)
+            followup_automation.sync_followup_from_opportunity(
+                opp, user=user, old_stage=old_stage,
+            )
 
     @action(detail=True, methods=["post"])
     def mark_won(self, request, pk=None):
