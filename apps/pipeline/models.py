@@ -316,6 +316,14 @@ class FollowUpTask(TimestampedModel):
     subject = models.CharField(max_length=255)
     details = models.TextField(blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    completed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="completed_followups",
+    )
+    completion_notes = models.TextField(blank=True)
 
     class Meta:
         ordering = ["due_date", "due_time"]

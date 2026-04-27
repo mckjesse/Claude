@@ -488,6 +488,123 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
                 activity.followup_completed(task, user)
             activity.followup_updated(task, user, changed)
 
+    @action(detail=True, methods=["post"])
+    def complete(self, request, pk=None):
+        """
+        POST /api/followups/{id}/complete/
+
+        Marks the task completed with required notes, then creates a
+        new follow-up due 14 days later for the same opportunity and
+        assignee.
+        """
+        task = self.get_object()
+        if task.status == FollowUpTask.Status.COMPLETED:
+            return Response(
+                {"detail": "Task is already completed."}, status=400
+            )
+        notes = (request.data.get("completion_notes") or "").strip()
+        if not notes:
+            return Response(
+                {"completion_notes": "Completion notes are required."},
+                status=400,
+            )
+        with transaction.atomic():
+            task.status = FollowUpTask.Status.COMPLETED
+            task.completed_at = timezone.now()
+            task.completed_by = request.user
+            task.completion_notes = notes
+            task.save(
+                update_fields=[
+                    "status",
+                    "completed_at",
+                    "completed_by",
+                    "completion_notes",
+                    "updated_at",
+                ]
+            )
+            activity.followup_completed(task, request.user)
+            self._create_successor(task, request.user)
+        return Response(self.get_serializer(task).data)
+
+    @action(detail=True, methods=["post"])
+    def reopen(self, request, pk=None):
+        """
+        POST /api/followups/{id}/reopen/
+
+        Returns a completed task to pending. Completion notes are
+        preserved for audit; completed_at and completed_by are cleared.
+        """
+        task = self.get_object()
+        if task.status != FollowUpTask.Status.COMPLETED:
+            return Response(
+                {"detail": "Only completed tasks can be reopened."},
+                status=400,
+            )
+        with transaction.atomic():
+            task.status = FollowUpTask.Status.PENDING
+            task.completed_at = None
+            task.completed_by = None
+            # completion_notes preserved for audit
+            task.save(
+                update_fields=[
+                    "status",
+                    "completed_at",
+                    "completed_by",
+                    "updated_at",
+                ]
+            )
+            activity._log(
+                opportunity=task.opportunity,
+                entity_type="followup",
+                entity_id=task.id,
+                activity_type="followup_reopened",
+                description=(
+                    f"Follow-up '{task.subject}' reopened."
+                ),
+                user=request.user,
+            )
+        return Response(self.get_serializer(task).data)
+
+    @staticmethod
+    def _create_successor(completed_task, user):
+        """
+        Create a new follow-up 14 days after the completed one, with
+        the same assignee, priority, and task type. Duplicate guard:
+        don't create if one with subject "Follow up again" already
+        exists for the same opportunity and is still pending.
+        """
+        _SUBJECT = "Follow up again"
+        already = FollowUpTask.objects.filter(
+            opportunity=completed_task.opportunity,
+            subject=_SUBJECT,
+            status__in=[
+                FollowUpTask.Status.PENDING,
+                FollowUpTask.Status.IN_PROGRESS,
+            ],
+        ).exists()
+        if already:
+            return None
+        from datetime import timedelta
+
+        due = (completed_task.due_date or timezone.localdate()) + timedelta(
+            days=14
+        )
+        successor = FollowUpTask.objects.create(
+            opportunity=completed_task.opportunity,
+            assigned_to_user=completed_task.assigned_to_user,
+            subject=_SUBJECT,
+            task_type=completed_task.task_type,
+            priority=completed_task.priority,
+            status=FollowUpTask.Status.PENDING,
+            due_date=due,
+            details=(
+                f"Auto-created after completing: "
+                f"'{completed_task.subject}'."
+            ),
+        )
+        activity.followup_created(successor, user)
+        return successor
+
 
 class ActivityLogViewSet(viewsets.ModelViewSet):
     serializer_class = ActivityLogSerializer
