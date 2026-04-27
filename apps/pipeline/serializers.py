@@ -183,6 +183,7 @@ class OpportunitySerializer(serializers.ModelSerializer):
     # column name stays project_code to avoid collision with Django's
     # integer id. Writes still use project_code.
     project_id = serializers.CharField(source="project_code", read_only=True)
+    is_archived = serializers.SerializerMethodField()
 
     company_detail = CompanyForOpportunitySerializer(source="company", read_only=True)
     primary_contact_detail = ContactMinimalSerializer(
@@ -242,6 +243,9 @@ class OpportunitySerializer(serializers.ModelSerializer):
         return LossReasonSummarySerializer(obj.loss_reason).data
 
     # --- validation ------------------------------------------------------
+    def get_is_archived(self, obj):
+        return obj.archived_at is not None
+
     def validate_probability_percent(self, value):
         if value is None:
             return value

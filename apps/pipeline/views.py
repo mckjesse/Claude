@@ -133,14 +133,21 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         #   (unset or any other value)  → active opportunities only
         #   true                        → archived opportunities only
         #   all                         → both active and archived
+        # ``?include_archived=true`` is an alias for ``?archived=all``.
         archived_param = (
             self.request.query_params.get("archived", "").lower()
         )
-        include_archived = archived_param in ("true", "all")
+        include_archived_param = (
+            self.request.query_params.get("include_archived", "").lower()
+        )
+        show_all = (
+            archived_param == "all" or include_archived_param == "true"
+        )
+        include_archived = archived_param == "true" or show_all
         qs = scoping.scoped_opportunities(
             self.request.user, include_archived=include_archived
         )
-        if archived_param == "true":
+        if archived_param == "true" and not show_all:
             qs = qs.filter(archived_at__isnull=False)
         return (
             qs.select_related(
