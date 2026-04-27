@@ -593,9 +593,16 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
         """
         POST /api/followups/{id}/complete/
 
-        Marks the task completed with required notes, then creates a
-        new follow-up due 14 days later for the same opportunity and
-        assignee.
+        Marks the task completed. The caller chooses whether to schedule
+        a successor follow-up or close out for good.
+
+        Payload:
+            completion_notes   (required)  free text
+            schedule_next      (optional)  bool, default false
+            next_due_date      (optional)  YYYY-MM-DD, default +14 days
+            next_subject       (optional)  default "Follow up again"
+            next_task_type     (optional)  default same as completed task
+            next_priority      (optional)  default same as completed task
         """
         task = self.get_object()
         if task.status == FollowUpTask.Status.COMPLETED:
@@ -608,6 +615,25 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
                 {"completion_notes": "Completion notes are required."},
                 status=400,
             )
+
+        schedule_next = request.data.get("schedule_next", False)
+        if schedule_next:
+            from datetime import timedelta
+
+            raw_due = request.data.get("next_due_date")
+            if raw_due:
+                from datetime import date as date_cls
+
+                try:
+                    next_due = date_cls.fromisoformat(raw_due)
+                except (TypeError, ValueError):
+                    return Response(
+                        {"next_due_date": "Invalid date format. Use YYYY-MM-DD."},
+                        status=400,
+                    )
+            else:
+                next_due = (task.due_date or timezone.localdate()) + timedelta(days=14)
+
         with transaction.atomic():
             task.status = FollowUpTask.Status.COMPLETED
             task.completed_at = timezone.now()
@@ -623,8 +649,28 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
                 ]
             )
             activity.followup_completed(task, request.user)
-            self._create_successor(task, request.user)
-        return Response(self.get_serializer(task).data)
+
+            successor = None
+            if schedule_next:
+                successor = self._create_successor(
+                    task,
+                    request.user,
+                    due_date=next_due,
+                    subject=request.data.get("next_subject") or "Follow up again",
+                    task_type=request.data.get("next_task_type") or task.task_type,
+                    priority=request.data.get("next_priority") or task.priority,
+                )
+
+        data = self.get_serializer(task).data
+        if successor:
+            data["next_followup"] = {
+                "id": successor.id,
+                "subject": successor.subject,
+                "due_date": str(successor.due_date),
+                "task_type": successor.task_type,
+                "priority": successor.priority,
+            }
+        return Response(data)
 
     @action(detail=True, methods=["post"])
     def reopen(self, request, pk=None):
@@ -666,17 +712,23 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(task).data)
 
     @staticmethod
-    def _create_successor(completed_task, user):
+    def _create_successor(
+        completed_task,
+        user,
+        *,
+        due_date,
+        subject="Follow up again",
+        task_type=None,
+        priority=None,
+    ):
         """
-        Create a new follow-up 14 days after the completed one, with
-        the same assignee, priority, and task type. Duplicate guard:
-        don't create if one with subject "Follow up again" already
-        exists for the same opportunity and is still pending.
+        Create a successor follow-up. Duplicate guard: don't create if
+        a pending/in_progress task with the same subject already exists
+        for the same opportunity.
         """
-        _SUBJECT = "Follow up again"
         already = FollowUpTask.objects.filter(
             opportunity=completed_task.opportunity,
-            subject=_SUBJECT,
+            subject=subject,
             status__in=[
                 FollowUpTask.Status.PENDING,
                 FollowUpTask.Status.IN_PROGRESS,
@@ -684,21 +736,16 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
         ).exists()
         if already:
             return None
-        from datetime import timedelta
-
-        due = (completed_task.due_date or timezone.localdate()) + timedelta(
-            days=14
-        )
         successor = FollowUpTask.objects.create(
             opportunity=completed_task.opportunity,
             assigned_to_user=completed_task.assigned_to_user,
-            subject=_SUBJECT,
-            task_type=completed_task.task_type,
-            priority=completed_task.priority,
+            subject=subject,
+            task_type=task_type or completed_task.task_type,
+            priority=priority or completed_task.priority,
             status=FollowUpTask.Status.PENDING,
-            due_date=due,
+            due_date=due_date,
             details=(
-                f"Auto-created after completing: "
+                f"Follow-up after completing: "
                 f"'{completed_task.subject}'."
             ),
         )
