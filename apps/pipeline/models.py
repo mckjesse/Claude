@@ -380,6 +380,7 @@ class LossReason(models.Model):
         COMPETITOR = "competitor", "Competitor"
         CLIENT_CHANGE = "client_change", "Client Change"
         NO_DECISION = "no_decision", "No Decision"
+        PROJECT_WON_OTHER = "project_won_other", "Project Won via Another Builder"
         OTHER = "other", "Other"
 
     opportunity = models.OneToOneField(

@@ -395,6 +395,99 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         opp.delete()
         return Response(status=204)
 
+    @action(detail=True, methods=["post"])
+    def close_related_as_lost(self, request, pk=None):
+        """
+        POST /api/opportunities/{id}/close_related_as_lost/
+
+        After marking an opportunity won, call this to close the other
+        open opportunities that share the same project_code (same
+        project, different builders). Each is set to stage=lost,
+        status=closed, with a LossReason of "project_won_other" naming
+        the winning builder.
+
+        Not automatic — the frontend invokes this explicitly so the
+        user retains control.
+        """
+        won_opp = self.get_object()
+        if won_opp.stage != Opportunity.Stage.WON:
+            return Response(
+                {
+                    "detail": (
+                        "This action is only valid on a won opportunity. "
+                        f"Current stage is '{won_opp.stage}'."
+                    )
+                },
+                status=400,
+            )
+        if not won_opp.project_code:
+            return Response(
+                {"detail": "Opportunity has no project_code."},
+                status=400,
+            )
+        related = (
+            Opportunity.objects.filter(
+                project_code=won_opp.project_code,
+                status=Opportunity.Status.OPEN,
+            )
+            .exclude(pk=won_opp.pk)
+        )
+        if not related.exists():
+            return Response(
+                {
+                    "detail": "No other open opportunities share this project code.",
+                    "closed": [],
+                }
+            )
+        winning_company = (
+            won_opp.company.name if won_opp.company_id else "unknown"
+        )
+        closed_summaries = []
+        with transaction.atomic():
+            for opp in related.select_related("company"):
+                opp.stage = Opportunity.Stage.LOST
+                opp.status = Opportunity.Status.CLOSED
+                opp.save(update_fields=["stage", "status", "updated_at"])
+                LossReason.objects.update_or_create(
+                    opportunity=opp,
+                    defaults={
+                        "reason_category": LossReason.Category.PROJECT_WON_OTHER,
+                        "reason_detail": (
+                            f"Project won by {winning_company} "
+                            f"(opportunity #{won_opp.pk})."
+                        ),
+                        "competitor_name": winning_company,
+                    },
+                )
+                activity.opportunity_stage_changed(
+                    opp, request.user, Opportunity.Stage.FOLLOW_UP, opp.stage
+                )
+                activity.opportunity_marked_lost(
+                    opp,
+                    request.user,
+                    LossReason.Category.PROJECT_WON_OTHER,
+                    winning_company,
+                )
+                quote_automation.sync_quote_from_opportunity(
+                    opp, user=request.user
+                )
+                closed_summaries.append(
+                    {
+                        "id": opp.id,
+                        "project_name": opp.project_name,
+                        "project_code": opp.project_code,
+                        "company": opp.company.name if opp.company_id else None,
+                        "stage": opp.stage,
+                        "status": opp.status,
+                    }
+                )
+        return Response(
+            {
+                "detail": f"Closed {len(closed_summaries)} related opportunity(ies) as lost.",
+                "closed": closed_summaries,
+            }
+        )
+
 
 class QuoteViewSet(viewsets.ModelViewSet):
     serializer_class = QuoteSerializer
