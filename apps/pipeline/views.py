@@ -595,15 +595,11 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
 
         Marks the task completed. The caller chooses whether to schedule
         a successor follow-up or close out for good.
-
-        Payload:
-            completion_notes   (required)  free text
-            schedule_next      (optional)  bool, default false
-            next_due_date      (optional)  YYYY-MM-DD, default +14 days
-            next_subject       (optional)  default "Follow up again"
-            next_task_type     (optional)  default same as completed task
-            next_priority      (optional)  default same as completed task
         """
+        import logging
+
+        logger = logging.getLogger("apps.pipeline.views")
+
         task = self.get_object()
         if task.status == FollowUpTask.Status.COMPLETED:
             return Response(
@@ -616,7 +612,20 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
                 status=400,
             )
 
-        schedule_next = request.data.get("schedule_next", False)
+        # Parse schedule_next robustly: accept bool, string "true"/"false",
+        # or int 1/0. Default to False.
+        raw_schedule = request.data.get("schedule_next", False)
+        if isinstance(raw_schedule, str):
+            schedule_next = raw_schedule.lower() in ("true", "1", "yes")
+        else:
+            schedule_next = bool(raw_schedule)
+
+        logger.info(
+            "followup_complete: task=%s raw_schedule_next=%r parsed=%s",
+            task.pk, raw_schedule, schedule_next,
+        )
+
+        next_due = None
         if schedule_next:
             from datetime import timedelta
 
@@ -625,14 +634,16 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
                 from datetime import date as date_cls
 
                 try:
-                    next_due = date_cls.fromisoformat(raw_due)
+                    next_due = date_cls.fromisoformat(str(raw_due))
                 except (TypeError, ValueError):
                     return Response(
                         {"next_due_date": "Invalid date format. Use YYYY-MM-DD."},
                         status=400,
                     )
             else:
-                next_due = (task.due_date or timezone.localdate()) + timedelta(days=14)
+                next_due = (task.due_date or timezone.localdate()) + timedelta(
+                    days=14
+                )
 
         with transaction.atomic():
             task.status = FollowUpTask.Status.COMPLETED
@@ -660,8 +671,19 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
                     task_type=request.data.get("next_task_type") or task.task_type,
                     priority=request.data.get("next_priority") or task.priority,
                 )
+                if successor:
+                    logger.info(
+                        "followup_complete: created successor id=%s opp=%s due=%s",
+                        successor.pk, task.opportunity_id, successor.due_date,
+                    )
+                else:
+                    logger.info(
+                        "followup_complete: successor skipped (duplicate guard) opp=%s",
+                        task.opportunity_id,
+                    )
 
         data = self.get_serializer(task).data
+        data["completed"] = True
         if successor:
             data["next_followup"] = {
                 "id": successor.id,
@@ -669,6 +691,9 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
                 "due_date": str(successor.due_date),
                 "task_type": successor.task_type,
                 "priority": successor.priority,
+                "assigned_to_user": successor.assigned_to_user_id,
+                "status": successor.status,
+                "opportunity": successor.opportunity_id,
             }
         return Response(data)
 
@@ -726,6 +751,9 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
         a pending/in_progress task with the same subject already exists
         for the same opportunity.
         """
+        import logging
+
+        logger = logging.getLogger("apps.pipeline.views")
         already = FollowUpTask.objects.filter(
             opportunity=completed_task.opportunity,
             subject=subject,
@@ -735,6 +763,11 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
             ],
         ).exists()
         if already:
+            logger.info(
+                "followup_successor: blocked by duplicate guard "
+                "opp=%s subject=%r",
+                completed_task.opportunity_id, subject,
+            )
             return None
         successor = FollowUpTask.objects.create(
             opportunity=completed_task.opportunity,
