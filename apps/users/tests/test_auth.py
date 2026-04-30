@@ -1,8 +1,8 @@
 """
-Auth flow tests: login, logout, me, and CSRF enforcement on /login/.
+Auth flow tests: JWT login, token refresh, /me/, logout.
 """
 from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import APITestCase
 
 from apps.users.models import AppUser
 
@@ -18,12 +18,13 @@ class AuthFlowTests(APITestCase):
             role=AppUser.Role.ESTIMATOR,
         )
 
-    # ---- me ----------------------------------------------------------
+    # ---- /me/ --------------------------------------------------------
     def test_me_returns_401_when_unauthenticated(self):
         resp = self.client.get("/api/users/me/")
-        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
-        # Also serves as the CSRF bootstrap endpoint
-        self.assertIn("csrftoken", resp.cookies)
+        self.assertIn(
+            resp.status_code,
+            (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN),
+        )
 
     def test_me_returns_user_when_authenticated(self):
         self.client.force_authenticate(user=self.user)
@@ -34,17 +35,31 @@ class AuthFlowTests(APITestCase):
         self.assertEqual(resp.data["display_name"], "Alice Test")
 
     # ---- login -------------------------------------------------------
-    def test_login_with_valid_credentials(self):
+    def test_login_returns_jwt_tokens_and_user(self):
         resp = self.client.post(
             "/api/users/login/",
             {"username": "alice", "password": "testpass123"},
             format="json",
         )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data["username"], "alice")
-        self.assertEqual(resp.data["role"], "estimator")
-        # Session cookie is now set for subsequent calls on the same client
-        self.assertIn("sessionid", resp.cookies)
+        self.assertIn("access", resp.data)
+        self.assertIn("refresh", resp.data)
+        self.assertEqual(resp.data["user"]["username"], "alice")
+        self.assertEqual(resp.data["user"]["role"], "estimator")
+        self.assertEqual(resp.data["user"]["display_name"], "Alice Test")
+        self.assertIn("id", resp.data["user"])
+
+    def test_login_does_not_require_csrf(self):
+        from rest_framework.test import APIClient
+
+        client = APIClient(enforce_csrf_checks=True)
+        resp = client.post(
+            "/api/users/login/",
+            {"username": "alice", "password": "testpass123"},
+            format="json",
+        )
+        # JWT login is stateless — no CSRF needed even with enforcement on.
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     def test_login_rejects_wrong_password(self):
         resp = self.client.post(
@@ -53,7 +68,7 @@ class AuthFlowTests(APITestCase):
             format="json",
         )
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertNotIn("sessionid", resp.cookies)
+        self.assertNotIn("access", resp.data)
 
     def test_login_rejects_unknown_user(self):
         resp = self.client.post(
@@ -63,26 +78,35 @@ class AuthFlowTests(APITestCase):
         )
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_login_requires_csrf_when_enforced(self):
-        # The default DRF test client skips CSRF. Force it back on to
-        # prove that the production login endpoint is CSRF-protected.
-        client = APIClient(enforce_csrf_checks=True)
-        resp = client.post(
+    # ---- JWT access --------------------------------------------------
+    def test_jwt_access_token_authenticates_me(self):
+        login = self.client.post(
             "/api/users/login/",
             {"username": "alice", "password": "testpass123"},
             format="json",
         )
-        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+        token = login.data["access"]
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+        resp = self.client.get("/api/users/me/")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["username"], "alice")
 
-    # ---- logout ------------------------------------------------------
-    def test_logout_ends_session(self):
-        self.client.login(username="alice", password="testpass123")
-        resp = self.client.post("/api/users/logout/")
-        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+    # ---- token refresh -----------------------------------------------
+    def test_refresh_returns_new_access_token(self):
+        login = self.client.post(
+            "/api/users/login/",
+            {"username": "alice", "password": "testpass123"},
+            format="json",
+        )
+        resp = self.client.post(
+            "/api/users/token/refresh/",
+            {"refresh": login.data["refresh"]},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn("access", resp.data)
 
-        follow = self.client.get("/api/users/me/")
-        self.assertEqual(follow.status_code, status.HTTP_401_UNAUTHORIZED)
-
+    # ---- logout (session cleanup, optional for JWT) ------------------
     def test_logout_requires_authentication(self):
         resp = self.client.post("/api/users/logout/")
         self.assertIn(

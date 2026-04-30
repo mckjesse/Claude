@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
@@ -41,6 +42,7 @@ from .serializers import (
 )
 from .services import activity
 from .services import dashboard as dashboard_service
+from .services import followup_automation
 from .services import quote_automation
 from .services import reports as reports_service
 from .services import scoping
@@ -127,18 +129,34 @@ class OpportunityViewSet(viewsets.ModelViewSet):
     queryset = Opportunity.objects.all()
 
     def get_queryset(self):
+        # ``?archived=`` controls archive visibility on the list view:
+        #   (unset or any other value)  → active opportunities only
+        #   true                        → archived opportunities only
+        #   all                         → both active and archived
+        # ``?include_archived=true`` is an alias for ``?archived=all``.
+        archived_param = (
+            self.request.query_params.get("archived", "").lower()
+        )
+        include_archived_param = (
+            self.request.query_params.get("include_archived", "").lower()
+        )
+        show_all = (
+            archived_param == "all" or include_archived_param == "true"
+        )
+        include_archived = archived_param == "true" or show_all
+        qs = scoping.scoped_opportunities(
+            self.request.user, include_archived=include_archived
+        )
+        if archived_param == "true" and not show_all:
+            qs = qs.filter(archived_at__isnull=False)
         return (
-            scoping.scoped_opportunities(self.request.user)
-            .select_related(
+            qs.select_related(
                 "company",
                 "primary_contact",
                 "estimator",
                 "assigned_user",
-                # Reverse OneToOne to LossReason. Pulling it into the
-                # same query avoids an extra lookup per row when the
-                # frontend renders loss-reason reporting from the
-                # opportunity list.
                 "loss_reason",
+                "archived_by",
             )
             .prefetch_related("quotes", "tasks")
         )
@@ -171,6 +189,9 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             user = self.request.user
             activity.opportunity_created(opp, user)
             quote_automation.sync_quote_from_opportunity(opp, user=user)
+            followup_automation.sync_followup_from_opportunity(
+                opp, user=user, old_stage=None,
+            )
 
     def perform_update(self, serializer):
         self._enforce_admin_field_protection(serializer)
@@ -189,6 +210,9 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                 )
             activity.opportunity_updated(opp, user, changed)
             quote_automation.sync_quote_from_opportunity(opp, user=user)
+            followup_automation.sync_followup_from_opportunity(
+                opp, user=user, old_stage=old_stage,
+            )
 
     @action(detail=True, methods=["post"])
     def mark_won(self, request, pk=None):
@@ -238,6 +262,238 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                 opp, user=request.user
             )
         return Response(self.get_serializer(opp).data)
+
+    @action(detail=True, methods=["post"])
+    def reopen(self, request, pk=None):
+        """
+        POST /api/opportunities/{id}/reopen/
+
+        Moves a won or lost opportunity back into the active pipeline.
+        The historical loss reason (if any) is preserved for audit —
+        it is NOT deleted. Existing quote records are left untouched
+        (no status change, no deletion) so the pricing history remains
+        intact.
+
+        Access: same roles that can use mark_won / mark_lost
+        (director and estimator).
+        """
+        opp = self.get_object()
+        if opp.stage not in (
+            Opportunity.Stage.WON,
+            Opportunity.Stage.LOST,
+        ):
+            return Response(
+                {
+                    "detail": (
+                        f"Only won or lost opportunities can be reopened. "
+                        f"This opportunity is currently '{opp.stage}'."
+                    )
+                },
+                status=400,
+            )
+        old_stage = opp.stage
+        with transaction.atomic():
+            opp.stage = Opportunity.Stage.FOLLOW_UP
+            opp.status = Opportunity.Status.OPEN
+            opp.save(update_fields=["stage", "status", "updated_at"])
+            activity.opportunity_stage_changed(
+                opp, request.user, old_stage, opp.stage
+            )
+            activity._log(
+                opportunity=opp,
+                entity_type="opportunity",
+                entity_id=opp.id,
+                activity_type="reopened",
+                description=(
+                    f"Opportunity reopened from {old_stage}. "
+                    f"Moved to {Opportunity.Stage.FOLLOW_UP.label}."
+                ),
+                user=request.user,
+            )
+        return Response(self.get_serializer(opp).data)
+
+    def _get_opportunity_for_archive_path(self, request, pk):
+        """
+        Resolve an opportunity for archive / restore / destroy even
+        when it is already archived and therefore hidden by the
+        default queryset.
+        """
+        return (
+            scoping.scoped_opportunities(
+                request.user, include_archived=True
+            )
+            .filter(pk=pk)
+            .first()
+        )
+
+    @action(detail=True, methods=["post"])
+    def archive(self, request, pk=None):
+        """
+        POST /api/opportunities/{id}/archive/
+
+        Soft-delete: hides the opportunity from normal list / dashboard
+        / report queries without deleting any rows. Stage and status
+        are left alone (an open opportunity can be archived and will
+        come back open when restored; a lost opportunity stays lost).
+        """
+        opp = self._get_opportunity_for_archive_path(request, pk)
+        if opp is None:
+            return Response({"detail": "Not found."}, status=404)
+        if opp.archived_at is not None:
+            return Response(
+                {"detail": "Opportunity is already archived."},
+                status=400,
+            )
+        with transaction.atomic():
+            opp.archived_at = timezone.now()
+            opp.archived_by = request.user
+            opp.save(update_fields=["archived_at", "archived_by", "updated_at"])
+            activity.opportunity_archived(opp, request.user)
+        return Response(self.get_serializer(opp).data)
+
+    @action(detail=True, methods=["post"])
+    def restore(self, request, pk=None):
+        """
+        POST /api/opportunities/{id}/restore/
+
+        Undo archive. Stage and status are untouched — the opportunity
+        returns to the exact state it was in before archive.
+        """
+        opp = self._get_opportunity_for_archive_path(request, pk)
+        if opp is None:
+            return Response({"detail": "Not found."}, status=404)
+        if opp.archived_at is None:
+            return Response(
+                {"detail": "Opportunity is not archived."},
+                status=400,
+            )
+        with transaction.atomic():
+            opp.archived_at = None
+            opp.archived_by = None
+            opp.save(update_fields=["archived_at", "archived_by", "updated_at"])
+            activity.opportunity_restored(opp, request.user)
+        return Response(self.get_serializer(opp).data)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Hard DELETE. Only permitted on opportunities that have already
+        been archived — callers must go through POST /archive/ first.
+        That ensures the archive step is always logged in the activity
+        feed even if the admin eventually hard-deletes the row. The
+        permission class (OpportunityPermission) restricts this to
+        director + superuser.
+        """
+        opp = self._get_opportunity_for_archive_path(
+            request, kwargs.get("pk")
+        )
+        if opp is None:
+            return Response({"detail": "Not found."}, status=404)
+        if opp.archived_at is None:
+            return Response(
+                {
+                    "detail": (
+                        "Opportunity must be archived before it can be "
+                        "permanently deleted. "
+                        "POST /api/opportunities/{id}/archive/ first."
+                    )
+                },
+                status=400,
+            )
+        opp.delete()
+        return Response(status=204)
+
+    @action(detail=True, methods=["post"])
+    def close_related_as_lost(self, request, pk=None):
+        """
+        POST /api/opportunities/{id}/close_related_as_lost/
+
+        After marking an opportunity won, call this to close the other
+        open opportunities that share the same project_code (same
+        project, different builders). Each is set to stage=lost,
+        status=closed, with a LossReason of "project_won_other" naming
+        the winning builder.
+
+        Not automatic — the frontend invokes this explicitly so the
+        user retains control.
+        """
+        won_opp = self.get_object()
+        if won_opp.stage != Opportunity.Stage.WON:
+            return Response(
+                {
+                    "detail": (
+                        "This action is only valid on a won opportunity. "
+                        f"Current stage is '{won_opp.stage}'."
+                    )
+                },
+                status=400,
+            )
+        if not won_opp.project_code:
+            return Response(
+                {"detail": "Opportunity has no project_code."},
+                status=400,
+            )
+        related = (
+            Opportunity.objects.filter(
+                project_code=won_opp.project_code,
+                status=Opportunity.Status.OPEN,
+            )
+            .exclude(pk=won_opp.pk)
+        )
+        if not related.exists():
+            return Response(
+                {
+                    "detail": "No other open opportunities share this project code.",
+                    "closed": [],
+                }
+            )
+        winning_company = (
+            won_opp.company.name if won_opp.company_id else "unknown"
+        )
+        closed_summaries = []
+        with transaction.atomic():
+            for opp in related.select_related("company"):
+                opp.stage = Opportunity.Stage.LOST
+                opp.status = Opportunity.Status.CLOSED
+                opp.save(update_fields=["stage", "status", "updated_at"])
+                LossReason.objects.update_or_create(
+                    opportunity=opp,
+                    defaults={
+                        "reason_category": LossReason.Category.PROJECT_WON_OTHER,
+                        "reason_detail": (
+                            f"Project won by {winning_company} "
+                            f"(opportunity #{won_opp.pk})."
+                        ),
+                        "competitor_name": winning_company,
+                    },
+                )
+                activity.opportunity_stage_changed(
+                    opp, request.user, Opportunity.Stage.FOLLOW_UP, opp.stage
+                )
+                activity.opportunity_marked_lost(
+                    opp,
+                    request.user,
+                    LossReason.Category.PROJECT_WON_OTHER,
+                    winning_company,
+                )
+                quote_automation.sync_quote_from_opportunity(
+                    opp, user=request.user
+                )
+                closed_summaries.append(
+                    {
+                        "id": opp.id,
+                        "project_name": opp.project_name,
+                        "project_code": opp.project_code,
+                        "company": opp.company.name if opp.company_id else None,
+                        "stage": opp.stage,
+                        "status": opp.status,
+                    }
+                )
+        return Response(
+            {
+                "detail": f"Closed {len(closed_summaries)} related opportunity(ies) as lost.",
+                "closed": closed_summaries,
+            }
+        )
 
 
 class QuoteViewSet(viewsets.ModelViewSet):
@@ -332,6 +588,203 @@ class FollowUpTaskViewSet(viewsets.ModelViewSet):
                 activity.followup_completed(task, user)
             activity.followup_updated(task, user, changed)
 
+    @action(detail=True, methods=["post"])
+    def complete(self, request, pk=None):
+        """
+        POST /api/followups/{id}/complete/
+
+        Marks the task completed. The caller chooses whether to schedule
+        a successor follow-up or close out for good.
+        """
+        import logging
+
+        logger = logging.getLogger("apps.pipeline.views")
+
+        task = self.get_object()
+        if task.status == FollowUpTask.Status.COMPLETED:
+            return Response(
+                {"detail": "Task is already completed."}, status=400
+            )
+        notes = (request.data.get("completion_notes") or "").strip()
+        if not notes:
+            return Response(
+                {"completion_notes": "Completion notes are required."},
+                status=400,
+            )
+
+        # Parse schedule_next robustly: accept bool, string "true"/"false",
+        # or int 1/0. Default to False.
+        raw_schedule = request.data.get("schedule_next", False)
+        if isinstance(raw_schedule, str):
+            schedule_next = raw_schedule.lower() in ("true", "1", "yes")
+        else:
+            schedule_next = bool(raw_schedule)
+
+        logger.info(
+            "followup_complete: task=%s raw_schedule_next=%r parsed=%s",
+            task.pk, raw_schedule, schedule_next,
+        )
+
+        next_due = None
+        if schedule_next:
+            from datetime import timedelta
+
+            raw_due = request.data.get("next_due_date")
+            if raw_due:
+                from datetime import date as date_cls
+
+                try:
+                    next_due = date_cls.fromisoformat(str(raw_due))
+                except (TypeError, ValueError):
+                    return Response(
+                        {"next_due_date": "Invalid date format. Use YYYY-MM-DD."},
+                        status=400,
+                    )
+            else:
+                next_due = (task.due_date or timezone.localdate()) + timedelta(
+                    days=14
+                )
+
+        with transaction.atomic():
+            task.status = FollowUpTask.Status.COMPLETED
+            task.completed_at = timezone.now()
+            task.completed_by = request.user
+            task.completion_notes = notes
+            task.save(
+                update_fields=[
+                    "status",
+                    "completed_at",
+                    "completed_by",
+                    "completion_notes",
+                    "updated_at",
+                ]
+            )
+            activity.followup_completed(task, request.user)
+
+            successor = None
+            if schedule_next:
+                successor = self._create_successor(
+                    task,
+                    request.user,
+                    due_date=next_due,
+                    subject=request.data.get("next_subject") or "Follow up again",
+                    task_type=request.data.get("next_task_type") or task.task_type,
+                    priority=request.data.get("next_priority") or task.priority,
+                )
+                if successor:
+                    logger.info(
+                        "followup_complete: created successor id=%s opp=%s due=%s",
+                        successor.pk, task.opportunity_id, successor.due_date,
+                    )
+                else:
+                    logger.info(
+                        "followup_complete: successor skipped (duplicate guard) opp=%s",
+                        task.opportunity_id,
+                    )
+
+        data = self.get_serializer(task).data
+        data["completed"] = True
+        if successor:
+            data["next_followup"] = {
+                "id": successor.id,
+                "subject": successor.subject,
+                "due_date": str(successor.due_date),
+                "task_type": successor.task_type,
+                "priority": successor.priority,
+                "assigned_to_user": successor.assigned_to_user_id,
+                "status": successor.status,
+                "opportunity": successor.opportunity_id,
+            }
+        return Response(data)
+
+    @action(detail=True, methods=["post"])
+    def reopen(self, request, pk=None):
+        """
+        POST /api/followups/{id}/reopen/
+
+        Returns a completed task to pending. Completion notes are
+        preserved for audit; completed_at and completed_by are cleared.
+        """
+        task = self.get_object()
+        if task.status != FollowUpTask.Status.COMPLETED:
+            return Response(
+                {"detail": "Only completed tasks can be reopened."},
+                status=400,
+            )
+        with transaction.atomic():
+            task.status = FollowUpTask.Status.PENDING
+            task.completed_at = None
+            task.completed_by = None
+            # completion_notes preserved for audit
+            task.save(
+                update_fields=[
+                    "status",
+                    "completed_at",
+                    "completed_by",
+                    "updated_at",
+                ]
+            )
+            activity._log(
+                opportunity=task.opportunity,
+                entity_type="followup",
+                entity_id=task.id,
+                activity_type="followup_reopened",
+                description=(
+                    f"Follow-up '{task.subject}' reopened."
+                ),
+                user=request.user,
+            )
+        return Response(self.get_serializer(task).data)
+
+    @staticmethod
+    def _create_successor(
+        completed_task,
+        user,
+        *,
+        due_date,
+        subject="Follow up again",
+        task_type=None,
+        priority=None,
+    ):
+        """
+        Create a successor follow-up. Duplicate guard: don't create if
+        a pending/in_progress task with the same subject already exists
+        for the same opportunity.
+        """
+        import logging
+
+        logger = logging.getLogger("apps.pipeline.views")
+        already = FollowUpTask.objects.filter(
+            opportunity=completed_task.opportunity,
+            subject=subject,
+            status__in=[
+                FollowUpTask.Status.PENDING,
+                FollowUpTask.Status.IN_PROGRESS,
+            ],
+        ).exists()
+        if already:
+            logger.info(
+                "followup_successor: blocked by duplicate guard "
+                "opp=%s subject=%r",
+                completed_task.opportunity_id, subject,
+            )
+            return None
+        successor = FollowUpTask.objects.create(
+            opportunity=completed_task.opportunity,
+            assigned_to_user=completed_task.assigned_to_user,
+            subject=subject,
+            task_type=task_type or completed_task.task_type,
+            priority=priority or completed_task.priority,
+            status=FollowUpTask.Status.PENDING,
+            due_date=due_date,
+            details=(
+                f"Follow-up after completing: "
+                f"'{completed_task.subject}'."
+            ),
+        )
+        activity.followup_created(successor, user)
+        return successor
+
 
 class ActivityLogViewSet(viewsets.ModelViewSet):
     serializer_class = ActivityLogSerializer
@@ -368,6 +821,25 @@ class LossReasonViewSet(viewsets.ModelViewSet):
         return scoping.scoped_loss_reasons(self.request.user).select_related(
             "opportunity",
             "opportunity__company",
+        )
+
+
+class LossReasonChoicesView(APIView):
+    """
+    GET /api/loss-reason-choices/
+
+    Returns the list of valid loss-reason categories for the "Mark Lost"
+    modal dropdown. Each entry has a ``value`` (sent back to
+    ``POST /api/opportunities/{id}/mark_lost/`` as ``reason_category``)
+    and a ``label`` (human-readable, for display).
+    """
+
+    def get(self, request):
+        return Response(
+            [
+                {"value": choice.value, "label": choice.label}
+                for choice in LossReason.Category
+            ]
         )
 
 

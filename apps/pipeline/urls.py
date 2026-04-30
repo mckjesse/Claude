@@ -7,6 +7,7 @@ from .views import (
     ContactViewSet,
     DashboardView,
     FollowUpTaskViewSet,
+    LossReasonChoicesView,
     LossReasonViewSet,
     LossReasonsReportView,
     OpportunityViewSet,
@@ -29,6 +30,11 @@ router.register("activities", ActivityLogViewSet, basename="activity")
 router.register("loss-reasons", LossReasonViewSet, basename="lossreason")
 
 extra_patterns = [
+    path(
+        "loss-reason-choices/",
+        LossReasonChoicesView.as_view(),
+        name="loss-reason-choices",
+    ),
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
     path(
         "reports/pipeline-by-stage/",

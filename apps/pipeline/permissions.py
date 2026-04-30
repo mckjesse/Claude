@@ -125,8 +125,13 @@ class OpportunityPermission(IsAuthenticatedActive):
         if action == "destroy":
             return False
 
-        if action in ("mark_won", "mark_lost"):
+        if action in ("mark_won", "mark_lost", "reopen", "close_related_as_lost"):
             return role == Role.ESTIMATOR
+
+        if action in ("archive", "restore"):
+            # Same set that can edit an opportunity. Hard DELETE is
+            # director-only and handled by the generic "destroy" branch.
+            return role in (Role.ESTIMATOR, Role.ADMIN)
 
         if action in ("create", "update", "partial_update"):
             return role in (Role.ESTIMATOR, Role.ADMIN)

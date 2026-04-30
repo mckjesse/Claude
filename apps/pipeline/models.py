@@ -115,7 +115,9 @@ class Opportunity(TimestampedModel):
     # project_code is the human-facing "Project ID" displayed throughout
     # the UI (labels, reports, URLs). The internal primary key `id`
     # remains the technical identifier for foreign keys and relations.
-    project_code = models.CharField(max_length=100, unique=True)
+    # Not globally unique — FOXD may price the same project to multiple
+    # builders. Uniqueness is scoped to (project_code, company).
+    project_code = models.CharField(max_length=100)
 
     company = models.ForeignKey(
         Company,
@@ -180,10 +182,31 @@ class Opportunity(TimestampedModel):
         max_digits=14, decimal_places=2, null=True, blank=True
     )
 
+    # Soft delete / archive. ``archived_at is not None`` means the
+    # opportunity is hidden from normal list views, dashboard and
+    # reports, but the row (and all its related quotes, tasks,
+    # activity logs, loss reason) is still present for audit. Call
+    # the /archive/ and /restore/ actions to toggle; hard DELETE is
+    # still available to directors but requires archiving first.
+    archived_at = models.DateTimeField(null=True, blank=True)
+    archived_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="archived_opportunities",
+    )
+
     class Meta:
         ordering = ["-created_at"]
         verbose_name = "Opportunity"
         verbose_name_plural = "Opportunities"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project_code", "company"],
+                name="unique_project_code_per_company",
+            ),
+        ]
 
     def __str__(self):
         return self.project_name
@@ -293,6 +316,14 @@ class FollowUpTask(TimestampedModel):
     subject = models.CharField(max_length=255)
     details = models.TextField(blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    completed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="completed_followups",
+    )
+    completion_notes = models.TextField(blank=True)
 
     class Meta:
         ordering = ["due_date", "due_time"]
@@ -349,6 +380,7 @@ class LossReason(models.Model):
         COMPETITOR = "competitor", "Competitor"
         CLIENT_CHANGE = "client_change", "Client Change"
         NO_DECISION = "no_decision", "No Decision"
+        PROJECT_WON_OTHER = "project_won_other", "Project Won via Another Builder"
         OTHER = "other", "Other"
 
     opportunity = models.OneToOneField(

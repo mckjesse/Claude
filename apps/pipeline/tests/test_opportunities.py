@@ -58,7 +58,7 @@ class OpportunityCreationTests(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("project_code", resp.data)
 
-    def test_project_code_must_be_unique(self):
+    def test_same_project_code_same_company_is_blocked(self):
         self.client.post(
             "/api/opportunities/",
             {
@@ -78,7 +78,30 @@ class OpportunityCreationTests(APITestCase):
             format="json",
         )
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("project_code", resp.data)
+
+    def test_same_project_code_different_company_is_allowed(self):
+        other_company = Company.objects.create(
+            name="Other Builder", company_type=Company.Type.BUILDER,
+        )
+        self.client.post(
+            "/api/opportunities/",
+            {
+                "project_name": "Builder A bid",
+                "project_code": "MULTI-1",
+                "company": self.company.id,
+            },
+            format="json",
+        )
+        resp = self.client.post(
+            "/api/opportunities/",
+            {
+                "project_name": "Builder B bid",
+                "project_code": "MULTI-1",
+                "company": other_company.id,
+            },
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
 
 class OpportunityValidationTests(APITestCase):
@@ -292,3 +315,293 @@ class MarkLostTests(APITestCase):
         self.opp.refresh_from_db()
         self.assertEqual(self.opp.stage, Opportunity.Stage.LOST)
         self.assertEqual(self.opp.status, Opportunity.Status.CLOSED)
+
+    def test_direct_patch_out_of_lost_is_blocked(self):
+        # Trying to PATCH stage away from 'lost' must be rejected.
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/mark_lost/",
+            {"reason_category": LossReason.Category.PRICE},
+            format="json",
+        )
+        resp = self.client.patch(
+            f"/api/opportunities/{self.opp.id}/",
+            {"stage": Opportunity.Stage.LEAD},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("stage", resp.data)
+
+
+class ReopenTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.director = AppUser.objects.create_user(
+            username="reopen_dir", password="x", role=AppUser.Role.DIRECTOR,
+        )
+        cls.company = Company.objects.create(
+            name="ReopenCo", company_type=Company.Type.BUILDER,
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.director)
+        self.opp = Opportunity.objects.create(
+            project_name="ReopenTarget",
+            project_code=f"RE-{self.id()[-6:]}",
+            company=self.company,
+            estimator=self.director,
+            stage=Opportunity.Stage.LOST,
+            status=Opportunity.Status.CLOSED,
+        )
+        LossReason.objects.create(
+            opportunity=self.opp,
+            reason_category=LossReason.Category.PRICE,
+            reason_detail="Original loss.",
+        )
+
+    def test_reopen_sets_stage_follow_up_and_status_open(self):
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/reopen/", format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.opp.refresh_from_db()
+        self.assertEqual(self.opp.stage, Opportunity.Stage.FOLLOW_UP)
+        self.assertEqual(self.opp.status, Opportunity.Status.OPEN)
+
+    def test_reopen_preserves_loss_reason(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/reopen/", format="json",
+        )
+        lr = LossReason.objects.get(opportunity=self.opp)
+        self.assertEqual(lr.reason_category, LossReason.Category.PRICE)
+        self.assertEqual(lr.reason_detail, "Original loss.")
+
+    def test_reopen_creates_activity_entries(self):
+        from apps.pipeline.models import ActivityLog
+
+        before = ActivityLog.objects.filter(opportunity=self.opp).count()
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/reopen/", format="json",
+        )
+        after = ActivityLog.objects.filter(opportunity=self.opp).count()
+        self.assertEqual(after - before, 2)  # stage_changed + reopened
+
+    def test_reopen_rejects_non_terminal_opportunity(self):
+        self.opp.stage = Opportunity.Stage.PRICING
+        self.opp.status = Opportunity.Status.OPEN
+        self.opp.save()
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/reopen/", format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_reopen_works_on_won_opportunity(self):
+        self.opp.stage = Opportunity.Stage.WON
+        self.opp.final_awarded_value = "500000.00"
+        self.opp.save()
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/reopen/", format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.opp.refresh_from_db()
+        self.assertEqual(self.opp.stage, Opportunity.Stage.FOLLOW_UP)
+        self.assertEqual(self.opp.status, Opportunity.Status.OPEN)
+
+
+class ArchiveAndDeleteTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.director = AppUser.objects.create_user(
+            username="archive_dir", password="x", role=AppUser.Role.DIRECTOR,
+        )
+        cls.company = Company.objects.create(
+            name="ArchiveCo", company_type=Company.Type.BUILDER,
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.director)
+        self.opp = Opportunity.objects.create(
+            project_name="ArchiveTarget",
+            project_code="ARC-001",
+            company=self.company,
+            estimator=self.director,
+            stage=Opportunity.Stage.PRICING,
+            estimated_contract_value=Decimal("250000.00"),
+        )
+        # Create child records so we can verify cascade filtering.
+        from apps.pipeline.models import FollowUpTask, Quote
+
+        self.quote = Quote.objects.create(
+            opportunity=self.opp,
+            revision_number=1,
+            quoted_value_ex_gst=Decimal("250000.00"),
+            quote_reference="ARC-001-R1",
+        )
+        self.task = FollowUpTask.objects.create(
+            opportunity=self.opp,
+            assigned_to_user=self.director,
+            subject="Chase builder",
+            task_type=FollowUpTask.TaskType.CALL,
+            due_date="2099-01-01",
+        )
+
+    def test_archive_sets_fields_and_hides_from_list(self):
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.opp.refresh_from_db()
+        self.assertIsNotNone(self.opp.archived_at)
+        self.assertEqual(self.opp.archived_by, self.director)
+        resp = self.client.get("/api/opportunities/")
+        self.assertNotIn(
+            self.opp.id, [r["id"] for r in resp.data["results"]]
+        )
+
+    def test_archive_preserves_stage_and_status(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        self.opp.refresh_from_db()
+        self.assertEqual(self.opp.stage, Opportunity.Stage.PRICING)
+        self.assertEqual(self.opp.status, Opportunity.Status.OPEN)
+
+    def test_archive_rejected_if_already_archived(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_list_archived_true_returns_archived_only(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.get("/api/opportunities/?archived=true")
+        self.assertIn(
+            self.opp.id, [r["id"] for r in resp.data["results"]]
+        )
+
+    def test_list_archived_all_returns_both(self):
+        active = Opportunity.objects.create(
+            project_name="StillActive",
+            project_code="ARC-002",
+            company=self.company,
+            estimator=self.director,
+        )
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.get("/api/opportunities/?archived=all")
+        ids = [r["id"] for r in resp.data["results"]]
+        self.assertIn(self.opp.id, ids)
+        self.assertIn(active.id, ids)
+
+    def test_restore_clears_archive_fields(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/restore/", format="json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.opp.refresh_from_db()
+        self.assertIsNone(self.opp.archived_at)
+        self.assertIsNone(self.opp.archived_by)
+
+    def test_restore_on_non_archived_is_rejected(self):
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/restore/", format="json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_on_non_archived_is_rejected(self):
+        resp = self.client.delete(f"/api/opportunities/{self.opp.id}/")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(
+            Opportunity.objects.filter(pk=self.opp.pk).exists()
+        )
+
+    def test_delete_works_after_archive(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.delete(f"/api/opportunities/{self.opp.id}/")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(
+            Opportunity.objects.filter(pk=self.opp.pk).exists()
+        )
+
+    def test_estimator_can_archive(self):
+        estimator = AppUser.objects.create_user(
+            username="est_arch", password="x", role=AppUser.Role.ESTIMATOR,
+        )
+        self.client.force_authenticate(user=estimator)
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_read_only_cannot_archive(self):
+        ro = AppUser.objects.create_user(
+            username="ro_arch", password="x", role=AppUser.Role.READ_ONLY,
+        )
+        self.client.force_authenticate(user=ro)
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    # ---- child-record cascade filtering -----------------------------
+    def test_archive_hides_quotes_from_default_list(self):
+        resp = self.client.get("/api/quotes/")
+        ids_before = [r["id"] for r in resp.data["results"]]
+        self.assertIn(self.quote.id, ids_before)
+
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.get("/api/quotes/")
+        ids_after = [r["id"] for r in resp.data["results"]]
+        self.assertNotIn(self.quote.id, ids_after)
+
+    def test_archive_hides_followups_from_default_list(self):
+        resp = self.client.get("/api/followups/")
+        ids_before = [r["id"] for r in resp.data["results"]]
+        self.assertIn(self.task.id, ids_before)
+
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.get("/api/followups/")
+        ids_after = [r["id"] for r in resp.data["results"]]
+        self.assertNotIn(self.task.id, ids_after)
+
+    def test_archive_preserves_activity_log_visibility(self):
+        from apps.pipeline.models import ActivityLog
+
+        # The archive action itself creates an activity log entry.
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        resp = self.client.get(
+            f"/api/activities/?opportunity={self.opp.id}"
+        )
+        self.assertGreater(resp.data["count"], 0)
+
+    def test_restore_unhides_quotes_and_followups(self):
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/archive/", format="json"
+        )
+        self.client.post(
+            f"/api/opportunities/{self.opp.id}/restore/", format="json"
+        )
+        resp_q = self.client.get("/api/quotes/")
+        resp_f = self.client.get("/api/followups/")
+        self.assertIn(
+            self.quote.id, [r["id"] for r in resp_q.data["results"]]
+        )
+        self.assertIn(
+            self.task.id, [r["id"] for r in resp_f.data["results"]]
+        )

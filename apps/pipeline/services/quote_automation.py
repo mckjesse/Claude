@@ -107,6 +107,42 @@ def _value_for_quote(opp: Opportunity) -> Optional[Decimal]:
     return opp.estimated_contract_value
 
 
+def _build_quote_payload(
+    opp: Opportunity,
+    *,
+    revision: int,
+    value: Decimal,
+) -> dict:
+    """
+    Explicit field mapping from Opportunity → Quote.
+
+    ┌──────────────────────────────────────── Opportunity ─ → ─ Quote ──────────┐
+    │  opp                                 → opportunity (FK id)                │
+    │  opp.project_code + "-R{revision}"   → quote_reference                    │
+    │  value (_value_for_quote)            → quoted_value_ex_gst                │
+    │  opp.estimated_margin_percent        → quoted_margin_percent              │
+    │  opp.submission_date                 → submission_date                    │
+    │  _STATUS_FOR_STAGE[opp.stage]        → quote_status                       │
+    │  (constant)                          → revision_number = revision         │
+    └──────────────────────────────────────────────────────────────────────────┘
+
+    Keeping the mapping in one dedicated function makes it obvious
+    which source field feeds which destination field — no serializer
+    magic, no signals, no implicit defaults hidden in the model.
+    """
+    return {
+        "opportunity": opp,
+        "revision_number": revision,
+        "quote_reference": f"{opp.project_code}-R{revision}",
+        "quoted_value_ex_gst": value,
+        "quoted_margin_percent": opp.estimated_margin_percent,
+        "submission_date": opp.submission_date,
+        "quote_status": _STATUS_FOR_STAGE.get(
+            opp.stage, Quote.QuoteStatus.DRAFT
+        ),
+    }
+
+
 def _create_quote(
     opp: Opportunity,
     *,
@@ -114,23 +150,12 @@ def _create_quote(
     value: Decimal,
     user: Optional[AppUser],
 ) -> Quote:
-    quote_status = _STATUS_FOR_STAGE.get(opp.stage, Quote.QuoteStatus.DRAFT)
-    quote = Quote.objects.create(
-        opportunity=opp,
-        revision_number=revision,
-        quoted_value_ex_gst=value,
-        quote_reference=f"{opp.project_code}-R{revision}",
-        quote_status=quote_status,
-        submission_date=(
-            opp.submission_date
-            if opp.stage == Opportunity.Stage.SUBMITTED
-            else None
-        ),
-    )
+    payload = _build_quote_payload(opp, revision=revision, value=value)
+    quote = Quote.objects.create(**payload)
     activity.quote_created(quote, user)
     logger.info(
         "quote_automation: wrote Quote(id=%s, opp=%s, rev=%s, value=%s, status=%s)",
-        quote.id, opp.pk, quote.revision_number, value, quote_status,
+        quote.id, opp.pk, quote.revision_number, value, payload["quote_status"],
     )
     return quote
 

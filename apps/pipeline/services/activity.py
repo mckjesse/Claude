@@ -325,6 +325,28 @@ def followup_updated(task: FollowUpTask, user, changed_fields: list[str]) -> Non
     )
 
 
+def opportunity_archived(opp: Opportunity, user) -> None:
+    _log(
+        opportunity=opp,
+        entity_type="opportunity",
+        entity_id=opp.id,
+        activity_type="archived",
+        description=f"Opportunity archived: {opp.project_name}.",
+        user=user,
+    )
+
+
+def opportunity_restored(opp: Opportunity, user) -> None:
+    _log(
+        opportunity=opp,
+        entity_type="opportunity",
+        entity_id=opp.id,
+        activity_type="restored",
+        description=f"Opportunity restored: {opp.project_name}.",
+        user=user,
+    )
+
+
 def followup_completed(task: FollowUpTask, user) -> None:
     _log(
         opportunity=task.opportunity,
