@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 
 from apps.users.models import AppUser
 
-from .filters import FollowUpTaskFilter, OpportunityFilter
+from .filters import FollowUpTaskFilter, OpportunityFilter, QuoteFilter
 from .models import (
     ActivityLog,
     Company,
@@ -504,7 +504,7 @@ class QuoteViewSet(viewsets.ModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = ["opportunity", "quote_status"]
+    filterset_class = QuoteFilter
     search_fields = ["quote_reference", "opportunity__project_name"]
     ordering_fields = ["revision_number", "submission_date", "created_at"]
     ordering = ["opportunity", "-revision_number"]

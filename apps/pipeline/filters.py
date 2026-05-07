@@ -1,7 +1,7 @@
 import django_filters
 from django.utils import timezone
 
-from .models import FollowUpTask, Opportunity
+from .models import FollowUpTask, Opportunity, Quote
 
 
 class OpportunityFilter(django_filters.FilterSet):
@@ -67,3 +67,13 @@ class FollowUpTaskFilter(django_filters.FilterSet):
         if value:
             return active.filter(due_date__lt=today)
         return active.filter(due_date__gte=today)
+
+
+class QuoteFilter(django_filters.FilterSet):
+    # Accept both ``opportunity`` and ``opportunity_id`` so the frontend
+    # works regardless of which key it sends.
+    opportunity_id = django_filters.NumberFilter(field_name="opportunity_id")
+
+    class Meta:
+        model = Quote
+        fields = ["opportunity", "opportunity_id", "quote_status"]
