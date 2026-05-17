@@ -807,6 +807,29 @@ class ActivityLogViewSet(viewsets.ModelViewSet):
             "created_by_user",
         )
 
+    def perform_create(self, serializer):
+        import logging
+
+        logger = logging.getLogger("apps.pipeline.views")
+        opp = serializer.validated_data.get("opportunity")
+        # Auto-fill entity_id from the opportunity if not provided.
+        entity_id = serializer.validated_data.get("entity_id")
+        if entity_id is None and opp is not None:
+            entity_id = opp.id
+        log = serializer.save(
+            created_by_user=self.request.user,
+            entity_id=entity_id,
+        )
+        logger.info(
+            "activity_create: id=%s opp=%s type=%s entity=%s/%s user=%s",
+            log.id,
+            log.opportunity_id,
+            log.activity_type,
+            log.entity_type,
+            log.entity_id,
+            self.request.user.username,
+        )
+
 
 class LossReasonViewSet(viewsets.ModelViewSet):
     serializer_class = LossReasonSerializer

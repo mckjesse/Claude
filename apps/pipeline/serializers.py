@@ -390,6 +390,15 @@ class ActivityLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActivityLog
         fields = "__all__"
+        extra_kwargs = {
+            # Sensible defaults so the frontend can POST a note with just
+            # {"opportunity": <id>, "description": "..."} and everything
+            # else fills in automatically.
+            "entity_type": {"default": "opportunity"},
+            "activity_type": {"default": "note"},
+            "entity_id": {"required": False},
+            "created_by_user": {"required": False},
+        }
 
 
 class LossReasonSerializer(serializers.ModelSerializer):
