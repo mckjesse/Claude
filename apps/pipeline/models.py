@@ -401,13 +401,12 @@ class ActivityLog(models.Model):
 class LossReason(models.Model):
     class Category(models.TextChoices):
         PRICE = "price", "Price"
-        SCOPE = "scope", "Scope"
+        PROGRAM = "program", "Program"
+        SCOPE = "scope", "Scope / exclusions"
         RELATIONSHIP = "relationship", "Relationship"
-        TIMING = "timing", "Timing"
-        CAPABILITY = "capability", "Capability"
-        COMPETITOR = "competitor", "Competitor"
-        CLIENT_CHANGE = "client_change", "Client Change"
-        NO_DECISION = "no_decision", "No Decision"
+        COMPETITOR = "competitor", "Competitor / incumbent"
+        CANCELLED = "cancelled", "Client cancelled"
+        NO_RESPONSE = "no_response", "No response / went cold"
         PROJECT_WON_OTHER = "project_won_other", "Project Won via Another Builder"
         OTHER = "other", "Other"
 

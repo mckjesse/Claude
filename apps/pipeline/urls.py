@@ -35,6 +35,11 @@ extra_patterns = [
         LossReasonChoicesView.as_view(),
         name="loss-reason-choices",
     ),
+    path(
+        "loss-reasons/options/",
+        LossReasonChoicesView.as_view(),
+        name="loss-reason-options",
+    ),
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
     path(
         "reports/pipeline-by-stage/",
@@ -73,4 +78,4 @@ extra_patterns = [
     ),
 ]
 
-urlpatterns = router.urls + extra_patterns
+urlpatterns = extra_patterns + router.urls
