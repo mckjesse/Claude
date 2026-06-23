@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COD Team Randomizer</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0d0a;
+      --surface: #14181433;
+      --panel: #161b16;
+      --panel-raised: #1d241d;
+      --border: #2c352c;
+      --border-light: #3c473c;
+      --text: #e6ece6;
+      --text-muted: #93a093;
+      --text-dim: #6b766b;
+      --accent: #b9f227;
+      --accent-dim: #2a3310;
+      --team1: #44c0ff;
+      --team1-dim: #0f2738;
+      --team2: #ff6b3d;
+      --team2-dim: #38160c;
+      --danger: #ff5151;
+      --radius: 6px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background:
+        radial-gradient(circle at 15% 0%, #1a241a 0%, transparent 45%),
+        radial-gradient(circle at 85% 100%, #1a1f28 0%, transparent 45%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      padding: 28px 18px 60px;
+    }
+
+    .wrap { max-width: 920px; margin: 0 auto; }
+
+    /* ---- Header ---- */
+    header { text-align: center; margin-bottom: 28px; }
+    header h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 38px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text);
+      line-height: 1.1;
+    }
+    header h1 .hi { color: var(--accent); }
+    header p {
+      color: var(--text-dim);
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .card h2 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2 .count {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 2px 9px;
+      border-radius: 20px;
+    }
+
+    /* ---- Add name ---- */
+    .add-row { display: flex; gap: 10px; }
+    input[type="text"] {
+      flex: 1;
+      background: var(--panel-raised);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 15px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input[type="text"]:focus { border-color: var(--accent); }
+    input[type="text"]::placeholder { color: var(--text-dim); }
+
+    button {
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius);
+      font-weight: 600;
+      transition: transform .1s, background .15s, opacity .15s;
+    }
+    button:active { transform: translateY(1px); }
+
+    .btn-add {
+      background: var(--accent);
+      color: #11160a;
+      font-size: 15px;
+      padding: 0 22px;
+      letter-spacing: .5px;
+    }
+    .btn-add:hover { background: #c9ff3d; }
+
+    /* ---- Name chips ---- */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 10px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--panel-raised);
+      border: 1px solid var(--border-light);
+      border-radius: 20px;
+      padding: 7px 8px 7px 14px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .chip.locked {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .chip.locked .lock { color: var(--accent); }
+    .chip .lock { font-size: 12px; }
+    .chip .x {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #00000033;
+      color: var(--text-dim);
+      font-size: 14px;
+      line-height: 1;
+    }
+    .chip .x:hover { background: var(--danger); color: #fff; }
+    .empty-note { color: var(--text-dim); font-size: 14px; font-style: italic; }
+
+    .locked-info {
+      font-size: 12.5px;
+      color: var(--text-dim);
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .locked-info b { color: var(--accent); font-weight: 600; }
+
+    /* ---- Actions ---- */
+    .actions { display: flex; gap: 12px; margin-bottom: 22px; }
+    .btn-random {
+      flex: 1;
+      background: linear-gradient(135deg, var(--accent), #8ec70f);
+      color: #11160a;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 16px;
+    }
+    .btn-random:hover { filter: brightness(1.07); }
+    .btn-random:disabled { opacity: .4; cursor: not-allowed; filter: none; }
+    .btn-clear {
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-muted);
+      font-size: 14px;
+      padding: 0 18px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .btn-clear:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ---- Teams ---- */
+    .teams { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .team {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .team.t1 { border-color: var(--team1); }
+    .team.t2 { border-color: var(--team2); }
+    .team-head {
+      padding: 13px 16px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .t1 .team-head { background: var(--team1-dim); color: var(--team1); }
+    .t2 .team-head { background: var(--team2-dim); color: var(--team2); }
+    .team-head .num {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      opacity: .8;
+      letter-spacing: 0;
+    }
+    .team-body { padding: 10px; display: flex; flex-direction: column; gap: 7px; min-height: 60px; }
+    .player {
+      background: var(--panel-raised);
+      border-radius: var(--radius);
+      padding: 11px 14px;
+      font-size: 15px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      animation: pop .25s ease both;
+    }
+    .player .badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 2px 7px;
+      border-radius: 20px;
+      margin-left: auto;
+    }
+    @keyframes pop {
+      from { opacity: 0; transform: translateY(6px) scale(.98); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .placeholder {
+      text-align: center;
+      color: var(--text-dim);
+      padding: 40px 20px;
+      border: 1px dashed var(--border-light);
+      border-radius: var(--radius);
+      font-size: 14px;
+    }
+
+    @media (max-width: 560px) {
+      header h1 { font-size: 28px; letter-spacing: 2px; }
+      .teams { grid-template-columns: 1fr; }
+      .btn-random { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>COD <span class="hi">Team</span> Randomizer</h1>
+      <p>Drop in the squad &middot; hit random &middot; lock the duo</p>
+    </header>
+
+    <!-- Add names -->
+    <div class="card">
+      <h2>Players <span class="count" id="count">0</span></h2>
+      <div class="add-row">
+        <input type="text" id="nameInput" placeholder="Enter a player name and hit Enter" autocomplete="off">
+        <button class="btn-add" id="addBtn">Add</button>
+      </div>
+      <div class="chips" id="chips" style="margin-top:16px;">
+        <span class="empty-note">No players yet — add some names above.</span>
+      </div>
+      <div class="locked-info">
+        🔒 <span><b>Pickle Pizza</b> &amp; <b>Wagga 300</b> are locked to <b>Team 1</b> together — every time.</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn-random" id="randomBtn" disabled>Randomize Teams</button>
+      <button class="btn-clear" id="clearBtn">Clear</button>
+    </div>
+
+    <!-- Teams -->
+    <div id="teamsArea">
+      <div class="placeholder">Add at least 2 players, then hit <b>Randomize Teams</b>.</div>
+    </div>
+  </div>
+
+  <script>
+    // ---- Locked duo: always together, always Team 1 ----
+    const LOCKED = ['Pickle Pizza', 'Wagga 300'];
+    const norm = s => s.trim().toLowerCase().replace(/\s+/g, ' ');
+    const LOCKED_NORM = LOCKED.map(norm);
+    const isLocked = name => LOCKED_NORM.includes(norm(name));
+
+    let players = [];
+
+    const $ = id => document.getElementById(id);
+    const nameInput = $('nameInput');
+    const chipsEl = $('chips');
+    const countEl = $('count');
+    const randomBtn = $('randomBtn');
+    const teamsArea = $('teamsArea');
+
+    function addName() {
+      const raw = nameInput.value.trim();
+      if (!raw) return;
+      if (players.some(p => norm(p) === norm(raw))) {
+        // already added — clear & flash focus
+        nameInput.value = '';
+        nameInput.focus();
+        return;
+      }
+      players.push(raw);
+      nameInput.value = '';
+      nameInput.focus();
+      renderChips();
+    }
+
+    function removeName(i) {
+      players.splice(i, 1);
+      renderChips();
+    }
+
+    function renderChips() {
+      countEl.textContent = players.length;
+      randomBtn.disabled = players.length < 2;
+      if (players.length === 0) {
+        chipsEl.innerHTML = '<span class="empty-note">No players yet — add some names above.</span>';
+        return;
+      }
+      chipsEl.innerHTML = '';
+      players.forEach((p, i) => {
+        const chip = document.createElement('span');
+        chip.className = 'chip' + (isLocked(p) ? ' locked' : '');
+        const lock = isLocked(p) ? '<span class="lock">🔒</span>' : '';
+        chip.innerHTML = lock + '<span>' + escapeHtml(p) + '</span>' +
+          '<span class="x" title="Remove">&times;</span>';
+        chip.querySelector('.x').addEventListener('click', () => removeName(i));
+        chipsEl.appendChild(chip);
+      });
+    }
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function randomize() {
+      if (players.length < 2) return;
+
+      // Split into locked (forced Team 1) and everyone else.
+      const lockedPlayers = players.filter(isLocked);
+      const others = shuffle(players.filter(p => !isLocked(p)));
+
+      const team1 = [...lockedPlayers];
+      const team2 = [];
+
+      // Balance: aim for even team sizes overall, keeping the locked
+      // duo on Team 1. Fill toward the smaller team each step.
+      const total = players.length;
+      const team1Target = Math.ceil(total / 2);
+
+      for (const p of others) {
+        if (team1.length < team1Target) team1.push(p);
+        else team2.push(p);
+      }
+
+      // Shuffle order within each team for display variety.
+      renderTeams(shuffle(team1), shuffle(team2));
+    }
+
+    function renderTeams(team1, team2) {
+      teamsArea.innerHTML =
+        '<div class="teams">' +
+          teamHtml('t1', 'Team 1', 1, team1) +
+          teamHtml('t2', 'Team 2', 2, team2) +
+        '</div>';
+    }
+
+    function teamHtml(cls, title, num, list) {
+      const body = list.length
+        ? list.map(p =>
+            '<div class="player"><span>' + escapeHtml(p) + '</span>' +
+            (isLocked(p) ? '<span class="badge">Locked</span>' : '') +
+            '</div>').join('')
+        : '<div class="placeholder" style="padding:20px;border:none;">Empty</div>';
+      return '<div class="team ' + cls + '">' +
+        '<div class="team-head">' + title +
+          '<span class="num">' + list.length + ' player' + (list.length === 1 ? '' : 's') + '</span>' +
+        '</div>' +
+        '<div class="team-body">' + body + '</div>' +
+      '</div>';
+    }
+
+    function clearAll() {
+      players = [];
+      renderChips();
+      teamsArea.innerHTML =
+        '<div class="placeholder">Add at least 2 players, then hit <b>Randomize Teams</b>.</div>';
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // ---- Events ----
+    $('addBtn').addEventListener('click', addName);
+    nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addName(); });
+    randomBtn.addEventListener('click', randomize);
+    $('clearBtn').addEventListener('click', clearAll);
+
+    nameInput.focus();
+  </script>
+</body>
+</html>
