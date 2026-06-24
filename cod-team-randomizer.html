@@ -110,6 +110,9 @@
       gap: 10px;
     }
     .roster-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       background: var(--panel-raised);
       border: 1.5px solid var(--border-light);
       color: var(--text);
@@ -119,18 +122,38 @@
       border-radius: 30px;
       letter-spacing: .3px;
       text-align: center;
+      min-height: 50px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .roster-btn span {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      min-height: 50px;
+    }
+    /* Hide the native checkbox; the label IS the button. */
+    .roster-btn input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+      margin: 0;
+      pointer-events: none;
     }
     .roster-btn:hover { border-color: var(--text-dim); }
+    /* Selected state is driven by the checkbox — works with zero JavaScript. */
+    .roster-btn:has(input:checked) {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #11160a;
+    }
+    /* Fallback for engines without :has() — JS adds .on as well. */
     .roster-btn.on {
       background: var(--accent);
       border-color: var(--accent);
       color: #11160a;
     }
-    .roster-btn.on:hover { background: #c9ff3d; }
 
     .add-row { display: flex; gap: 10px; margin-top: 16px; }
     input[type="text"] {
@@ -260,13 +283,13 @@
     <div class="card">
       <h2>Who&rsquo;s Playing <span class="count" id="count">0</span></h2>
       <div class="roster" id="roster">
-        <button type="button" class="roster-btn" data-name="PicklePizza">PicklePizza</button>
-        <button type="button" class="roster-btn" data-name="Wogga300">Wogga300</button>
-        <button type="button" class="roster-btn" data-name="Tbaggs">Tbaggs</button>
-        <button type="button" class="roster-btn" data-name="Donnie">Donnie</button>
-        <button type="button" class="roster-btn" data-name="Mikeumstinks">Mikeumstinks</button>
-        <button type="button" class="roster-btn" data-name="Smeel">Smeel</button>
-        <button type="button" class="roster-btn" data-name="Campking">Campking</button>
+        <label class="roster-btn"><input type="checkbox" value="PicklePizza"><span>PicklePizza</span></label>
+        <label class="roster-btn"><input type="checkbox" value="Wogga300"><span>Wogga300</span></label>
+        <label class="roster-btn"><input type="checkbox" value="Tbaggs"><span>Tbaggs</span></label>
+        <label class="roster-btn"><input type="checkbox" value="Donnie"><span>Donnie</span></label>
+        <label class="roster-btn"><input type="checkbox" value="Mikeumstinks"><span>Mikeumstinks</span></label>
+        <label class="roster-btn"><input type="checkbox" value="Smeel"><span>Smeel</span></label>
+        <label class="roster-btn"><input type="checkbox" value="Campking"><span>Campking</span></label>
       </div>
       <div class="add-row">
         <input type="text" id="nameInput" placeholder="Add a guest&hellip;" autocomplete="off">
@@ -300,40 +323,47 @@
     const teamsArea = $('teamsArea');
     const nameInput = $('nameInput');
 
+    const checkboxes = () => rosterEl.querySelectorAll('input[type="checkbox"]');
+
     function updateState() {
-      const on = rosterEl.querySelectorAll('.roster-btn.on').length;
+      let on = 0;
+      checkboxes().forEach(cb => {
+        // keep the .on fallback class in sync for engines without :has()
+        cb.closest('.roster-btn').classList.toggle('on', cb.checked);
+        if (cb.checked) on++;
+      });
       countEl.textContent = on;
       randomBtn.disabled = on < 2;
     }
 
-    // Event delegation: works for the static buttons and any guests added later.
-    rosterEl.addEventListener('click', e => {
-      const btn = e.target.closest('.roster-btn');
-      if (!btn) return;
-      btn.classList.toggle('on');
-      updateState();
-    });
+    // The checkbox toggles natively on tap (no JS needed); this just keeps
+    // the count and the fallback highlight in sync when it does run.
+    rosterEl.addEventListener('change', updateState);
 
     function selectedNames() {
-      return Array.from(rosterEl.querySelectorAll('.roster-btn.on'))
-        .map(b => b.dataset.name);
+      return Array.from(checkboxes()).filter(cb => cb.checked).map(cb => cb.value);
     }
 
     function addGuest() {
       const raw = nameInput.value.trim();
       if (!raw) return;
-      // If a button with this name already exists, just select it.
-      const existing = Array.from(rosterEl.querySelectorAll('.roster-btn'))
-        .find(b => norm(b.dataset.name) === norm(raw));
+      // If a player with this name already exists, just select it.
+      const existing = Array.from(checkboxes())
+        .find(cb => norm(cb.value) === norm(raw));
       if (existing) {
-        existing.classList.add('on');
+        existing.checked = true;
       } else {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'roster-btn on';
-        btn.dataset.name = raw;
-        btn.textContent = raw;
-        rosterEl.appendChild(btn);
+        const label = document.createElement('label');
+        label.className = 'roster-btn';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = raw;
+        cb.checked = true;
+        const span = document.createElement('span');
+        span.textContent = raw;
+        label.appendChild(cb);
+        label.appendChild(span);
+        rosterEl.appendChild(label);
       }
       nameInput.value = '';
       nameInput.focus();
@@ -411,7 +441,7 @@
     }
 
     function clearSelection() {
-      rosterEl.querySelectorAll('.roster-btn.on').forEach(b => b.classList.remove('on'));
+      checkboxes().forEach(cb => { cb.checked = false; });
       updateState();
       teamsArea.innerHTML =
         '<div class="placeholder">Pick at least 2 players, then hit <b>Randomize Teams</b>.</div>';
