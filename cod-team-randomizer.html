@@ -332,18 +332,38 @@
 
       const pinned = playing.filter(isPinned);
       const others = shuffle(playing.filter(n => !isPinned(n)));
+      const n = playing.length;
+      const p = pinned.length;
 
-      const team1 = pinned.slice();
-      const team2 = [];
-      const team1Target = Math.ceil(playing.length / 2);
+      // Balanced team sizes; randomly decide which side gets the extra
+      // body when the count is odd.
+      const big = Math.ceil(n / 2);
+      const small = Math.floor(n / 2);
+      let t1size, t2size;
+      if (Math.random() < 0.5) { t1size = big; t2size = small; }
+      else { t1size = small; t2size = big; }
 
-      for (const p of others) {
-        if (team1.length < team1Target) team1.push(p);
-        else team2.push(p);
+      // The pinned pair travels together to a randomly chosen side —
+      // but only a side big enough to hold them (matters for small/odd
+      // lobbies). This makes them land on Team 1 or Team 2 unpredictably.
+      const canHold = [];
+      if (t1size >= p) canHold.push(1);
+      if (t2size >= p) canHold.push(2);
+      const pinnedTeam = canHold[Math.floor(Math.random() * canHold.length)];
+
+      let team1 = [], team2 = [];
+      if (pinnedTeam === 1) {
+        team1 = pinned.slice();
+        while (team1.length < t1size && others.length) team1.push(others.shift());
+        team2 = others;
+      } else {
+        team2 = pinned.slice();
+        while (team2.length < t2size && others.length) team2.push(others.shift());
+        team1 = others;
       }
 
       // Shuffle each team's display order so the pinned pair doesn't
-      // sit predictably at the top.
+      // sit predictably together at the top.
       renderTeams(shuffle(team1), shuffle(team2));
     }
 
