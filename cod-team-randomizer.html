@@ -259,7 +259,15 @@
     <!-- Roster -->
     <div class="card">
       <h2>Who&rsquo;s Playing <span class="count" id="count">0</span></h2>
-      <div class="roster" id="roster"></div>
+      <div class="roster" id="roster">
+        <button type="button" class="roster-btn" data-name="PicklePizza">PicklePizza</button>
+        <button type="button" class="roster-btn" data-name="Wogga300">Wogga300</button>
+        <button type="button" class="roster-btn" data-name="Tbaggs">Tbaggs</button>
+        <button type="button" class="roster-btn" data-name="Donnie">Donnie</button>
+        <button type="button" class="roster-btn" data-name="Mikeumstinks">Mikeumstinks</button>
+        <button type="button" class="roster-btn" data-name="Smeel">Smeel</button>
+        <button type="button" class="roster-btn" data-name="Campking">Campking</button>
+      </div>
       <div class="add-row">
         <input type="text" id="nameInput" placeholder="Add a guest&hellip;" autocomplete="off">
         <button class="btn-add" id="addBtn">Add</button>
@@ -279,19 +287,11 @@
   </div>
 
   <script>
-    // Default roster shown as buttons.
-    const ROSTER = ['PicklePizza', 'Wogga300', 'Tbaggs', 'Donnie', 'Mikeumstinks', 'Smeel', 'Campking'];
-
     // These two always end up on the same team. Kept internal — no UI hint.
     const PINNED = ['PicklePizza', 'Wogga300'];
     const norm = s => s.trim().toLowerCase().replace(/\s+/g, ' ');
     const PINNED_NORM = PINNED.map(norm);
     const isPinned = name => PINNED_NORM.includes(norm(name));
-
-    // names currently on the roster (presets + any added guests)
-    let roster = ROSTER.slice();
-    // names toggled on
-    let selected = new Set();
 
     const $ = id => document.getElementById(id);
     const rosterEl = $('roster');
@@ -300,38 +300,44 @@
     const teamsArea = $('teamsArea');
     const nameInput = $('nameInput');
 
-    function renderRoster() {
-      rosterEl.innerHTML = '';
-      roster.forEach(name => {
-        const btn = document.createElement('button');
-        btn.className = 'roster-btn' + (selected.has(name) ? ' on' : '');
-        btn.textContent = name;
-        btn.addEventListener('click', () => toggle(name));
-        rosterEl.appendChild(btn);
-      });
-      countEl.textContent = selected.size;
-      randomBtn.disabled = selected.size < 2;
+    function updateState() {
+      const on = rosterEl.querySelectorAll('.roster-btn.on').length;
+      countEl.textContent = on;
+      randomBtn.disabled = on < 2;
     }
 
-    function toggle(name) {
-      if (selected.has(name)) selected.delete(name);
-      else selected.add(name);
-      renderRoster();
+    // Event delegation: works for the static buttons and any guests added later.
+    rosterEl.addEventListener('click', e => {
+      const btn = e.target.closest('.roster-btn');
+      if (!btn) return;
+      btn.classList.toggle('on');
+      updateState();
+    });
+
+    function selectedNames() {
+      return Array.from(rosterEl.querySelectorAll('.roster-btn.on'))
+        .map(b => b.dataset.name);
     }
 
     function addGuest() {
       const raw = nameInput.value.trim();
       if (!raw) return;
-      const existing = roster.find(n => norm(n) === norm(raw));
+      // If a button with this name already exists, just select it.
+      const existing = Array.from(rosterEl.querySelectorAll('.roster-btn'))
+        .find(b => norm(b.dataset.name) === norm(raw));
       if (existing) {
-        selected.add(existing);
+        existing.classList.add('on');
       } else {
-        roster.push(raw);
-        selected.add(raw);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'roster-btn on';
+        btn.dataset.name = raw;
+        btn.textContent = raw;
+        rosterEl.appendChild(btn);
       }
       nameInput.value = '';
       nameInput.focus();
-      renderRoster();
+      updateState();
     }
 
     function shuffle(arr) {
@@ -344,7 +350,7 @@
     }
 
     function randomize() {
-      const playing = roster.filter(n => selected.has(n));
+      const playing = selectedNames();
       if (playing.length < 2) return;
 
       const pinned = playing.filter(isPinned);
@@ -405,8 +411,8 @@
     }
 
     function clearSelection() {
-      selected.clear();
-      renderRoster();
+      rosterEl.querySelectorAll('.roster-btn.on').forEach(b => b.classList.remove('on'));
+      updateState();
       teamsArea.innerHTML =
         '<div class="placeholder">Pick at least 2 players, then hit <b>Randomize Teams</b>.</div>';
     }
@@ -422,7 +428,7 @@
     randomBtn.addEventListener('click', randomize);
     $('clearBtn').addEventListener('click', clearSelection);
 
-    renderRoster();
+    updateState();
   </script>
 </body>
 </html>
