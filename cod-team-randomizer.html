@@ -7,7 +7,7 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     :root {
       --bg: #0a0d0a;
@@ -104,18 +104,27 @@
     button:active { transform: translateY(1px); }
 
     /* ---- Roster buttons ---- */
-    .roster { display: flex; flex-wrap: wrap; gap: 10px; }
+    .roster {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
     .roster-btn {
       background: var(--panel-raised);
       border: 1.5px solid var(--border-light);
-      color: var(--text-muted);
-      font-size: 15px;
+      color: var(--text);
+      font-size: 16px;
       font-weight: 600;
-      padding: 11px 18px;
+      padding: 14px 16px;
       border-radius: 30px;
       letter-spacing: .3px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-height: 50px;
     }
-    .roster-btn:hover { border-color: var(--text-dim); color: var(--text); }
+    .roster-btn:hover { border-color: var(--text-dim); }
     .roster-btn.on {
       background: var(--accent);
       border-color: var(--accent);
@@ -130,8 +139,8 @@
       border: 1px solid var(--border-light);
       border-radius: var(--radius);
       color: var(--text);
-      font-size: 15px;
-      padding: 11px 14px;
+      font-size: 16px;
+      padding: 12px 14px;
       outline: none;
       transition: border-color .15s;
     }
@@ -226,9 +235,17 @@
     }
 
     @media (max-width: 560px) {
-      header h1 { font-size: 28px; letter-spacing: 2px; }
+      body { padding: 18px 12px 50px; }
+      header h1 { font-size: 26px; letter-spacing: 2px; }
+      .card { padding: 16px; }
+      .roster { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .roster-btn { font-size: 15px; padding: 14px 10px; }
       .teams { grid-template-columns: 1fr; }
-      .btn-random { font-size: 18px; }
+      .btn-random { font-size: 18px; letter-spacing: 2px; }
+      .actions { flex-wrap: wrap; }
+    }
+    @media (max-width: 340px) {
+      .roster { grid-template-columns: 1fr; }
     }
   </style>
 </head>
