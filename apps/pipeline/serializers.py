@@ -165,6 +165,10 @@ class FollowUpTaskMinimalSerializer(serializers.ModelSerializer):
 # Full serializers
 # ---------------------------------------------------------------------------
 class CompanySerializer(serializers.ModelSerializer):
+    account_owner_detail = UserMinimalSerializer(
+        source="account_owner", read_only=True
+    )
+
     class Meta:
         model = Company
         fields = "__all__"

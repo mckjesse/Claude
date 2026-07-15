@@ -68,18 +68,34 @@ class CompanyAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "company_type",
+        "account_tier",
+        "margin_quality",
+        "account_owner",
         "suburb",
         "state",
-        "primary_email",
         "status",
     )
-    list_filter = ("company_type", "status", "state")
+    list_filter = ("company_type", "status", "state", "account_tier", "margin_quality")
     search_fields = ("name", "primary_email", "primary_phone", "suburb")
+    autocomplete_fields = ("account_owner",)
     readonly_fields = TIMESTAMPS
     fieldsets = (
         (None, {"fields": ("name", "company_type", "status")}),
         ("Contact details", {"fields": ("primary_phone", "primary_email", "website")}),
         ("Address", {"fields": ("address", "suburb", "state")}),
+        (
+            "Account Management",
+            {
+                "fields": (
+                    "account_tier",
+                    "margin_quality",
+                    "account_owner",
+                    "last_contact_date",
+                    "next_contact_date",
+                    "relationship_notes",
+                )
+            },
+        ),
         ("Notes", {"fields": ("notes",)}),
         ("Timestamps", {"fields": TIMESTAMPS, "classes": ("collapse",)}),
     )

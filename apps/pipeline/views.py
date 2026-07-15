@@ -72,14 +72,30 @@ class CompanyViewSet(viewsets.ModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = ["company_type", "status", "state"]
+    filterset_fields = [
+        "company_type",
+        "status",
+        "state",
+        "account_tier",
+        "margin_quality",
+        "account_owner",
+    ]
     search_fields = ["name", "primary_email", "suburb", "state"]
-    ordering_fields = ["name", "created_at", "updated_at"]
+    ordering_fields = [
+        "name",
+        "account_tier",
+        "last_contact_date",
+        "next_contact_date",
+        "created_at",
+        "updated_at",
+    ]
     ordering = ["name"]
     queryset = Company.objects.all()
 
     def get_queryset(self):
-        return scoping.scoped_companies(self.request.user)
+        return scoping.scoped_companies(self.request.user).select_related(
+            "account_owner"
+        )
 
 
 class ContactViewSet(viewsets.ModelViewSet):
@@ -914,11 +930,11 @@ class LossReasonsReportView(APIView):
 class StaleOpportunitiesReportView(APIView):
     def get(self, request):
         try:
-            days = int(request.query_params.get("days", 14))
+            days = int(request.query_params.get("days", 30))
         except (TypeError, ValueError):
-            days = 14
+            days = 30
         if days < 1:
-            days = 14
+            days = 30
         return Response(
             reports_service.stale_opportunities(request.user, days=days)
         )

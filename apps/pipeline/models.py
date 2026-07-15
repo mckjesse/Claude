@@ -27,6 +27,16 @@ class Company(TimestampedModel):
         ACTIVE = "active", "Active"
         INACTIVE = "inactive", "Inactive"
 
+    class AccountTier(models.TextChoices):
+        A = "A", "Tier A"
+        B = "B", "Tier B"
+        C = "C", "Tier C"
+
+    class MarginQuality(models.TextChoices):
+        HIGH = "high", "High"
+        MEDIUM = "medium", "Medium"
+        LOW = "low", "Low"
+
     name = models.CharField(max_length=255)
     company_type = models.CharField(
         max_length=32, choices=Type.choices, default=Type.OTHER
@@ -41,6 +51,24 @@ class Company(TimestampedModel):
     status = models.CharField(
         max_length=16, choices=Status.choices, default=Status.ACTIVE
     )
+
+    # --- Account Management fields ---
+    account_tier = models.CharField(
+        max_length=2, choices=AccountTier.choices, blank=True
+    )
+    margin_quality = models.CharField(
+        max_length=10, choices=MarginQuality.choices, blank=True
+    )
+    account_owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="owned_accounts",
+    )
+    relationship_notes = models.TextField(blank=True)
+    last_contact_date = models.DateField(null=True, blank=True)
+    next_contact_date = models.DateField(null=True, blank=True)
 
     class Meta:
         ordering = ["name"]
@@ -373,13 +401,12 @@ class ActivityLog(models.Model):
 class LossReason(models.Model):
     class Category(models.TextChoices):
         PRICE = "price", "Price"
-        SCOPE = "scope", "Scope"
+        PROGRAM = "program", "Program"
+        SCOPE = "scope", "Scope / exclusions"
         RELATIONSHIP = "relationship", "Relationship"
-        TIMING = "timing", "Timing"
-        CAPABILITY = "capability", "Capability"
-        COMPETITOR = "competitor", "Competitor"
-        CLIENT_CHANGE = "client_change", "Client Change"
-        NO_DECISION = "no_decision", "No Decision"
+        COMPETITOR = "competitor", "Competitor / incumbent"
+        CANCELLED = "cancelled", "Client cancelled"
+        NO_RESPONSE = "no_response", "No response / went cold"
         PROJECT_WON_OTHER = "project_won_other", "Project Won via Another Builder"
         OTHER = "other", "Other"
 
