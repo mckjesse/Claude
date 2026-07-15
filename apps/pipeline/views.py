@@ -930,11 +930,11 @@ class LossReasonsReportView(APIView):
 class StaleOpportunitiesReportView(APIView):
     def get(self, request):
         try:
-            days = int(request.query_params.get("days", 14))
+            days = int(request.query_params.get("days", 30))
         except (TypeError, ValueError):
-            days = 14
+            days = 30
         if days < 1:
-            days = 14
+            days = 30
         return Response(
             reports_service.stale_opportunities(request.user, days=days)
         )

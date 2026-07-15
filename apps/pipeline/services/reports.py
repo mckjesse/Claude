@@ -16,7 +16,7 @@ from django.utils import timezone
 
 from apps.users.models import AppUser
 
-from ..models import FollowUpTask, LossReason, Opportunity
+from ..models import FollowUpTask, LossReason, Opportunity, Quote
 from . import scoping
 
 ZERO_DEC = Decimal("0.00")
@@ -250,22 +250,106 @@ def loss_reasons_report(user: AppUser) -> list[dict]:
 # ---------------------------------------------------------------------------
 # Stale opportunities (no activity in the last `days` days)
 # ---------------------------------------------------------------------------
-def stale_opportunities(user: AppUser, days: int = 14) -> list[dict]:
-    now = timezone.now()
-    cutoff = now - timedelta(days=days)
+_STALE_STAGES = (
+    Opportunity.Stage.SUBMITTED,
+    Opportunity.Stage.FOLLOW_UP,
+    Opportunity.Stage.NEGOTIATING,
+)
+
+STALE_THRESHOLD_DAYS = 30
+
+
+def _submission_date_for(opp: Opportunity):
+    """
+    Resolve the effective submission date for a stale calculation using
+    the documented priority:
+
+      1. Opportunity.submission_date
+      2. latest Quote.submission_date (highest revision with a date)
+      3. latest submitted Quote.created_at
+      4. Opportunity.updated_at — fallback only when no submitted date
+         exists anywhere.
+
+    Returns a (date, is_true_submission) tuple. ``is_true_submission``
+    is False only when the ``updated_at`` fallback was used, so callers
+    can treat that case conservatively.
+    """
+    if opp.submission_date:
+        return opp.submission_date, True
+
+    quotes = list(opp.quotes.all())
+
+    # 2. latest quote that carries a submission_date (by revision).
+    dated = [q for q in quotes if q.submission_date]
+    if dated:
+        dated.sort(key=lambda q: q.revision_number, reverse=True)
+        return dated[0].submission_date, True
+
+    # 3. latest submitted quote's created_at.
+    submitted = [
+        q for q in quotes if q.quote_status == Quote.QuoteStatus.SUBMITTED
+    ]
+    if submitted:
+        submitted.sort(key=lambda q: q.revision_number, reverse=True)
+        return submitted[0].created_at.date(), True
+
+    # 4. fallback.
+    return opp.updated_at.date(), False
+
+
+def stale_opportunities(user: AppUser, days: int = STALE_THRESHOLD_DAYS) -> list[dict]:
+    """
+    An opportunity is stale when ALL of the following hold:
+      - not archived
+      - stage is submitted, follow_up, or negotiating (never won/lost)
+      - at least ``days`` days (default 30) since its effective
+        submission date
+      - it has no pending/in-progress follow-up whose due_date >= today
+    """
+    if days < 1:
+        days = STALE_THRESHOLD_DAYS
+    today = timezone.localdate()
+    cutoff = today - timedelta(days=days)
+
+    active_statuses = (
+        FollowUpTask.Status.PENDING,
+        FollowUpTask.Status.IN_PROGRESS,
+    )
 
     qs = (
-        scoping.scoped_opportunities(user)
-        .filter(status=Opportunity.Status.OPEN)
-        .annotate(last_activity_at=Max("activity_logs__created_at"))
-        .filter(Q(last_activity_at__lt=cutoff) | Q(last_activity_at__isnull=True))
+        scoping.scoped_opportunities(user)  # already excludes archived
+        .filter(stage__in=_STALE_STAGES)
         .select_related("company", "estimator", "assigned_user")
-        .order_by("updated_at")
+        .prefetch_related("quotes", "tasks")
     )
 
     results = []
     for o in qs:
-        last = o.last_activity_at
+        submission_date, _is_true = _submission_date_for(o)
+        days_since = (today - submission_date).days
+
+        # Not old enough yet.
+        if submission_date > cutoff:
+            continue
+
+        # Look at this opportunity's follow-ups.
+        tasks = list(o.tasks.all())
+        future_pending = [
+            t
+            for t in tasks
+            if t.status in active_statuses and t.due_date >= today
+        ]
+        # A pending future follow-up means someone is on it — not stale.
+        if future_pending:
+            continue
+
+        # Report metadata: most recent completed/any follow-up date, and
+        # the soonest upcoming follow-up date (there is none if we got
+        # here, but keep the field for the frontend).
+        past_due_dates = [t.due_date for t in tasks]
+        last_followup_date = max(past_due_dates) if past_due_dates else None
+        next_followup_date = None  # by definition no future pending one
+
         results.append(
             {
                 "id": o.id,
@@ -293,11 +377,13 @@ def stale_opportunities(user: AppUser, days: int = 14) -> list[dict]:
                     else None
                 ),
                 "estimated_contract_value": o.estimated_contract_value,
-                "last_activity_at": last,
-                "days_since_last_activity": (
-                    (now - last).days if last else None
-                ),
-                "last_updated_at": o.updated_at,
+                "stale_since_date": submission_date,
+                "days_since_submission": days_since,
+                "last_followup_date": last_followup_date,
+                "next_followup_date": next_followup_date,
             }
         )
+
+    # Oldest submissions first.
+    results.sort(key=lambda r: r["stale_since_date"])
     return results
