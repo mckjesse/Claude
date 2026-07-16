@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COD Team Wheel</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #0a0d0a;
+      --panel: #161b16;
+      --panel-raised: #1d241d;
+      --border: #2c352c;
+      --border-light: #3c473c;
+      --text: #e6ece6;
+      --text-muted: #93a093;
+      --text-dim: #6b766b;
+      --accent: #b9f227;
+      --accent-dim: #2a3310;
+      --team1: #44c0ff;
+      --team1-dim: #0f2738;
+      --team2: #ff6b3d;
+      --team2-dim: #38160c;
+      --danger: #ff5151;
+      --radius: 6px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background:
+        radial-gradient(circle at 15% 0%, #1a241a 0%, transparent 45%),
+        radial-gradient(circle at 85% 100%, #1a1f28 0%, transparent 45%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      padding: 24px 14px 60px;
+    }
+
+    .wrap { max-width: 720px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 24px; }
+    header h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 34px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+    header h1 .hi { color: var(--accent); }
+    header p {
+      color: var(--text-dim);
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+    .card h2 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2 .count {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 2px 9px;
+      border-radius: 20px;
+    }
+
+    button {
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius);
+      font-weight: 600;
+      transition: transform .1s, background .15s, border-color .15s, color .15s, opacity .15s, filter .15s;
+    }
+    button:active { transform: translateY(1px); }
+
+    /* ---- Roster ---- */
+    .roster {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .roster-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--panel-raised);
+      border: 1.5px solid var(--border-light);
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 600;
+      padding: 14px 16px;
+      border-radius: 30px;
+      text-align: center;
+      min-height: 50px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .roster-btn span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .roster-btn input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; pointer-events: none; }
+    .roster-btn:has(input:checked),
+    .roster-btn.on { background: var(--accent); border-color: var(--accent); color: #11160a; }
+
+    .add-row { display: flex; gap: 10px; margin-top: 16px; }
+    input[type="text"] {
+      flex: 1;
+      background: var(--panel-raised);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 16px;
+      padding: 12px 14px;
+      outline: none;
+    }
+    input[type="text"]:focus { border-color: var(--accent); }
+    input[type="text"]::placeholder { color: var(--text-dim); }
+    .btn-add {
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-muted);
+      font-size: 14px;
+      padding: 0 20px;
+    }
+    .btn-add:hover { border-color: var(--accent); color: var(--accent); }
+
+    .primary-actions { display: flex; gap: 12px; margin-bottom: 22px; }
+    .btn-primary {
+      flex: 1;
+      background: linear-gradient(135deg, var(--accent), #8ec70f);
+      color: #11160a;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 15px;
+    }
+    .btn-primary:hover { filter: brightness(1.07); }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; filter: none; }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-muted);
+      font-size: 14px;
+      padding: 0 18px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .btn-ghost:hover { border-color: var(--text-dim); color: var(--text); }
+
+    /* ---- Wheel ---- */
+    .hidden { display: none !important; }
+    .wheel-stage { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+    .wheel-holder { position: relative; display: inline-block; margin-bottom: 8px; }
+    canvas { display: block; touch-action: manipulation; }
+    .pointer {
+      position: absolute;
+      top: -6px; left: 50%;
+      transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-top: 24px solid var(--accent);
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,.6));
+      z-index: 2;
+    }
+    .result {
+      min-height: 30px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-align: center;
+      margin: 6px 0 14px;
+      color: var(--accent);
+    }
+
+    /* ---- Teams ---- */
+    .teams { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .team { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .team.t1 { border-color: var(--team1); }
+    .team.t2 { border-color: var(--team2); }
+    .team-head {
+      padding: 11px 14px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .t1 .team-head { background: var(--team1-dim); color: var(--team1); }
+    .t2 .team-head { background: var(--team2-dim); color: var(--team2); }
+    .team-head .num { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; opacity: .8; }
+    .team-body { padding: 9px; display: flex; flex-direction: column; gap: 6px; min-height: 60px; }
+    .player {
+      background: var(--panel-raised);
+      border-radius: var(--radius);
+      padding: 10px 13px;
+      font-size: 15px;
+      font-weight: 500;
+      animation: pop .3s ease both;
+    }
+    @keyframes pop {
+      0% { opacity: 0; transform: scale(.7); }
+      60% { transform: scale(1.06); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    @media (max-width: 560px) {
+      header h1 { font-size: 26px; letter-spacing: 2px; }
+      .card { padding: 15px; }
+      .roster { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .btn-primary { font-size: 18px; letter-spacing: 2px; }
+    }
+    @media (max-width: 340px) { .roster { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>COD <span class="hi">Team</span> Wheel</h1>
+      <p>Spin to draft players one by one</p>
+    </header>
+
+    <!-- ============ SETUP SCREEN ============ -->
+    <div id="setup">
+      <div class="card">
+        <h2>Who&rsquo;s Playing <span class="count" id="count">0</span></h2>
+        <div class="roster" id="roster">
+          <label class="roster-btn"><input type="checkbox" value="PicklePizza"><span>PicklePizza</span></label>
+          <label class="roster-btn"><input type="checkbox" value="Wogga300"><span>Wogga300</span></label>
+          <label class="roster-btn"><input type="checkbox" value="Tbaggs"><span>Tbaggs</span></label>
+          <label class="roster-btn"><input type="checkbox" value="Donnie"><span>Donnie</span></label>
+          <label class="roster-btn"><input type="checkbox" value="Mikeumstinks"><span>Mikeumstinks</span></label>
+          <label class="roster-btn"><input type="checkbox" value="Smeel"><span>Smeel</span></label>
+          <label class="roster-btn"><input type="checkbox" value="Campking"><span>Campking</span></label>
+        </div>
+        <div class="add-row">
+          <input type="text" id="nameInput" placeholder="Add a guest&hellip;" autocomplete="off">
+          <button class="btn-add" id="addBtn">Add</button>
+        </div>
+      </div>
+      <div class="primary-actions">
+        <button class="btn-primary" id="startBtn" disabled>Start Draft</button>
+        <button class="btn-ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+
+    <!-- ============ DRAFT SCREEN ============ -->
+    <div id="draft" class="hidden">
+      <div class="wheel-stage">
+        <div class="wheel-holder">
+          <div class="pointer"></div>
+          <canvas id="wheel" width="360" height="360"></canvas>
+        </div>
+      </div>
+      <div class="result" id="result">Spin the wheel!</div>
+      <div class="primary-actions">
+        <button class="btn-primary" id="spinBtn">Spin</button>
+        <button class="btn-ghost" id="restartBtn">Restart</button>
+      </div>
+      <div class="teams">
+        <div class="team t1">
+          <div class="team-head">Team 1 <span class="num" id="t1count">0</span></div>
+          <div class="team-body" id="t1body"></div>
+        </div>
+        <div class="team t2">
+          <div class="team-head">Team 2 <span class="num" id="t2count">0</span></div>
+          <div class="team-body" id="t2body"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Pinned pair — always land on the same team. Kept internal, no UI hint.
+    const PINNED = ['PicklePizza', 'Wogga300'];
+    const norm = s => s.trim().toLowerCase().replace(/\s+/g, ' ');
+    const PINNED_NORM = PINNED.map(norm);
+    const isPinned = name => PINNED_NORM.includes(norm(name));
+
+    const $ = id => document.getElementById(id);
+    const rosterEl = $('roster');
+    const nameInput = $('nameInput');
+    const setupEl = $('setup');
+    const draftEl = $('draft');
+    const resultEl = $('result');
+    const spinBtn = $('spinBtn');
+
+    const checkboxes = () => rosterEl.querySelectorAll('input[type="checkbox"]');
+
+    function updateCount() {
+      let on = 0;
+      checkboxes().forEach(cb => {
+        cb.closest('.roster-btn').classList.toggle('on', cb.checked);
+        if (cb.checked) on++;
+      });
+      $('count').textContent = on;
+      $('startBtn').disabled = on < 2;
+    }
+    rosterEl.addEventListener('change', updateCount);
+
+    function selectedNames() {
+      return Array.from(checkboxes()).filter(cb => cb.checked).map(cb => cb.value);
+    }
+
+    function addGuest() {
+      const raw = nameInput.value.trim();
+      if (!raw) return;
+      const existing = Array.from(checkboxes()).find(cb => norm(cb.value) === norm(raw));
+      if (existing) { existing.checked = true; }
+      else {
+        const label = document.createElement('label');
+        label.className = 'roster-btn';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.value = raw; cb.checked = true;
+        const span = document.createElement('span'); span.textContent = raw;
+        label.appendChild(cb); label.appendChild(span);
+        rosterEl.appendChild(label);
+      }
+      nameInput.value = '';
+      nameInput.focus();
+      updateCount();
+    }
+
+    function clearSetup() {
+      checkboxes().forEach(cb => { cb.checked = false; });
+      updateCount();
+    }
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // Decide the whole split up front: balanced sizes, pinned pair together
+    // on a randomly chosen side. The wheel selection order stays genuinely
+    // random — team membership is already fixed, so the pairing never shows.
+    function buildTeamMap(playing) {
+      const pinned = playing.filter(isPinned);
+      const others = shuffle(playing.filter(n => !isPinned(n)));
+      const n = playing.length, p = pinned.length;
+      const big = Math.ceil(n / 2), small = Math.floor(n / 2);
+      let t1size, t2size;
+      if (Math.random() < 0.5) { t1size = big; t2size = small; }
+      else { t1size = small; t2size = big; }
+      const canHold = [];
+      if (t1size >= p) canHold.push(1);
+      if (t2size >= p) canHold.push(2);
+      const pinnedTeam = canHold[Math.floor(Math.random() * canHold.length)];
+
+      let team1 = [], team2 = [];
+      if (pinnedTeam === 1) {
+        team1 = pinned.slice();
+        while (team1.length < t1size && others.length) team1.push(others.shift());
+        team2 = others;
+      } else {
+        team2 = pinned.slice();
+        while (team2.length < t2size && others.length) team2.push(others.shift());
+        team1 = others;
+      }
+      const map = new Map();
+      team1.forEach(n => map.set(n, 1));
+      team2.forEach(n => map.set(n, 2));
+      return map;
+    }
+
+    // ---- Wheel state ----
+    const COLORS = ['#b9f227', '#44c0ff', '#ff6b3d', '#ffd23f', '#7de08a', '#c88bff', '#ff8fb1', '#5ad1c8'];
+    const canvas = $('wheel');
+    const ctx = canvas.getContext('2d');
+    let SIZE = 360, cx = 180, cy = 180, radius = 174;
+    let remaining = [];
+    let teamOf = new Map();
+    let rotation = 0;
+    let spinning = false;
+
+    function sizeCanvas() {
+      SIZE = Math.max(240, Math.min(360, (window.innerWidth || 360) - 44));
+      const dpr = window.devicePixelRatio || 1;
+      canvas.style.width = SIZE + 'px';
+      canvas.style.height = SIZE + 'px';
+      canvas.width = Math.round(SIZE * dpr);
+      canvas.height = Math.round(SIZE * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cx = SIZE / 2; cy = SIZE / 2; radius = SIZE / 2 - 6;
+    }
+
+    function truncate(s) { return s.length > 12 ? s.slice(0, 11) + '…' : s; }
+
+    function drawWheel() {
+      ctx.clearRect(0, 0, SIZE, SIZE);
+      const n = remaining.length;
+      if (n === 0) {
+        ctx.beginPath(); ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = '#1d241d'; ctx.fill();
+        return;
+      }
+      const seg = 2 * Math.PI / n;
+      for (let i = 0; i < n; i++) {
+        const start = rotation + i * seg;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, start, start + seg);
+        ctx.closePath();
+        ctx.fillStyle = COLORS[i % COLORS.length];
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,.28)'; ctx.lineWidth = 2; ctx.stroke();
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(start + seg / 2);
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#0a0d0a';
+        ctx.font = '600 15px Inter, sans-serif';
+        ctx.fillText(truncate(remaining[i]), radius - 14, 0);
+        ctx.restore();
+      }
+      // hub
+      ctx.beginPath(); ctx.arc(cx, cy, 26, 0, 2 * Math.PI);
+      ctx.fillStyle = '#161b16'; ctx.fill();
+      ctx.strokeStyle = '#b9f227'; ctx.lineWidth = 3; ctx.stroke();
+    }
+
+    const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+
+    function spin() {
+      if (spinning || remaining.length === 0) return;
+      spinning = true;
+      spinBtn.disabled = true;
+      resultEl.textContent = 'Spinning…';
+
+      const n = remaining.length;
+      const seg = 2 * Math.PI / n;
+      const winner = Math.floor(Math.random() * n);           // genuinely random
+      const centerW = winner * seg + seg / 2;
+      const pointer = -Math.PI / 2;                            // top
+
+      let target = pointer - centerW;
+      const minTurns = 5;
+      while (target < rotation + minTurns * 2 * Math.PI) target += 2 * Math.PI;
+
+      const startRot = rotation;
+      const delta = target - startRot;
+      const dur = 4200;
+      let t0 = null;
+
+      function frame(now) {
+        if (t0 === null) t0 = now;
+        const p = Math.min(1, (now - t0) / dur);
+        rotation = startRot + delta * easeOutCubic(p);
+        drawWheel();
+        if (p < 1) requestAnimationFrame(frame);
+        else {
+          rotation = ((target % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+          drawWheel();
+          land(winner);
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function land(winner) {
+      const name = remaining[winner];
+      const team = teamOf.get(name);
+      addToTeam(team, name);
+      remaining.splice(winner, 1);
+      drawWheel();
+      resultEl.textContent = name;
+      spinning = false;
+
+      if (remaining.length === 0) {
+        spinBtn.disabled = true;
+        spinBtn.textContent = 'Done';
+        resultEl.textContent = 'Teams are set! 🎮';
+      } else {
+        spinBtn.disabled = false;
+      }
+    }
+
+    function addToTeam(team, name) {
+      const body = team === 1 ? $('t1body') : $('t2body');
+      const div = document.createElement('div');
+      div.className = 'player';
+      div.textContent = name;
+      body.appendChild(div);
+      const c = team === 1 ? $('t1count') : $('t2count');
+      c.textContent = body.children.length;
+    }
+
+    function startDraft() {
+      const playing = selectedNames();
+      if (playing.length < 2) return;
+
+      teamOf = buildTeamMap(playing);
+      remaining = shuffle(playing);      // wheel layout order (cosmetic)
+      rotation = 0;
+      spinning = false;
+
+      $('t1body').innerHTML = '';
+      $('t2body').innerHTML = '';
+      $('t1count').textContent = '0';
+      $('t2count').textContent = '0';
+      spinBtn.disabled = false;
+      spinBtn.textContent = 'Spin';
+      resultEl.textContent = 'Spin the wheel!';
+
+      setupEl.classList.add('hidden');
+      draftEl.classList.remove('hidden');
+
+      sizeCanvas();
+      drawWheel();
+    }
+
+    function restart() {
+      draftEl.classList.add('hidden');
+      setupEl.classList.remove('hidden');
+    }
+
+    // Redraw crisply if the viewport changes while drafting.
+    window.addEventListener('resize', () => {
+      if (!draftEl.classList.contains('hidden') && !spinning) {
+        sizeCanvas();
+        drawWheel();
+      }
+    });
+
+    // ---- Events ----
+    $('addBtn').addEventListener('click', addGuest);
+    nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addGuest(); });
+    $('clearBtn').addEventListener('click', clearSetup);
+    $('startBtn').addEventListener('click', startDraft);
+    spinBtn.addEventListener('click', spin);
+    $('restartBtn').addEventListener('click', restart);
+
+    updateCount();
+  </script>
+</body>
+</html>
