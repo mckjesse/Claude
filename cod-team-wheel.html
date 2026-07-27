@@ -202,6 +202,12 @@
       color: var(--accent);
     }
 
+    .btn-share {
+      width: 100%;
+      margin-top: 16px;
+      animation: pop .3s ease both;
+    }
+
     /* ---- Teams ---- */
     .teams { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .team { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
@@ -298,6 +304,7 @@
           <div class="team-body" id="t2body"></div>
         </div>
       </div>
+      <button class="btn-primary btn-share hidden" id="shareBtn">📸 Share Result</button>
     </div>
   </div>
 
@@ -315,6 +322,7 @@
     const draftEl = $('draft');
     const resultEl = $('result');
     const spinBtn = $('spinBtn');
+    const shareBtn = $('shareBtn');
 
     const checkboxes = () => rosterEl.querySelectorAll('input[type="checkbox"]');
 
@@ -520,6 +528,7 @@
         autoRunning = false;
         spinBtn.textContent = 'Done';
         resultEl.textContent = 'Teams are set! 🎮';
+        shareBtn.classList.remove('hidden');   // reveal Share once drafting is done
       } else {
         // brief pause so the picked name is readable, then spin again
         autoTimer = setTimeout(spinOnce, 900);
@@ -554,6 +563,7 @@
       spinBtn.disabled = false;
       spinBtn.textContent = 'Spin';
       resultEl.textContent = 'Spin the wheel!';
+      shareBtn.classList.add('hidden');
 
       setupEl.classList.add('hidden');
       draftEl.classList.remove('hidden');
@@ -567,6 +577,111 @@
       clearTimeout(autoTimer);
       draftEl.classList.add('hidden');
       setupEl.classList.remove('hidden');
+    }
+
+    // Render a clean image of the final teams to share.
+    function makeResultsImage() {
+      const t1 = Array.from($('t1body').children).map(c => c.textContent);
+      const t2 = Array.from($('t2body').children).map(c => c.textContent);
+      const rows = Math.max(t1.length, t2.length);
+
+      const S = 2;                    // 2x for crisp output
+      const W = 720, padX = 48;
+      const headerH = 150, colHeadH = 74, rowH = 62, footerH = 56;
+      const bodyH = colHeadH + rows * rowH + 24;
+      const H = headerH + bodyH + footerH;
+
+      const cv = document.createElement('canvas');
+      cv.width = W * S; cv.height = H * S;
+      const g = cv.getContext('2d');
+      g.scale(S, S);
+
+      // background
+      g.fillStyle = '#0a0d0a'; g.fillRect(0, 0, W, H);
+      g.fillStyle = '#12160f';
+      g.fillRect(padX, headerH - 24, W - padX * 2, bodyH);
+
+      // title
+      g.textAlign = 'center';
+      g.fillStyle = '#e6ece6';
+      g.font = "800 46px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      g.fillText('COD TEAMS', W / 2, 74);
+      g.fillStyle = '#b9f227';
+      g.font = "600 18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      g.fillText('RANDOMIZED SQUADS', W / 2, 104);
+
+      const colW = (W - padX * 2 - 24) / 2;
+      const col1X = padX, col2X = padX + colW + 24;
+      const top = headerH + colHeadH - 18;
+
+      function drawColumn(x, title, list, color) {
+        // header pill
+        g.fillStyle = color;
+        roundRect(g, x, headerH, colW, 46, 10); g.fill();
+        g.fillStyle = '#0a0d0a';
+        g.textAlign = 'center';
+        g.font = "800 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        g.fillText(title, x + colW / 2, headerH + 31);
+        // names
+        g.textAlign = 'left';
+        g.font = "600 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        list.forEach((name, i) => {
+          const ry = top + i * rowH;
+          g.fillStyle = '#1d241d';
+          roundRect(g, x, ry, colW, rowH - 12, 8); g.fill();
+          g.fillStyle = '#e6ece6';
+          g.fillText(clip(g, name, colW - 28), x + 16, ry + (rowH - 12) / 2 + 8);
+        });
+      }
+
+      drawColumn(col1X, 'TEAM 1', t1, '#44c0ff');
+      drawColumn(col2X, 'TEAM 2', t2, '#ff6b3d');
+
+      g.textAlign = 'center';
+      g.fillStyle = '#6b766b';
+      g.font = "500 16px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      g.fillText('Good luck out there 🎮', W / 2, H - 24);
+
+      return cv;
+    }
+
+    function roundRect(g, x, y, w, h, r) {
+      g.beginPath();
+      g.moveTo(x + r, y);
+      g.arcTo(x + w, y, x + w, y + h, r);
+      g.arcTo(x + w, y + h, x, y + h, r);
+      g.arcTo(x, y + h, x, y, r);
+      g.arcTo(x, y, x + w, y, r);
+      g.closePath();
+    }
+
+    function clip(g, text, maxW) {
+      if (g.measureText(text).width <= maxW) return text;
+      let t = text;
+      while (t.length > 1 && g.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+      return t + '…';
+    }
+
+    async function shareResult() {
+      const cv = makeResultsImage();
+      const blob = await new Promise(res => cv.toBlob(res, 'image/png'));
+      const file = new File([blob], 'cod-teams.png', { type: 'image/png' });
+
+      // Native share sheet (Snapchat, etc.) when the device supports sharing files.
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: 'COD Teams' });
+          return;
+        } catch (err) {
+          if (err && err.name === 'AbortError') return;   // user cancelled
+        }
+      }
+      // Fallback: save the image so it can be posted manually.
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'cod-teams.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     // Redraw crisply if the viewport changes while drafting.
@@ -584,6 +699,7 @@
     $('startBtn').addEventListener('click', startDraft);
     spinBtn.addEventListener('click', startAuto);
     $('restartBtn').addEventListener('click', restart);
+    shareBtn.addEventListener('click', shareResult);
 
     updateCount();
   </script>
