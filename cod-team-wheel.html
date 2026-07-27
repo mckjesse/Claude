@@ -407,6 +407,8 @@
     let teamOf = new Map();
     let rotation = 0;
     let spinning = false;
+    let autoRunning = false;
+    let autoTimer = null;
 
     function sizeCanvas() {
       SIZE = Math.max(240, Math.min(360, (window.innerWidth || 360) - 44));
@@ -458,10 +460,18 @@
 
     const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
 
-    function spin() {
-      if (spinning || remaining.length === 0) return;
-      spinning = true;
+    // One click drafts everyone: spin → reveal → auto-spin again until done.
+    function startAuto() {
+      if (autoRunning || remaining.length === 0) return;
+      autoRunning = true;
       spinBtn.disabled = true;
+      spinBtn.textContent = 'Drafting…';
+      spinOnce();
+    }
+
+    function spinOnce() {
+      if (!autoRunning || spinning || remaining.length === 0) return;
+      spinning = true;
       resultEl.textContent = 'Spinning…';
 
       const n = remaining.length;
@@ -471,12 +481,13 @@
       const pointer = -Math.PI / 2;                            // top
 
       let target = pointer - centerW;
-      const minTurns = 5;
+      const minTurns = 4;
       while (target < rotation + minTurns * 2 * Math.PI) target += 2 * Math.PI;
 
       const startRot = rotation;
       const delta = target - startRot;
-      const dur = 4200;
+      // Later spins are a touch quicker so the full draft doesn't drag.
+      const dur = remaining.length > 2 ? 2400 : 3200;
       let t0 = null;
 
       function frame(now) {
@@ -503,12 +514,15 @@
       resultEl.textContent = name;
       spinning = false;
 
+      if (!autoRunning) return;                 // draft was reset mid-spin
+
       if (remaining.length === 0) {
-        spinBtn.disabled = true;
+        autoRunning = false;
         spinBtn.textContent = 'Done';
         resultEl.textContent = 'Teams are set! 🎮';
       } else {
-        spinBtn.disabled = false;
+        // brief pause so the picked name is readable, then spin again
+        autoTimer = setTimeout(spinOnce, 900);
       }
     }
 
@@ -530,6 +544,8 @@
       remaining = shuffle(playing);      // wheel layout order (cosmetic)
       rotation = 0;
       spinning = false;
+      autoRunning = false;
+      clearTimeout(autoTimer);
 
       $('t1body').innerHTML = '';
       $('t2body').innerHTML = '';
@@ -547,6 +563,8 @@
     }
 
     function restart() {
+      autoRunning = false;
+      clearTimeout(autoTimer);
       draftEl.classList.add('hidden');
       setupEl.classList.remove('hidden');
     }
@@ -564,7 +582,7 @@
     nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addGuest(); });
     $('clearBtn').addEventListener('click', clearSetup);
     $('startBtn').addEventListener('click', startDraft);
-    spinBtn.addEventListener('click', spin);
+    spinBtn.addEventListener('click', startAuto);
     $('restartBtn').addEventListener('click', restart);
 
     updateCount();
