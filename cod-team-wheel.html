@@ -478,13 +478,45 @@
 
     // Synthesized cartoon "mee-ow" — no audio file needed, works offline.
     let audioCtx = null;
+
+    // Create + unlock the audio engine. iOS needs this to happen inside a
+    // real tap and often needs a silent buffer played first, so we prime it
+    // on the very first touch anywhere in the page.
+    function ensureAudio() {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!audioCtx) {
+        audioCtx = new AC();
+        // silent 1-sample buffer unlocks WebAudio on iOS Safari
+        const buf = audioCtx.createBuffer(1, 1, 22050);
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        src.connect(audioCtx.destination);
+        src.start(0);
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+    // Prime audio on first interaction (covers taps before the first spin).
+    ['touchstart', 'pointerdown', 'click'].forEach(ev =>
+      window.addEventListener(ev, ensureAudio, { once: true, passive: true }));
+
     function playMeow() {
+      const ac = ensureAudio();
+      if (!ac) return;
+      // If the context is still waking up, wait for it before scheduling.
+      if (ac.state !== 'running' && ac.resume) {
+        ac.resume().then(meowNow).catch(() => {});
+      } else {
+        meowNow();
+      }
+    }
+
+    function meowNow() {
       try {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return;
-        audioCtx = audioCtx || new AC();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const t = audioCtx.currentTime;
+        const audioCtx = ensureAudio();
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime + 0.02;
         const dur = 0.62;
 
         // voice-ish tone that glides up ("mee") then down ("ow")
@@ -554,7 +586,8 @@
       const startRot = rotation;
       const delta = target - startRot;
       // Later spins are a touch quicker so the full draft doesn't drag.
-      const dur = remaining.length > 2 ? 2400 : 3200;
+      // (~30% faster than before.)
+      const dur = remaining.length > 2 ? 1680 : 2240;
       let t0 = null;
 
       function frame(now) {
