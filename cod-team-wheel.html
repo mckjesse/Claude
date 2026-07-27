@@ -476,9 +476,60 @@
 
     const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
 
+    // Synthesized cartoon "mee-ow" — no audio file needed, works offline.
+    let audioCtx = null;
+    function playMeow() {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        audioCtx = audioCtx || new AC();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const t = audioCtx.currentTime;
+        const dur = 0.62;
+
+        // voice-ish tone that glides up ("mee") then down ("ow")
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(500, t);
+        osc.frequency.linearRampToValueAtTime(880, t + 0.12);
+        osc.frequency.linearRampToValueAtTime(770, t + 0.30);
+        osc.frequency.linearRampToValueAtTime(420, t + dur);
+
+        // wobble for a cartoonish quiver
+        const lfo = audioCtx.createOscillator();
+        lfo.frequency.value = 17;
+        const lfoGain = audioCtx.createGain();
+        lfoGain.gain.value = 26;
+        lfo.connect(lfoGain).connect(osc.frequency);
+
+        // moving formant makes the vowel shift from "ee" to "ow"
+        const bp = audioCtx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.Q.value = 6;
+        bp.frequency.setValueAtTime(1050, t);
+        bp.frequency.linearRampToValueAtTime(1750, t + 0.14);
+        bp.frequency.linearRampToValueAtTime(720, t + dur);
+
+        const peak = audioCtx.createBiquadFilter();
+        peak.type = 'peaking';
+        peak.frequency.value = 2600; peak.Q.value = 4; peak.gain.value = 9;
+
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.5, t + 0.05);
+        gain.gain.setValueAtTime(0.5, t + 0.30);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+        osc.connect(bp); bp.connect(peak); peak.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(t); lfo.start(t);
+        osc.stop(t + dur + 0.02); lfo.stop(t + dur + 0.02);
+      } catch (e) { /* no audio, no problem */ }
+    }
+
     // One click drafts everyone: spin → reveal → auto-spin again until done.
     function startAuto() {
       if (autoRunning || remaining.length === 0) return;
+      playMeow();                       // 😹 meow when the wheel kicks off
       autoRunning = true;
       spinBtn.disabled = true;
       spinBtn.textContent = 'Drafting…';
