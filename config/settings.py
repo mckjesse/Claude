@@ -36,6 +36,18 @@ DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
 # scheme, no path (e.g. "foxd.onrender.com,api.example.com").
 ALLOWED_HOSTS = _csv(os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1"))
 
+# Known FOXD production backend hostnames. Merged in as a baseline so
+# the service always answers on its production domain and its current
+# Render URL, even if the ALLOWED_HOSTS env var drifts or is not set.
+# The Render URL is kept deliberately during the domain cutover.
+_BASELINE_ALLOWED_HOSTS = [
+    "api.foxd.co",
+    "crm-backend-pza6.onrender.com",
+]
+for _host in _BASELINE_ALLOWED_HOSTS:
+    if _host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_host)
+
 # Render injects RENDER_EXTERNAL_HOSTNAME automatically for every web
 # service (e.g. "foxd-backend.onrender.com"). Adding it here means the
 # service responds correctly on its Render URL without having to list
@@ -177,6 +189,12 @@ REST_FRAMEWORK = {
 # ---------------------------------------------------------------------------
 from datetime import timedelta  # noqa: E402
 
+# The React frontend authenticates purely with these stateless JWTs,
+# sent in the `Authorization: Bearer <access>` header on every request
+# and refreshed via POST /api/users/token/refresh/. This path does NOT
+# use or depend on the Django session / csrftoken cookies, so it works
+# identically regardless of the browser's cross-site cookie policy —
+# which is exactly what we need for crm.foxd.co calling api.foxd.co.
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
@@ -187,16 +205,39 @@ SIMPLE_JWT = {
 # ---------------------------------------------------------------------------
 # CORS / CSRF for a separate React frontend
 # ---------------------------------------------------------------------------
+# Production frontend origins that must always be allowed, merged on
+# top of anything supplied via the env var. crm.foxd.co is the new
+# production frontend; the Lovable origin is kept TEMPORARILY during
+# the cutover and can be dropped from this list once traffic has fully
+# moved to crm.foxd.co.
+_BASELINE_FRONTEND_ORIGINS = [
+    "https://crm.foxd.co",
+    "https://foxd-crm.lovable.app",  # temporary — remove post-cutover
+]
+
 CORS_ALLOWED_ORIGINS = _csv(
     os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 )
+for _origin in _BASELINE_FRONTEND_ORIGINS:
+    if _origin not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(_origin)
+
+# CORS_ALLOW_CREDENTIALS stays on so the Django admin / browsable API
+# (session + cookie based) keep working. The React frontend authenticates
+# with stateless JWT Bearer tokens and does not depend on this.
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF_TRUSTED_ORIGINS is a comma-separated list of *full origins* —
 # scheme + host (e.g. "https://foxd.onrender.com,https://foxd.example").
+# Only relevant to session/cookie POSTs (admin, browsable API); the JWT
+# frontend does not need CSRF. The production frontend origins are merged
+# in so those flows keep working during and after the cutover.
 CSRF_TRUSTED_ORIGINS = _csv(
     os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 )
+for _origin in _BASELINE_FRONTEND_ORIGINS:
+    if _origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_origin)
 if _RENDER_HOST:
     _render_origin = f"https://{_RENDER_HOST}"
     if _render_origin not in CSRF_TRUSTED_ORIGINS:
