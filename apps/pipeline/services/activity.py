@@ -356,3 +356,21 @@ def followup_completed(task: FollowUpTask, user) -> None:
         description=f"Follow-up '{task.subject}' marked completed.",
         user=user,
     )
+
+
+def followup_auto_cancelled(task: FollowUpTask, user, reason: str) -> None:
+    """
+    Logged when a follow-up is cancelled automatically because its
+    opportunity became terminal (won / lost / closed).
+    """
+    _log(
+        opportunity=task.opportunity,
+        entity_type="followup",
+        entity_id=task.id,
+        activity_type="followup_cancelled",
+        description=(
+            f"Follow-up '{task.subject}' automatically cancelled — "
+            f"opportunity marked as {reason}."
+        ),
+        user=user,
+    )

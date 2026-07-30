@@ -203,9 +203,11 @@ class MarkWonTests(APITestCase):
         self.assertEqual(self.opp.final_awarded_value, Decimal("250000"))
         self.assertEqual(str(self.opp.award_date), "2026-07-30")
         self.assertIn("Awarded after follow-up", self.opp.notes)
-        # Response returns the updated opportunity.
-        self.assertEqual(resp.data["stage"], Opportunity.Stage.WON)
-        self.assertEqual(resp.data["award_date"], "2026-07-30")
+        # Response nests the updated opportunity plus cleared-followup info.
+        self.assertEqual(resp.data["opportunity"]["stage"], Opportunity.Stage.WON)
+        self.assertEqual(resp.data["opportunity"]["award_date"], "2026-07-30")
+        self.assertEqual(resp.data["cleared_followups_count"], 0)
+        self.assertEqual(resp.data["cleared_followup_ids"], [])
 
     def test_lost_opportunity_cannot_be_marked_won(self):
         self.opp.stage = Opportunity.Stage.LOST

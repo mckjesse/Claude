@@ -209,6 +209,28 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                 opp, user=user, old_stage=None,
             )
 
+    # ------------------------------------------------------------------
+    # Terminal-state helpers
+    #
+    # An opportunity is "terminal" once it is won, lost, or otherwise
+    # closed. Reaching a terminal state clears any outstanding follow-ups
+    # (see followup_automation.clear_followups_for_terminal_opportunity).
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _is_terminal(stage, status) -> bool:
+        return (
+            stage in (Opportunity.Stage.WON, Opportunity.Stage.LOST)
+            or status == Opportunity.Status.CLOSED
+        )
+
+    @staticmethod
+    def _terminal_reason(opp) -> str:
+        if opp.stage == Opportunity.Stage.WON:
+            return "won"
+        if opp.stage == Opportunity.Stage.LOST:
+            return "lost"
+        return "closed"
+
     def perform_update(self, serializer):
         self._enforce_admin_field_protection(serializer)
         instance = serializer.instance
@@ -216,6 +238,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             instance, activity.OPPORTUNITY_TRACKED_FIELDS
         )
         old_stage = instance.stage
+        old_status = instance.status
         with transaction.atomic():
             opp = serializer.save()
             changed = activity.diff(opp, baseline)
@@ -229,6 +252,15 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             followup_automation.sync_followup_from_opportunity(
                 opp, user=user, old_stage=old_stage,
             )
+            # If this PATCH just moved the opportunity into a terminal
+            # state (e.g. an allowed workflow set stage=won), clear its
+            # outstanding follow-ups so it drops off the dashboard.
+            if self._is_terminal(opp.stage, opp.status) and not self._is_terminal(
+                old_stage, old_status
+            ):
+                followup_automation.clear_followups_for_terminal_opportunity(
+                    opp, user=user, reason=self._terminal_reason(opp),
+                )
 
     @action(detail=True, methods=["post"])
     def mark_won(self, request, pk=None):
@@ -310,7 +342,19 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             quote_automation.sync_quote_from_opportunity(
                 opp, user=request.user
             )
-        return Response(self.get_serializer(opp).data)
+            # Terminal now — clear any outstanding follow-ups.
+            cleared_ids = (
+                followup_automation.clear_followups_for_terminal_opportunity(
+                    opp, user=request.user, reason="won",
+                )
+            )
+        return Response(
+            {
+                "opportunity": self.get_serializer(opp).data,
+                "cleared_followups_count": len(cleared_ids),
+                "cleared_followup_ids": cleared_ids,
+            }
+        )
 
     @action(detail=True, methods=["post"])
     def mark_lost(self, request, pk=None):
@@ -334,7 +378,19 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             quote_automation.sync_quote_from_opportunity(
                 opp, user=request.user
             )
-        return Response(self.get_serializer(opp).data)
+            # Terminal now — clear any outstanding follow-ups.
+            cleared_ids = (
+                followup_automation.clear_followups_for_terminal_opportunity(
+                    opp, user=request.user, reason="lost",
+                )
+            )
+        return Response(
+            {
+                "opportunity": self.get_serializer(opp).data,
+                "cleared_followups_count": len(cleared_ids),
+                "cleared_followup_ids": cleared_ids,
+            }
+        )
 
     @action(detail=True, methods=["post"])
     def reopen(self, request, pk=None):

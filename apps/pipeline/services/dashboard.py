@@ -39,11 +39,24 @@ def build_dashboard(user: AppUser) -> dict:
     activity = scoping.scoped_activity(user)
 
     open_opps = opps.filter(status=Opportunity.Status.OPEN)
-    active_tasks = tasks.exclude(
-        status__in=[
-            FollowUpTask.Status.COMPLETED,
-            FollowUpTask.Status.CANCELLED,
-        ]
+    # Pending dashboard follow-ups exclude anything already completed or
+    # cancelled, AND anything whose parent opportunity is terminal
+    # (won / lost / closed) — a follow-up on a closed opportunity must
+    # never surface as outstanding, even if it somehow stayed pending.
+    active_tasks = (
+        tasks.exclude(
+            status__in=[
+                FollowUpTask.Status.COMPLETED,
+                FollowUpTask.Status.CANCELLED,
+            ]
+        )
+        .exclude(
+            opportunity__stage__in=[
+                Opportunity.Stage.WON,
+                Opportunity.Stage.LOST,
+            ]
+        )
+        .exclude(opportunity__status=Opportunity.Status.CLOSED)
     )
 
     totals = open_opps.aggregate(total=_VALUE_SUM)

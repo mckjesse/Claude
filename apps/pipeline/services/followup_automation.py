@@ -22,6 +22,81 @@ logger = logging.getLogger(__name__)
 
 _SUBJECT = "Follow up on submitted quote"
 
+_AUTO_CANCEL_NOTE = (
+    "Automatically closed because opportunity was marked as {reason}."
+)
+
+
+def clear_followups_for_terminal_opportunity(
+    opportunity: Opportunity,
+    *,
+    user: Optional[AppUser] = None,
+    reason: str = "closed",
+) -> list[int]:
+    """
+    Cancel every outstanding follow-up for an opportunity that has just
+    become terminal (won / lost / closed).
+
+    "Outstanding" means ``status = PENDING`` and ``completed_at IS NULL``.
+    Matching tasks are moved to ``CANCELLED`` — never hard-deleted — with
+    a completion note, timestamp and (if available) the acting user, so
+    the history is preserved. Idempotent: once cleared, a repeat call
+    finds nothing.
+
+    Returns the list of cleared follow-up ids.
+    """
+    pending = list(
+        opportunity.tasks.filter(
+            status=FollowUpTask.Status.PENDING,
+            completed_at__isnull=True,
+        )
+    )
+
+    # Requirement 7: debug/admin logging of what was found.
+    logger.info(
+        "followup_clear: opp=%s terminal_stage=%s pending_found=%s",
+        opportunity.pk,
+        reason,
+        len(pending),
+    )
+    if not pending:
+        return []
+
+    now = timezone.now()
+    note = _AUTO_CANCEL_NOTE.format(reason=reason)
+    acting_user = (
+        user if (user is not None and getattr(user, "is_authenticated", False))
+        else None
+    )
+
+    cleared_ids: list[int] = []
+    for task in pending:
+        task.status = FollowUpTask.Status.CANCELLED
+        task.completed_at = now
+        task.completion_notes = note
+        task.completed_by = acting_user
+        task.save(
+            update_fields=[
+                "status",
+                "completed_at",
+                "completion_notes",
+                "completed_by",
+                "updated_at",
+            ]
+        )
+        activity.followup_auto_cancelled(task, user, reason)
+        cleared_ids.append(task.id)
+
+    logger.info(
+        "followup_clear: opp=%s terminal_stage=%s cleared_count=%s "
+        "cleared_ids=%s",
+        opportunity.pk,
+        reason,
+        len(cleared_ids),
+        cleared_ids,
+    )
+    return cleared_ids
+
 
 def sync_followup_from_opportunity(
     opportunity: Opportunity,

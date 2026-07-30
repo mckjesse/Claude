@@ -104,6 +104,15 @@ def overdue_followups_report(user: AppUser) -> list[dict]:
                 FollowUpTask.Status.CANCELLED,
             ]
         )
+        # Follow-ups on terminal (won/lost/closed) opportunities are not
+        # outstanding work — keep them out of the overdue list.
+        .exclude(
+            opportunity__stage__in=[
+                Opportunity.Stage.WON,
+                Opportunity.Stage.LOST,
+            ]
+        )
+        .exclude(opportunity__status=Opportunity.Status.CLOSED)
         .filter(due_date__lt=today)
         .select_related(
             "opportunity",
