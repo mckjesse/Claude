@@ -106,6 +106,28 @@ class StaleOpportunityTests(APITestCase):
         )
         self.assertNotIn(opp.id, self._stale_ids())
 
+    def test_stale_opportunity_marked_won_disappears_from_dashboard(self):
+        # A stale opportunity that gets closed off as won via the
+        # mark_won endpoint must drop out of the stale list.
+        opp = self._make_opp(
+            "S2WON",
+            stage=Opportunity.Stage.SUBMITTED,
+            submission_offset_days=45,
+        )
+        self.assertIn(opp.id, self._stale_ids())
+
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_won/",
+            {"final_awarded_value": "250000"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 200)
+        opp.refresh_from_db()
+        self.assertEqual(opp.stage, Opportunity.Stage.WON)
+        self.assertEqual(opp.status, Opportunity.Status.CLOSED)
+        self.assertNotIn(opp.id, self._stale_ids())
+
     def test_lead_stage_not_stale(self):
         # lead is not an eligible stale stage even if old.
         opp = self._make_opp(

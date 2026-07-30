@@ -178,6 +178,62 @@ class MarkWonTests(APITestCase):
         )
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_mark_won_rejects_zero_value(self):
+        # final_awarded_value must be strictly greater than 0.
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/mark_won/",
+            {"final_awarded_value": "0"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("final_awarded_value", resp.data)
+
+    def test_mark_won_saves_award_date_and_notes(self):
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/mark_won/",
+            {
+                "final_awarded_value": "250000",
+                "award_date": "2026-07-30",
+                "notes": "Awarded after follow-up",
+            },
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.opp.refresh_from_db()
+        self.assertEqual(self.opp.final_awarded_value, Decimal("250000"))
+        self.assertEqual(str(self.opp.award_date), "2026-07-30")
+        self.assertIn("Awarded after follow-up", self.opp.notes)
+        # Response returns the updated opportunity.
+        self.assertEqual(resp.data["stage"], Opportunity.Stage.WON)
+        self.assertEqual(resp.data["award_date"], "2026-07-30")
+
+    def test_lost_opportunity_cannot_be_marked_won(self):
+        self.opp.stage = Opportunity.Stage.LOST
+        self.opp.status = Opportunity.Status.CLOSED
+        self.opp.save(update_fields=["stage", "status"])
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/mark_won/",
+            {"final_awarded_value": "250000"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.opp.refresh_from_db()
+        self.assertEqual(self.opp.stage, Opportunity.Stage.LOST)
+
+    def test_archived_opportunity_cannot_be_marked_won(self):
+        from django.utils import timezone
+
+        self.opp.archived_at = timezone.now()
+        self.opp.save(update_fields=["archived_at"])
+        resp = self.client.post(
+            f"/api/opportunities/{self.opp.id}/mark_won/",
+            {"final_awarded_value": "250000"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.opp.refresh_from_db()
+        self.assertNotEqual(self.opp.stage, Opportunity.Stage.WON)
+
     def test_mark_won_sets_stage_status_and_value(self):
         resp = self.client.post(
             f"/api/opportunities/{self.opp.id}/mark_won/",

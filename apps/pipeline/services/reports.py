@@ -319,6 +319,10 @@ def stale_opportunities(user: AppUser, days: int = STALE_THRESHOLD_DAYS) -> list
     qs = (
         scoping.scoped_opportunities(user)  # already excludes archived
         .filter(stage__in=_STALE_STAGES)
+        # _STALE_STAGES already excludes won/lost/withdrawn, but be
+        # explicit that anything closed off (e.g. marked won) drops out
+        # of the stale list regardless of stage.
+        .exclude(status=Opportunity.Status.CLOSED)
         .select_related("company", "estimator", "assigned_user")
         .prefetch_related("quotes", "tasks")
     )

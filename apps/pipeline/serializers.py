@@ -1,4 +1,5 @@
 from datetime import time as dtime
+from decimal import Decimal
 
 from django.utils import timezone
 from rest_framework import serializers
@@ -419,8 +420,19 @@ class LossReasonSerializer(serializers.ModelSerializer):
 # Custom action payload serializers
 # ---------------------------------------------------------------------------
 class MarkWonSerializer(serializers.Serializer):
+    # ``final_awarded_value`` is required and must be strictly greater
+    # than zero — you cannot win a job for nothing.
     final_awarded_value = serializers.DecimalField(
-        max_digits=14, decimal_places=2, min_value=0
+        max_digits=14,
+        decimal_places=2,
+        min_value=Decimal("0.01"),
+        error_messages={
+            "min_value": "final_awarded_value must be greater than 0.",
+        },
+    )
+    award_date = serializers.DateField(required=False, allow_null=True)
+    notes = serializers.CharField(
+        required=False, allow_blank=True, default=""
     )
 
 

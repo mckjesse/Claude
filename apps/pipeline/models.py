@@ -209,6 +209,10 @@ class Opportunity(TimestampedModel):
     final_awarded_value = models.DecimalField(
         max_digits=14, decimal_places=2, null=True, blank=True
     )
+    # Actual date the contract was awarded, captured when the
+    # opportunity is marked won. Distinct from ``expected_award_date``,
+    # which is a forward-looking estimate set while the tender is open.
+    award_date = models.DateField(null=True, blank=True)
 
     # Soft delete / archive. ``archived_at is not None`` means the
     # opportunity is hidden from normal list views, dashboard and

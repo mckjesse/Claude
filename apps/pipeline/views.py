@@ -232,21 +232,78 @@ class OpportunityViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def mark_won(self, request, pk=None):
-        opp = self.get_object()
+        """
+        POST /api/opportunities/{id}/mark_won/
+
+        Closes a stale / active opportunity off as won. Requires a
+        positive ``final_awarded_value``; ``award_date`` and ``notes``
+        are optional. A lost or archived opportunity cannot be marked
+        won — reopen / restore it first.
+
+        On success: stage=won, status=closed, the awarded value (and
+        award date / note if supplied) is persisted, the win is logged
+        to the activity feed, and the related quote is synced to
+        accepted.
+        """
+        # Resolve including archived so we can return a clear 400 rather
+        # than a bare 404 for the archived case.
+        opp = self._get_opportunity_for_archive_path(request, pk)
+        if opp is None:
+            return Response({"detail": "Not found."}, status=404)
+        self.check_object_permissions(request, opp)
+
+        if opp.archived_at is not None:
+            return Response(
+                {
+                    "detail": (
+                        "Archived opportunities cannot be marked won. "
+                        "Restore it first."
+                    )
+                },
+                status=400,
+            )
+        if opp.stage == Opportunity.Stage.LOST:
+            return Response(
+                {
+                    "detail": (
+                        "A lost opportunity cannot be marked won. "
+                        "Reopen it first."
+                    )
+                },
+                status=400,
+            )
+
         payload = MarkWonSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
+        award_date = payload.validated_data.get("award_date")
+        notes = payload.validated_data.get("notes", "").strip()
+
         with transaction.atomic():
-            opp.final_awarded_value = payload.validated_data["final_awarded_value"]
+            opp.final_awarded_value = payload.validated_data[
+                "final_awarded_value"
+            ]
             opp.stage = Opportunity.Stage.WON
             opp.status = Opportunity.Status.CLOSED
-            opp.save(
-                update_fields=[
-                    "final_awarded_value",
-                    "stage",
-                    "status",
-                    "updated_at",
-                ]
-            )
+            update_fields = [
+                "final_awarded_value",
+                "stage",
+                "status",
+                "updated_at",
+            ]
+            if award_date is not None:
+                opp.award_date = award_date
+                update_fields.append("award_date")
+            if notes:
+                # Append non-destructively — never clobber prior notes.
+                stamp = award_date or timezone.localdate()
+                addition = f"[Won {stamp}] {notes}"
+                opp.notes = (
+                    f"{opp.notes}\n{addition}".strip()
+                    if opp.notes
+                    else addition
+                )
+                update_fields.append("notes")
+            opp.save(update_fields=update_fields)
             activity.opportunity_marked_won(
                 opp, request.user, opp.final_awarded_value
             )
