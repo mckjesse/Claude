@@ -605,3 +605,171 @@ class ArchiveAndDeleteTests(APITestCase):
         self.assertIn(
             self.task.id, [r["id"] for r in resp_f.data["results"]]
         )
+
+
+class TerminalTransitionGuardTests(APITestCase):
+    """
+    ``reopen`` is the only sanctioned door out of a terminal stage. The
+    serializer enforces that on the PATCH path; mark_won / mark_lost must
+    enforce it too, or they leave contradictory rows behind — a won
+    opportunity carrying a loss reason, or a lost one carrying a final
+    awarded value.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.director = AppUser.objects.create_user(
+            username="terminal_dir", password="x", role=AppUser.Role.DIRECTOR,
+        )
+        cls.company = Company.objects.create(
+            name="Terminal Builder", company_type=Company.Type.BUILDER,
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.director)
+
+    def _opportunity(self, code):
+        return Opportunity.objects.create(
+            project_name="Terminal Project",
+            project_code=code,
+            company=self.company,
+            estimator=self.director,
+            stage=Opportunity.Stage.SUBMITTED,
+            estimated_contract_value=Decimal("250000.00"),
+        )
+
+    def test_mark_won_rejects_a_lost_opportunity(self):
+        opp = self._opportunity("TERM-001")
+        self.client.post(
+            f"/api/opportunities/{opp.id}/mark_lost/",
+            {"reason_category": "price"},
+            format="json",
+        )
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_won/",
+            {"final_awarded_value": "260000.00"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("reopen", resp.data["detail"])
+
+        opp.refresh_from_db()
+        self.assertEqual(opp.stage, Opportunity.Stage.LOST)
+        self.assertIsNone(opp.final_awarded_value)
+
+    def test_mark_lost_rejects_a_won_opportunity(self):
+        opp = self._opportunity("TERM-002")
+        self.client.post(
+            f"/api/opportunities/{opp.id}/mark_won/",
+            {"final_awarded_value": "260000.00"},
+            format="json",
+        )
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_lost/",
+            {"reason_category": "price"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("reopen", resp.data["detail"])
+
+        opp.refresh_from_db()
+        self.assertEqual(opp.stage, Opportunity.Stage.WON)
+        self.assertFalse(LossReason.objects.filter(opportunity=opp).exists())
+
+    def test_reopen_then_mark_won_is_allowed(self):
+        # The guard must not block the sanctioned route.
+        opp = self._opportunity("TERM-003")
+        self.client.post(
+            f"/api/opportunities/{opp.id}/mark_lost/",
+            {"reason_category": "price"},
+            format="json",
+        )
+        self.client.post(f"/api/opportunities/{opp.id}/reopen/", format="json")
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_won/",
+            {"final_awarded_value": "260000.00"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        opp.refresh_from_db()
+        self.assertEqual(opp.stage, Opportunity.Stage.WON)
+
+    def test_re_marking_won_still_updates_the_awarded_value(self):
+        # Same-stage re-marking is a legitimate correction, not a
+        # terminal transition — it must keep working.
+        opp = self._opportunity("TERM-004")
+        self.client.post(
+            f"/api/opportunities/{opp.id}/mark_won/",
+            {"final_awarded_value": "260000.00"},
+            format="json",
+        )
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_won/",
+            {"final_awarded_value": "275000.00"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        opp.refresh_from_db()
+        self.assertEqual(opp.final_awarded_value, Decimal("275000.00"))
+
+
+class ActionResponseFreshnessTests(APITestCase):
+    """
+    ``get_object()`` primes the prefetch cache for quotes and tasks.
+    Automation then writes new rows the cache cannot see, so a custom
+    action must drop the cache before serialising or it reports
+    ``latest_quote: null`` for a quote it just created.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.director = AppUser.objects.create_user(
+            username="fresh_dir", password="x", role=AppUser.Role.DIRECTOR,
+        )
+        cls.company = Company.objects.create(
+            name="Fresh Builder", company_type=Company.Type.BUILDER,
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.director)
+
+    def _opportunity(self, code):
+        return Opportunity.objects.create(
+            project_name="Fresh Project",
+            project_code=code,
+            company=self.company,
+            estimator=self.director,
+            stage=Opportunity.Stage.SUBMITTED,
+            estimated_contract_value=Decimal("300000.00"),
+        )
+
+    def test_mark_won_response_includes_the_auto_created_quote(self):
+        opp = self._opportunity("FRESH-001")
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_won/",
+            {"final_awarded_value": "310000.00"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(opp.quotes.count(), 1)
+        self.assertIsNotNone(resp.data["latest_quote"])
+        self.assertEqual(
+            resp.data["latest_quote"]["quoted_value_ex_gst"], "310000.00"
+        )
+        self.assertEqual(
+            resp.data["latest_quote"]["quote_status"], "accepted"
+        )
+
+    def test_mark_lost_response_includes_the_auto_created_quote(self):
+        opp = self._opportunity("FRESH-002")
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_lost/",
+            {"reason_category": "price"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(opp.quotes.count(), 1)
+        self.assertIsNotNone(resp.data["latest_quote"])
+        self.assertEqual(
+            resp.data["latest_quote"]["quote_status"], "unsuccessful"
+        )

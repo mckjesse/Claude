@@ -4,10 +4,16 @@ wins.
 """
 from decimal import Decimal
 
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.pipeline.models import Company, LossReason, Opportunity
+from apps.pipeline.models import (
+    ActivityLog,
+    Company,
+    LossReason,
+    Opportunity,
+)
 from apps.users.models import AppUser
 
 
@@ -142,3 +148,48 @@ class CloseRelatedAsLostTests(APITestCase):
         self.assertEqual(
             LossReason.objects.filter(opportunity=self.open_b).count(), 1
         )
+
+    def test_archived_related_opportunity_is_left_alone(self):
+        # Archived opportunities are soft-deleted. A bulk workflow must
+        # not reach back into them.
+        self.open_c.archived_at = timezone.now()
+        self.open_c.archived_by = self.director
+        self.open_c.save(update_fields=["archived_at", "archived_by"])
+
+        resp = self.client.post(
+            f"/api/opportunities/{self.won.id}/close_related_as_lost/",
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        closed_ids = [row["id"] for row in resp.data["closed"]]
+        self.assertNotIn(self.open_c.id, closed_ids)
+        self.assertIn(self.open_b.id, closed_ids)
+
+        self.open_c.refresh_from_db()
+        self.assertEqual(self.open_c.stage, Opportunity.Stage.PRICING)
+        self.assertEqual(self.open_c.status, Opportunity.Status.OPEN)
+        self.assertFalse(
+            LossReason.objects.filter(opportunity=self.open_c).exists()
+        )
+
+    def test_stage_changed_activity_records_the_real_previous_stage(self):
+        # open_b is at "submitted" and open_c at "pricing" — the log must
+        # say so, not report a hardcoded stage.
+        self.client.post(
+            f"/api/opportunities/{self.won.id}/close_related_as_lost/",
+            format="json",
+        )
+        for opp, expected in (
+            (self.open_b, "Submitted"),
+            (self.open_c, "Pricing"),
+        ):
+            description = (
+                ActivityLog.objects.filter(
+                    opportunity=opp, activity_type="stage_changed"
+                )
+                .values_list("description", flat=True)
+                .first()
+            )
+            self.assertEqual(
+                description, f"Stage changed from {expected} to Lost."
+            )

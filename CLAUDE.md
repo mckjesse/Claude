@@ -68,7 +68,7 @@ python manage.py migrate
 python manage.py seed_demo      # idempotent; --reset to wipe first
 python manage.py runserver
 
-python manage.py test           # 134 tests across 11 files
+python manage.py test           # 144 tests across 11 files
 python manage.py test apps.pipeline
 ```
 
@@ -90,21 +90,30 @@ regression, not a refactor.
    The only sanctioned path in is `POST /api/opportunities/{id}/mark_lost/`,
    which writes both atomically. A direct `PATCH` to `stage=lost` is
    rejected with 400.
-3. **You cannot `PATCH` out of `won`/`lost`.** The only way back is
-   `POST /api/opportunities/{id}/reopen/`, which moves the opportunity to
-   `follow_up` / `open` and **preserves** the historical `LossReason` and
-   all quotes for audit.
+3. **`reopen` is the only door out of a terminal stage.** A `PATCH`
+   changing `stage` away from `won`/`lost` is rejected, and so is
+   `mark_won` on a lost opportunity or `mark_lost` on a won one (both
+   400, pointing at `reopen`). `POST /api/opportunities/{id}/reopen/`
+   moves it to `follow_up` / `open` and **preserves** the historical
+   `LossReason` and all quotes for audit. Without this, an opportunity
+   could end up `won` while still carrying a loss reason, or `lost` while
+   carrying a final awarded value.
 4. **`project_code` is unique per company, not globally** — FOXD prices
    the same project to several builders, so the same code legitimately
    appears once per builder.
 5. **Hard `DELETE` on an opportunity requires it to be archived first**
    (400 otherwise), so the archive event is always in the activity feed
    even if the row is later destroyed.
-6. **The activity log is append-only** for everyone except directors.
-7. **Authorisation lives only in `permissions.py` (what you may do) and
+6. **The activity log is append-only** for everyone except directors,
+   and must record what actually happened — never a placeholder value.
+7. **Archived opportunities are invisible to bulk workflow.** Anything
+   that acts on a *set* of opportunities (currently
+   `close_related_as_lost`) must exclude `archived_at__isnull=False`;
+   soft-deleted rows are not candidates for mutation.
+8. **Authorisation lives only in `permissions.py` (what you may do) and
    `services/scoping.py` (which rows you may see).** Never re-implement
    either rule inline in a view, and never trust the frontend for it.
-8. **Every viewset's `get_queryset` goes through `scoping.scoped_*()`** —
+9. **Every viewset's `get_queryset` goes through `scoping.scoped_*()`** —
    never `Model.objects` directly. Dashboard and report services do the
    same, which is how role visibility reaches them for free.
 
@@ -145,8 +154,16 @@ regression, not a refactor.
 - **`reopen` does not re-run quote automation**, by design: existing
   pricing history is left untouched.
 - **`scoped_loss_reasons` returns nothing for `project_manager`**, even
-  though a PM can see won opportunities. An asymmetry, not obviously
-  intentional — check before relying on it.
+  though a PM can see won opportunities (a reopened-then-won opportunity
+  keeps its historical `LossReason`). An asymmetry, not obviously
+  intentional, and left as-is because changing visibility is a policy
+  call — check before relying on it.
+- **Never order by a `TextChoices` CharField to get semantic order.**
+  `priority`, `stage` and `quote_status` all sort alphabetically, which is
+  meaningless: `-priority` yields medium, low, high, critical and buries
+  the urgent work. `services/dashboard.py` defines `_PRIORITY_RANK` (a
+  `Case`/`When` expression) for this; reuse that pattern rather than
+  reaching for `order_by("-priority")`.
 - **`read_only` role sees every row.** Only `project_manager` is
   row-restricted (to `stage=won`). The `read_only` restriction is on
   writes, via the permission classes.

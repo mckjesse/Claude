@@ -230,9 +230,38 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                 opp, user=user, old_stage=old_stage,
             )
 
+    def _serialize_fresh(self, opp):
+        """
+        Serialise ``opp`` for a custom-action response.
+
+        ``get_object()`` populates ``_prefetched_objects_cache`` for
+        ``quotes`` and ``tasks``. Quote / follow-up automation then writes
+        new rows, which that cache cannot see — so ``latest_quote`` and
+        ``next_followup`` would serialise from stale data and report
+        ``null`` for a quote that was just created. DRF's UpdateModelMixin
+        drops the cache for PUT/PATCH; custom actions have to do it
+        themselves.
+        """
+        if getattr(opp, "_prefetched_objects_cache", None):
+            opp._prefetched_objects_cache = {}
+        return Response(self.get_serializer(opp).data)
+
     @action(detail=True, methods=["post"])
     def mark_won(self, request, pk=None):
         opp = self.get_object()
+        # Terminal -> terminal is not a valid transition. The serializer
+        # blocks it on the PATCH path (guard 1); block it here too so the
+        # action cannot leave a won opportunity carrying a loss reason.
+        if opp.stage == Opportunity.Stage.LOST:
+            return Response(
+                {
+                    "detail": (
+                        "This opportunity is lost. Use POST "
+                        "/api/opportunities/{id}/reopen/ before marking it won."
+                    )
+                },
+                status=400,
+            )
         payload = MarkWonSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
         with transaction.atomic():
@@ -253,11 +282,24 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             quote_automation.sync_quote_from_opportunity(
                 opp, user=request.user
             )
-        return Response(self.get_serializer(opp).data)
+        return self._serialize_fresh(opp)
 
     @action(detail=True, methods=["post"])
     def mark_lost(self, request, pk=None):
         opp = self.get_object()
+        # Mirror of the guard in mark_won: without this, a won
+        # opportunity could be flipped to lost while keeping its
+        # final_awarded_value.
+        if opp.stage == Opportunity.Stage.WON:
+            return Response(
+                {
+                    "detail": (
+                        "This opportunity is won. Use POST "
+                        "/api/opportunities/{id}/reopen/ before marking it lost."
+                    )
+                },
+                status=400,
+            )
         payload = MarkLostSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
         with transaction.atomic():
@@ -277,7 +319,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             quote_automation.sync_quote_from_opportunity(
                 opp, user=request.user
             )
-        return Response(self.get_serializer(opp).data)
+        return self._serialize_fresh(opp)
 
     @action(detail=True, methods=["post"])
     def reopen(self, request, pk=None):
@@ -452,6 +494,11 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             Opportunity.objects.filter(
                 project_code=won_opp.project_code,
                 status=Opportunity.Status.OPEN,
+                # Archived opportunities are soft-deleted and must stay
+                # out of bulk workflow: sweeping them up here would
+                # mutate rows the user has already removed from the
+                # active pipeline.
+                archived_at__isnull=True,
             )
             .exclude(pk=won_opp.pk)
         )
@@ -468,6 +515,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         closed_summaries = []
         with transaction.atomic():
             for opp in related.select_related("company"):
+                previous_stage = opp.stage
                 opp.stage = Opportunity.Stage.LOST
                 opp.status = Opportunity.Status.CLOSED
                 opp.save(update_fields=["stage", "status", "updated_at"])
@@ -483,7 +531,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                     },
                 )
                 activity.opportunity_stage_changed(
-                    opp, request.user, Opportunity.Stage.FOLLOW_UP, opp.stage
+                    opp, request.user, previous_stage, opp.stage
                 )
                 activity.opportunity_marked_lost(
                     opp,

@@ -155,15 +155,22 @@ refresh, `Authorization: Bearer <token>`.
 
 | Method | Path | Effect |
 |---|---|---|
-| POST | `/api/opportunities/{id}/mark_won/` | Body `{final_awarded_value}`. Sets `stage=won`, `status=closed`, then runs quote automation |
-| POST | `/api/opportunities/{id}/mark_lost/` | Body `{reason_category, reason_detail?, competitor_name?, price_gap_notes?}`. `update_or_create`s the `LossReason`, sets `stage=lost`, `status=closed`, runs quote automation |
+| POST | `/api/opportunities/{id}/mark_won/` | Body `{final_awarded_value}`. Sets `stage=won`, `status=closed`, then runs quote automation. **400 if the opportunity is currently `lost`** — go through `reopen` first. Re-marking an already-won opportunity is allowed and updates the value |
+| POST | `/api/opportunities/{id}/mark_lost/` | Body `{reason_category, reason_detail?, competitor_name?, price_gap_notes?}`. `update_or_create`s the `LossReason`, sets `stage=lost`, `status=closed`, runs quote automation. **400 if the opportunity is currently `won`** — go through `reopen` first |
 | POST | `/api/opportunities/{id}/reopen/` | Only from `won`/`lost`. Moves to `stage=follow_up`, `status=open`. **Preserves** the LossReason and all quotes. Logs `stage_changed` + `reopened`. Does **not** run quote automation |
 | POST | `/api/opportunities/{id}/archive/` | Soft delete: `archived_at=now`, `archived_by=user`. Leaves stage/status alone. 400 if already archived |
 | POST | `/api/opportunities/{id}/restore/` | Clears both archive fields. 400 if not archived |
 | DELETE | `/api/opportunities/{id}/` | Hard delete. **400 unless already archived.** Cascades to quotes, tasks, activity, loss reason |
-| POST | `/api/opportunities/{id}/close_related_as_lost/` | Only on a **won** opportunity. Closes every *other* `open` opportunity sharing the `project_code` as lost, with `reason_category=project_won_other` and the winning builder as `competitor_name`. Returns the affected list. Never touches the won opportunity |
+| POST | `/api/opportunities/{id}/close_related_as_lost/` | Only on a **won** opportunity. Closes every *other* non-archived `open` opportunity sharing the `project_code` as lost, with `reason_category=project_won_other` and the winning builder as `competitor_name`. Returns the affected list. Never touches the won opportunity, and never touches archived rows |
 | POST | `/api/followups/{id}/complete/` | `completion_notes` **required**. `schedule_next` (bool/`"true"`/`1`, default false) optionally creates a successor; `next_due_date` defaults to +14 days, `next_subject` to `"Follow up again"`, type/priority inherit |
 | POST | `/api/followups/{id}/reopen/` | Completed → `pending`; clears `completed_at`/`completed_by`, **keeps** `completion_notes` |
+
+`mark_won` and `mark_lost` drop the instance's prefetch cache before
+serialising their response (`_serialize_fresh`). `get_object()` primes
+that cache, and quote automation then writes a row the cache cannot see —
+without the reset the response reports `latest_quote: null` for a quote it
+just created. DRF's `UpdateModelMixin` does this for PUT/PATCH; custom
+actions must do it themselves.
 
 `archive`, `restore` and `destroy` resolve the object through
 `_get_opportunity_for_archive_path()` (which passes
@@ -564,19 +571,19 @@ an existing rule rather than adding to it; see `DECISIONS.md`.
 
 ## 10. Tests
 
-134 tests across 11 files. There is no pytest config — this is the Django
+144 tests across 11 files. There is no pytest config — this is the Django
 test runner.
 
 | File | Tests | Covers |
 |---|---|---|
-| `pipeline/tests/test_opportunities.py` | 38 | CRUD, stage/status invariants, archive/restore/delete, reopen, uniqueness |
+| `pipeline/tests/test_opportunities.py` | 44 | CRUD, stage/status invariants, archive/restore/delete, reopen, uniqueness, terminal-transition guards, action response freshness |
 | `pipeline/tests/test_permissions.py` | 16 | The role matrix per resource |
 | `pipeline/tests/test_quote_automation.py` | 15 | Eligible stages, value source, revision decisions, status mapping |
 | `pipeline/tests/test_followup_completion.py` | 11 | Required notes, close-out vs successor, duplicate guard, reopen |
 | `pipeline/tests/test_stale_opportunities.py` | 11 | Threshold, eligible stages, future-follow-up exclusion, date fallbacks, metadata |
 | `pipeline/tests/test_followup_automation.py` | 9 | Transition-only firing, idempotence, assignee precedence |
-| `pipeline/tests/test_close_related.py` | 7 | Grouped close, loss-reason content, response shape, idempotence |
-| `pipeline/tests/test_dashboard.py` | 7 | Aggregate shape and counts |
+| `pipeline/tests/test_close_related.py` | 9 | Grouped close, loss-reason content, response shape, idempotence, archived rows excluded, real previous stage logged |
+| `pipeline/tests/test_dashboard.py` | 9 | Aggregate shape and counts, overdue-follow-up priority ordering |
 | `pipeline/tests/test_followups.py` | 6 | Follow-up CRUD and filters |
 | `pipeline/tests/test_quote_revisions.py` | 5 | Revision uniqueness, `opportunity_id` filter alias |
 | `users/tests/test_auth.py` | 9 | JWT login, Bearer access to `/me/`, refresh, CSRF *not* required (verified with `enforce_csrf_checks=True`) |
