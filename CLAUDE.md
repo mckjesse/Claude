@@ -165,11 +165,12 @@ regression, not a refactor.
 
 ## Known drift and traps
 
-- **The README's auth section is stale.** It documents session + CSRF
-  auth and says "no JWT"; the code has used **SimpleJWT as the primary
-  frontend auth** since commit `37de8c5` (session auth is kept only for
-  the Django admin and DRF browsable API). Trust `config/settings.py`
-  and `apps/users/views.py` over the README.
+- **Auth is SimpleJWT, not session auth** — since commit `37de8c5`,
+  because session cookies were unreliable on iPad Safari. Session auth
+  survives only for the Django admin and DRF browsable API. The README
+  documented the old session/CSRF flow for months after the switch; it
+  has now been corrected, but treat `config/settings.py` and
+  `apps/users/views.py` as the authority if they ever disagree again.
 - **`/api/loss-reason-choices/` and `/api/loss-reasons/options/` are the
   same view.** Both exist for frontend compatibility. In
   `apps/pipeline/urls.py`, `extra_patterns` **must** stay before

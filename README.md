@@ -11,8 +11,10 @@ record.
 - Django REST Framework
 - PostgreSQL
 - django-filter, django-cors-headers
-- Authentication: Django native **session authentication** only (no JWT,
-  no token auth, no Entra/MSAL/Supabase)
+- Authentication: **SimpleJWT** (`djangorestframework-simplejwt`) as the
+  primary path for the React frontend. Django session authentication is
+  retained only for the Django admin and the DRF browsable API. No
+  Entra/MSAL/Supabase.
 
 ## Project layout
 
@@ -76,23 +78,37 @@ apps/pipeline/     Core domain models (companies, opportunities, quotes, ...)
 
 ## Auth endpoints
 
-| Method | Path                 | Description                              |
-|--------|----------------------|------------------------------------------|
-| GET    | `/api/users/me/`     | Current user + sets CSRF cookie          |
-| POST   | `/api/users/login/`  | Username/password login, starts session  |
-| POST   | `/api/users/logout/` | Ends the session                         |
+| Method | Path                          | Auth | Description |
+|--------|-------------------------------|------|-------------|
+| POST   | `/api/users/login/`           | none | Username/password. Returns `{access, refresh, user: {id, username, display_name, role}}`. No CSRF required |
+| POST   | `/api/users/token/refresh/`   | refresh token | Exchanges a refresh token for a new access token |
+| GET    | `/api/users/me/`              | required | Current user's profile. Works with `Bearer` or session |
+| POST   | `/api/users/logout/`          | required | Ends the Django session if one exists. JWT clients simply discard their tokens |
+| GET    | `/api/users/`                 | required | Active users, for estimator / assignee dropdowns |
+| GET    | `/api/users/csrf/`            | none | Sets and returns the `csrftoken`. Only needed for session-based flows; JWT clients can ignore it |
+
+Token lifetimes are set in `config/settings.py` under `SIMPLE_JWT`:
+access **30 minutes**, refresh **7 days**, rotation enabled, header type
+`Bearer`.
 
 ### React integration notes
 
-- The React app must send requests with `credentials: "include"` so
-  session and CSRF cookies flow.
-- On app load, React should call `GET /api/users/me/` once. This sets
-  the `csrftoken` cookie and tells the frontend whether the user is
-  already signed in (200 vs 401).
-- For any unsafe method (POST/PUT/PATCH/DELETE), React must read the
-  `csrftoken` cookie and send it in the `X-CSRFToken` header.
-- Ensure your React dev origin is listed in both `CORS_ALLOWED_ORIGINS`
-  and `CSRF_TRUSTED_ORIGINS` in `.env`.
+1. `POST /api/users/login/` — store the `access` and `refresh` tokens.
+2. Send `Authorization: Bearer <access>` on every subsequent request.
+3. On a `401`, `POST /api/users/token/refresh/` with the refresh token
+   and retry with the new access token.
+4. **No CSRF cookie and no `X-CSRFToken` header are needed anywhere.**
+5. `credentials: "include"` is **not** required — JWT auth is stateless
+   and does not depend on cookies.
+6. Ensure your React origin is listed in `CORS_ALLOWED_ORIGINS` in
+   `.env`, so the browser permits the cross-origin call.
+
+Why JWT rather than session cookies: session auth proved unreliable on
+iPad Safari, whose cross-site cookie restrictions dropped the session
+cookie. Bearer tokens are unaffected by cookie policy, which is what
+makes the split between `crm.foxd.co` and `api.foxd.co` work at all.
+`CSRF_TRUSTED_ORIGINS` still matters for the Django admin, which does use
+session auth.
 
 ## User roles
 
@@ -162,7 +178,7 @@ migrations per deploy.
 | `ALLOWED_HOSTS` | yes | `foxd-backend.onrender.com,api.foxd.example` | Comma-separated. Include every hostname that resolves to the service. |
 | `DATABASE_URL` | yes | *(auto)* | Render wires this automatically when you link a Postgres database to the service. |
 | `CORS_ALLOWED_ORIGINS` | yes | `https://foxd.example.com` | Comma-separated React frontend origins. |
-| `CSRF_TRUSTED_ORIGINS` | yes | `https://foxd.example.com` | Comma-separated. Must include frontend origin and any backend hostname that serves forms. |
+| `CSRF_TRUSTED_ORIGINS` | yes | `https://foxd.example.com` | Comma-separated. Needed for the session-authenticated Django admin, not for the JWT API. |
 | `WEB_CONCURRENCY` | no | `3` | Gunicorn worker count. Default 3. |
 | `PORT` | no | *(auto)* | Render injects this automatically. |
 
@@ -197,8 +213,8 @@ Before clicking **Deploy**:
       service's environment.
 - [ ] `CORS_ALLOWED_ORIGINS` includes the production React origin.
 - [ ] `CSRF_TRUSTED_ORIGINS` includes the production React origin.
-- [ ] React app is built with `credentials: "include"` and sends
-      `X-CSRFToken` on unsafe methods.
+- [ ] React app sends `Authorization: Bearer <access>` and refreshes via
+      `POST /api/users/token/refresh/` on 401.
 - [ ] A superuser has been created — either via `render shell` then
       `python manage.py createsuperuser`, or by running `seed_demo`
       which creates predictable demo users.
