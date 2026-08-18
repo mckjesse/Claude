@@ -3,10 +3,16 @@ Opportunity creation + validation + mark_won / mark_lost.
 """
 from decimal import Decimal
 
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.pipeline.models import Company, LossReason, Opportunity
+from apps.pipeline.models import (
+    Company,
+    FollowUpTask,
+    LossReason,
+    Opportunity,
+)
 from apps.users.models import AppUser
 
 
@@ -663,3 +669,171 @@ class ArchiveAndDeleteTests(APITestCase):
         self.assertIn(
             self.task.id, [r["id"] for r in resp_f.data["results"]]
         )
+
+
+class TerminalTransitionGuardTests(APITestCase):
+    """
+    ``reopen`` is the only sanctioned door out of a terminal stage. The
+    serializer enforces that on the PATCH path and mark_won already
+    rejects a lost opportunity; mark_lost must reject a won one too, or
+    it leaves a lost row still carrying its final_awarded_value.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.director = AppUser.objects.create_user(
+            username="terminal_dir", password="x", role=AppUser.Role.DIRECTOR,
+        )
+        cls.company = Company.objects.create(
+            name="Terminal Builder", company_type=Company.Type.BUILDER,
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.director)
+
+    def _opportunity(self, code):
+        return Opportunity.objects.create(
+            project_name="Terminal Project",
+            project_code=code,
+            company=self.company,
+            estimator=self.director,
+            stage=Opportunity.Stage.SUBMITTED,
+            estimated_contract_value=Decimal("250000.00"),
+        )
+
+    def test_mark_lost_rejects_a_won_opportunity(self):
+        opp = self._opportunity("TERM-002")
+        self.client.post(
+            f"/api/opportunities/{opp.id}/mark_won/",
+            {"final_awarded_value": "260000.00"},
+            format="json",
+        )
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_lost/",
+            {"reason_category": "price"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("reopen", resp.data["detail"].lower())
+
+        opp.refresh_from_db()
+        self.assertEqual(opp.stage, Opportunity.Stage.WON)
+        self.assertFalse(LossReason.objects.filter(opportunity=opp).exists())
+
+    def test_mark_won_rejects_a_lost_opportunity(self):
+        opp = self._opportunity("TERM-001")
+        self.client.post(
+            f"/api/opportunities/{opp.id}/mark_lost/",
+            {"reason_category": "price"},
+            format="json",
+        )
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_won/",
+            {"final_awarded_value": "260000.00"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("reopen", resp.data["detail"].lower())
+
+        opp.refresh_from_db()
+        self.assertEqual(opp.stage, Opportunity.Stage.LOST)
+        self.assertIsNone(opp.final_awarded_value)
+
+    def test_reopen_then_mark_lost_is_allowed(self):
+        # The guard must not block the sanctioned route.
+        opp = self._opportunity("TERM-003")
+        self.client.post(
+            f"/api/opportunities/{opp.id}/mark_won/",
+            {"final_awarded_value": "260000.00"},
+            format="json",
+        )
+        self.client.post(f"/api/opportunities/{opp.id}/reopen/", format="json")
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_lost/",
+            {"reason_category": "price"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        opp.refresh_from_db()
+        self.assertEqual(opp.stage, Opportunity.Stage.LOST)
+
+
+class ActionResponseFreshnessTests(APITestCase):
+    """
+    ``get_object()`` primes the prefetch cache for quotes and tasks.
+    Quote automation then writes a quote and the terminal-follow-up
+    sweep cancels tasks — neither visible to that cache. The action must
+    drop it before serialising, or it reports a null latest_quote for a
+    quote it just created and keeps advertising a cancelled follow-up.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.director = AppUser.objects.create_user(
+            username="fresh_dir", password="x", role=AppUser.Role.DIRECTOR,
+        )
+        cls.company = Company.objects.create(
+            name="Fresh Builder", company_type=Company.Type.BUILDER,
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.director)
+
+    def _opportunity(self, code):
+        return Opportunity.objects.create(
+            project_name="Fresh Project",
+            project_code=code,
+            company=self.company,
+            estimator=self.director,
+            stage=Opportunity.Stage.SUBMITTED,
+            estimated_contract_value=Decimal("300000.00"),
+        )
+
+    def test_mark_won_response_includes_the_auto_created_quote(self):
+        opp = self._opportunity("FRESH-001")
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_won/",
+            {"final_awarded_value": "310000.00"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(opp.quotes.count(), 1)
+        latest = resp.data["opportunity"]["latest_quote"]
+        self.assertIsNotNone(latest)
+        self.assertEqual(latest["quoted_value_ex_gst"], "310000.00")
+        self.assertEqual(latest["quote_status"], "accepted")
+
+    def test_mark_lost_response_includes_the_auto_created_quote(self):
+        opp = self._opportunity("FRESH-002")
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_lost/",
+            {"reason_category": "price"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(opp.quotes.count(), 1)
+        latest = resp.data["opportunity"]["latest_quote"]
+        self.assertIsNotNone(latest)
+        self.assertEqual(latest["quote_status"], "unsuccessful")
+
+    def test_mark_won_response_does_not_advertise_a_cancelled_followup(self):
+        # The terminal sweep cancels outstanding follow-ups inside the
+        # transaction; next_followup must not still show one.
+        opp = self._opportunity("FRESH-003")
+        FollowUpTask.objects.create(
+            opportunity=opp,
+            assigned_to_user=self.director,
+            subject="Chase the builder",
+            task_type=FollowUpTask.TaskType.CALL,
+            due_date=timezone.localdate(),
+            priority=FollowUpTask.Priority.HIGH,
+            status=FollowUpTask.Status.PENDING,
+        )
+        resp = self.client.post(
+            f"/api/opportunities/{opp.id}/mark_won/",
+            {"final_awarded_value": "310000.00"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(resp.data["cleared_followups_count"], 1)
+        self.assertIsNone(resp.data["opportunity"]["next_followup"])

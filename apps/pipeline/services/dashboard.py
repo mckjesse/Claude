@@ -9,7 +9,15 @@ from __future__ import annotations
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Count, DecimalField, Sum
+from django.db.models import (
+    Case,
+    Count,
+    DecimalField,
+    IntegerField,
+    Sum,
+    Value,
+    When,
+)
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
@@ -27,6 +35,19 @@ _VALUE_SUM = Coalesce(
 
 _RECENT_ACTIVITY_LIMIT = 10
 _TOP_OVERDUE_LIMIT = 5
+
+# ``FollowUpTask.priority`` is a CharField, so ordering by
+# ``-priority`` sorts alphabetically — medium, low, high, critical —
+# which puts the most urgent tasks last. Rank the values explicitly
+# instead so "top overdue" really means most urgent first.
+_PRIORITY_RANK = Case(
+    When(priority=FollowUpTask.Priority.CRITICAL, then=Value(0)),
+    When(priority=FollowUpTask.Priority.HIGH, then=Value(1)),
+    When(priority=FollowUpTask.Priority.MEDIUM, then=Value(2)),
+    When(priority=FollowUpTask.Priority.LOW, then=Value(3)),
+    default=Value(4),
+    output_field=IntegerField(),
+)
 
 
 def build_dashboard(user: AppUser) -> dict:
@@ -133,7 +154,8 @@ def _top_overdue_followups(active_tasks, today) -> list[dict]:
     tasks = (
         active_tasks.filter(due_date__lt=today)
         .select_related("opportunity", "opportunity__company", "assigned_to_user")
-        .order_by("due_date", "-priority")[:_TOP_OVERDUE_LIMIT]
+        .annotate(priority_rank=_PRIORITY_RANK)
+        .order_by("due_date", "priority_rank")[:_TOP_OVERDUE_LIMIT]
     )
     return [
         {

@@ -4,12 +4,15 @@ Dashboard endpoint tests:
 - returns the expected top-level shape
 - row-level visibility: project manager sees only won-scoped data
 """
+from datetime import timedelta
 from decimal import Decimal
+
+from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.pipeline.models import Company, Opportunity
+from apps.pipeline.models import Company, FollowUpTask, Opportunity
 from apps.users.models import AppUser
 
 
@@ -160,3 +163,71 @@ class DashboardRowLevelVisibilityTests(APITestCase):
         self.client.force_authenticate(user=self.pm)
         resp = self.client.get("/api/companies/")
         self.assertEqual(resp.data["count"], 1)
+
+
+class TopOverdueFollowupOrderingTests(APITestCase):
+    """
+    ``priority`` is a CharField, so ordering by ``-priority`` sorts
+    alphabetically (medium, low, high, critical) and buries the most
+    urgent tasks. The dashboard must rank the values explicitly.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.director = AppUser.objects.create_user(
+            username="prio_dir", password="x", role=AppUser.Role.DIRECTOR,
+        )
+        cls.company = Company.objects.create(
+            name="PrioCo", company_type=Company.Type.BUILDER,
+        )
+        cls.opp = Opportunity.objects.create(
+            project_name="Prio Project",
+            project_code="PRIO-001",
+            company=cls.company,
+            estimator=cls.director,
+            stage=Opportunity.Stage.FOLLOW_UP,
+        )
+        overdue_on = timezone.localdate() - timedelta(days=5)
+        # Created in a deliberately unhelpful order so a stable sort
+        # cannot accidentally produce the right answer.
+        for priority in (
+            FollowUpTask.Priority.LOW,
+            FollowUpTask.Priority.CRITICAL,
+            FollowUpTask.Priority.MEDIUM,
+            FollowUpTask.Priority.HIGH,
+        ):
+            FollowUpTask.objects.create(
+                opportunity=cls.opp,
+                assigned_to_user=cls.director,
+                subject=f"Chase ({priority})",
+                task_type=FollowUpTask.TaskType.CALL,
+                due_date=overdue_on,
+                priority=priority,
+                status=FollowUpTask.Status.PENDING,
+            )
+
+    def test_top_overdue_followups_are_ordered_most_urgent_first(self):
+        self.client.force_authenticate(user=self.director)
+        resp = self.client.get("/api/dashboard/")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            [t["priority"] for t in resp.data["top_overdue_followups"]],
+            ["critical", "high", "medium", "low"],
+        )
+
+    def test_due_date_still_takes_precedence_over_priority(self):
+        # An older low-priority task outranks a newer critical one:
+        # due_date is the primary sort key, priority only breaks ties.
+        FollowUpTask.objects.create(
+            opportunity=self.opp,
+            assigned_to_user=self.director,
+            subject="Oldest, lowest priority",
+            task_type=FollowUpTask.TaskType.CALL,
+            due_date=timezone.localdate() - timedelta(days=30),
+            priority=FollowUpTask.Priority.LOW,
+            status=FollowUpTask.Status.PENDING,
+        )
+        self.client.force_authenticate(user=self.director)
+        resp = self.client.get("/api/dashboard/")
+        first = resp.data["top_overdue_followups"][0]
+        self.assertEqual(first["subject"], "Oldest, lowest priority")

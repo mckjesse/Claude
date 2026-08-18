@@ -262,6 +262,24 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                     opp, user=user, reason=self._terminal_reason(opp),
                 )
 
+    def _fresh_data(self, opp):
+        """
+        Serialise ``opp`` after automation has run.
+
+        ``get_object()`` (and ``_get_opportunity_for_archive_path``)
+        populate ``_prefetched_objects_cache`` for ``quotes`` and
+        ``tasks``. Quote automation then writes a new quote, and
+        ``clear_followups_for_terminal_opportunity`` cancels outstanding
+        tasks — neither of which that cache can see. Without this reset
+        the response reports ``latest_quote: null`` for a quote just
+        created, and keeps advertising a ``next_followup`` that has
+        already been cancelled. DRF's UpdateModelMixin drops the cache
+        for PUT/PATCH; custom actions must do it themselves.
+        """
+        if getattr(opp, "_prefetched_objects_cache", None):
+            opp._prefetched_objects_cache = {}
+        return self.get_serializer(opp).data
+
     @action(detail=True, methods=["post"])
     def mark_won(self, request, pk=None):
         """
@@ -350,7 +368,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             )
         return Response(
             {
-                "opportunity": self.get_serializer(opp).data,
+                "opportunity": self._fresh_data(opp),
                 "cleared_followups_count": len(cleared_ids),
                 "cleared_followup_ids": cleared_ids,
             }
@@ -359,6 +377,20 @@ class OpportunityViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def mark_lost(self, request, pk=None):
         opp = self.get_object()
+        # Mirror of the guard in mark_won: terminal -> terminal is not a
+        # valid transition. Without this a won opportunity could be
+        # flipped to lost while keeping its final_awarded_value.
+        if opp.stage == Opportunity.Stage.WON:
+            return Response(
+                {
+                    "detail": (
+                        "This opportunity is won. Use POST "
+                        "/api/opportunities/{id}/reopen/ before marking "
+                        "it lost."
+                    )
+                },
+                status=400,
+            )
         payload = MarkLostSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
         with transaction.atomic():
@@ -386,7 +418,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             )
         return Response(
             {
-                "opportunity": self.get_serializer(opp).data,
+                "opportunity": self._fresh_data(opp),
                 "cleared_followups_count": len(cleared_ids),
                 "cleared_followup_ids": cleared_ids,
             }
@@ -565,6 +597,11 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             Opportunity.objects.filter(
                 project_code=won_opp.project_code,
                 status=Opportunity.Status.OPEN,
+                # Archived opportunities are soft-deleted and must stay
+                # out of bulk workflow: sweeping them up here would
+                # mutate rows the user has already removed from the
+                # active pipeline.
+                archived_at__isnull=True,
             )
             .exclude(pk=won_opp.pk)
         )
@@ -581,6 +618,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         closed_summaries = []
         with transaction.atomic():
             for opp in related.select_related("company"):
+                previous_stage = opp.stage
                 opp.stage = Opportunity.Stage.LOST
                 opp.status = Opportunity.Status.CLOSED
                 opp.save(update_fields=["stage", "status", "updated_at"])
@@ -596,7 +634,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
                     },
                 )
                 activity.opportunity_stage_changed(
-                    opp, request.user, Opportunity.Stage.FOLLOW_UP, opp.stage
+                    opp, request.user, previous_stage, opp.stage
                 )
                 activity.opportunity_marked_lost(
                     opp,
