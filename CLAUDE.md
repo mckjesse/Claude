@@ -33,11 +33,20 @@ what the FOXD Render service actually builds and serves.
 Consequences:
 - **This is the working branch. All new work is committed and pushed
   here.** `CRM-Backend` is not a base and not a merge target.
-- **Pushing here does NOT deploy.** The Render service is set to
-  **manual deploy**, so production only changes when someone clicks
-  Deploy in the Render dashboard. A push is therefore safe — but still
-  run the full suite first, because whatever is on this branch is what
-  the next manual deploy ships.
+- **⚠️ A push here auto-deploys to production.** The Render service has
+  auto-deploy enabled against this branch, so `git push` *is* a
+  production release — there is no separate approval step. Therefore:
+  run the **full** suite before every push, and never push work in
+  progress. If you need to park something, push it to a scratch branch
+  instead.
+- Deploying runs `entrypoint.sh`, which applies `migrate --noinput`
+  before starting gunicorn. A push that adds a migration changes the
+  production schema on deploy. Check `makemigrations --check --dry-run`
+  before pushing so you know whether a schema change is in flight.
+- Auto-deploy is a **Render service setting, not a fact this file can
+  guarantee.** It has been misremembered in both directions before. If
+  it matters for what you are about to do, confirm it in the Render
+  dashboard rather than trusting this line.
 - `CRM-Backend` is behind by real work including a migration, so it is not
   a safe base and its schema does not match production.
 - Because the GitHub default branch is `claude/variation-register-app-oXKwO`,
