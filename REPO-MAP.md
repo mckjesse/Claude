@@ -8,6 +8,10 @@ conversation that produced it.
 Phase 0, and this file. No branch was modified or deleted, no repository was
 renamed, nothing was deployed.
 
+**Outstanding, ready to go:** the `c2e92d0` fast-forward described in item 1
+below. It is validated (160 tests green, no migrations) but unpushed — the
+assessing session was not permitted to write to a branch other than its own.
+
 ## The one-line summary
 
 `mckjesse/Claude` uses **branches as if they were repositories**: fourteen
@@ -29,13 +33,21 @@ commit. Everything else that is wrong follows from that.
 
 ## Fix before anything else
 
-1. **Production deploys from a feature branch.** Render auto-deploys the
-   Tender Pipeline API from `claude/foxd-tender-backend-NiPeb` inside this
-   fourteen-app repo. `entrypoint.sh` runs `migrate --noinput`, so a push
-   carrying a migration rewrites the production schema. A fresh clone lands
-   on `claude/variation-register-app-oXKwO` — a different app entirely.
-   Confirm the current setting in the Render dashboard rather than trusting
-   any file, including this one.
+1. **Production deploys from a feature branch — VERIFIED 20 Aug 2026.**
+   Checked in the Render dashboard: **Source** `mckjesse/Claude`, **Branch**
+   `claude/foxd-tender-backend-NiPeb`, **Auto-Deploy** `On Commit`. So a push
+   to that branch *is* a production release, with no approval step.
+   `entrypoint.sh` runs `migrate --noinput` on every deploy, so a push
+   carrying a migration rewrites the production schema. Meanwhile a fresh
+   clone lands on `claude/variation-register-app-oXKwO` — a different app
+   entirely.
+
+   This settles a contradiction in the history. The live branch's own
+   `CLAUDE.md` still claims *"Pushing here does NOT deploy... set to manual
+   deploy"*; commit `c2e92d0` corrects it to auto-deploy and is the accurate
+   one. Until `c2e92d0` is merged, the canonical orientation doc tells a
+   reader that pushes are safe when they are in fact releases. **Merging it
+   is the single highest-value change in this whole cleanup.**
 2. **One commit of production truth is stranded.**
    `claude/chat-history-github-upload-ro7k35` is the live branch **plus
    exactly one commit** — `c2e92d0`, which corrects `CLAUDE.md` to say that
@@ -256,7 +268,15 @@ Credential hygiene is otherwise sound: no database passwords, no Django
 only values that ship to the browser anyway — API base URLs and a Supabase
 *publishable* anon key.
 
-Two things worth re-checking rather than trusting: Render's auto-deploy
-setting (a service setting no file can guarantee, and it has been
-misremembered in both directions), and feature parity of the two calculators
-already ported into `foxd-hub`.
+Render's deploy configuration is no longer a guess: Source, Branch and
+Auto-Deploy were read directly from the dashboard on 20 Aug 2026 and are
+recorded above. Re-check it if it matters later — it is a dashboard setting
+no file can guarantee, and it has been misrecorded in both directions before.
+
+Still worth verifying: feature parity of the two calculators already ported
+into `foxd-hub`, before their source branches are retired.
+
+The merged state of `c2e92d0` was validated here — full suite run against
+PostgreSQL 16: **160 tests, all pass**; `makemigrations --check --dry-run`
+reports no changes. The fast-forward push itself was blocked by this
+session's permissions, so it remains outstanding.
