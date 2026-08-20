@@ -2,8 +2,11 @@
 
 Assessed 20 August 2026. Written because this repo's branch layout is
 actively misleading and the reasoning behind the cleanup should outlive the
-conversation that produced it. **No repository was changed by that
-assessment** — this file is a map, not a record of work done.
+conversation that produced it.
+
+**Changes made so far:** the `archive/2026-08-20/*` refs described under
+Phase 0, and this file. No branch was modified or deleted, no repository was
+renamed, nothing was deployed.
 
 ## The one-line summary
 
@@ -16,10 +19,10 @@ commit. Everything else that is wrong follows from that.
 | Repo | Vis. | Branches | What it is | Disposition |
 |---|---|---|---|---|
 | `Claude` | public | 14 | Fourteen unrelated apps, one per branch. No `main`. Default branch is the Variation Register. Holds the production backend. | Split, then archive |
-| `tender-tracker-pro` | private | 1 | Lovable React frontend for the Tender Pipeline; `.env` → `crm-backend-pza6.onrender.com`. The other half of the live system. | Live — rename `foxd-tender-web` |
+| `tender-tracker-pro` | private | 1 | Lovable React frontend for the Tender Pipeline; `.env` → `crm-backend-pza6.onrender.com`, `.env.production` → `api.foxd.co`. The other half of the live system. | Live — rename `foxd-tender-web` |
+| `foxd-4992dbd1` | private | 1 | **The FOXD public marketing website.** Landing page plus a `/book` capability & scope review funnel with lead-capture form, SEO component, case studies, five-pillar framework. | Live — rename `foxd-website` |
+| `merrigums` | private | 1 | **Live site for `merrigums.com.au`** — the Merrijig holiday rental. Long-form single page with gallery lightbox, reviews, JSON-LD `LodgingBusiness` schema, and an Airbnb-synced availability calendar via a Supabase edge function. A separate business from FOXD. | Live — keep the name |
 | `foxd-hub-9c7dc867` | private | 1 | Lovable React app already holding `CeilingGridCalculator.tsx` + `TenderScorecard.tsx`. | Adopt as `foxd-tools` |
-| `foxd-4992dbd1` | private | 1 | Lovable React; `Book.tsx`, `ProjectsPage.tsx`. Purpose unclear from code. | Confirm |
-| `merrigums` | private | 1 | Lovable + Supabase scaffold; only `Index.tsx` / `NotFound.tsx`. | Confirm or archive |
 | `COD` | public | 1 | Black Ops 7 randomizer. No `main`; only `claude/bo7-game-mode-randomizer-wdccrm`. | Keep — add `main` |
 | `CRM-Backend` | public | 1 | Single-commit orphan snapshot of the Django backend. Unrelated history, 3 migrations vs production's 11. | Delete |
 | `FOXD` | public | 0 | Completely empty. The best name in the estate, attached to nothing. | Repurpose or delete |
@@ -71,11 +74,24 @@ branch of the same name.
 | `CRM-Backend` | 73 | Strictly behind production. Misleading name. | Retire |
 
 ### Tool inventory — three attempts at one app
-| Branch | Commits | Status | Action |
+
+Commit counts mislead badly here. `A6PBz` looks like the leader at 25
+commits, but almost all of that history is an **inherited copy of the CRM
+Django backend** that rode along when `Tool-tracker-app` branched off the
+backend line. Measured by code that is actually a tool inventory, the
+ranking inverts.
+
+| Branch | Real app | What it actually is | Action |
 |---|---|---|---|
-| `claude/tool-inventory-app-A6PBz` | 25 | Furthest along: Netlify Functions + Blobs, CSV import. Contains all of `Tool-tracker-app`. | Likely the survivor |
-| `Tool-tracker-app` | 14 | **Zero unique commits** — strict subset of `A6PBz`. | Delete |
-| `claude/tool-inventory-app-7qfn6` | 9 | Different architecture: React + Django + Entra ID. Forked off root, never reconciled. | Pick one architecture |
+| `claude/tool-inventory-app-7qfn6` | 1,969 ln | **Purpose-built and structurally the real one.** Django `inventory` app with a relational model — `Project`, `Tool` (typed, FK to project) and `AllocationHistory` recording action, from-location, to-location, performed-by. Entra ID JWT auth validated against Microsoft's JWKS. React frontend with Dashboard, Projects, ToolRegistry, Allocations, plus CSV import with duplicate detection. | **Recommended base** |
+| `claude/tool-inventory-app-A6PBz` | 1,168 ln | Vanilla JS + HTML/CSS over a single 141-line Netlify function and a Netlify Blobs store — one JSON key holding everything, flat tools and projects, **no allocation history at all**. Has CSV import, but so does 7qfn6. The other 5,313 lines here are the stale CRM backend as baggage. | Harvest branding, then retire |
+| `Tool-tracker-app` | — | **Zero unique commits** — strict subset of `A6PBz`. | Delete |
+
+**Recommendation: build on `7qfn6`.** For tracking plant and equipment
+across project sites the question that matters is *where is this tool now and
+who moved it*, and only 7qfn6 models that. Its Entra ID auth also matches the
+Microsoft 365 tenant already in use, so there is no separate login to
+maintain. Carry over the FOXD logo and styling from `A6PBz`.
 
 ### Single-file tools
 | Branch | Commits | The actual app | Action |
@@ -108,50 +124,85 @@ changes in flight.**
 | `Claude` @ `claude/foxd-tender-backend-NiPeb` | `foxd-tender-api` — new repo, `main`, **private** (requires repointing Render) |
 | `tender-tracker-pro` | `foxd-tender-web` |
 | `foxd-hub-9c7dc867` | `foxd-tools` |
-| `Claude` @ `tool-inventory-app-A6PBz` | `foxd-tool-inventory` |
+| `foxd-4992dbd1` | `foxd-website` |
+| `merrigums` | `merrigums` — unchanged; already matches its domain, and it is a separate business |
+| `Claude` @ `tool-inventory-app-7qfn6` | `foxd-tool-inventory` |
 | `COD` @ `claude/bo7-…-wdccrm` | `COD` @ `main` |
-| `Claude` @ everything else | Tagged, then deleted |
+| `Claude` @ everything else | Archived refs, then deleted |
 | `Claude` (repo) | Archived, or `main` + README index |
 | `CRM-Backend`, `FOXD` | Deleted |
 
 ## Cleanup sequence
 
-**Phase 0 — make everything reversible (zero risk, do first).** Tag every
-branch tip before a single delete. Tags survive branch deletion, so after
-this nothing can be lost.
+### Phase 0 — make everything reversible — **DONE, 20 Aug 2026**
+
+All fourteen branch tips in this repo are preserved on the remote under
+`archive/2026-08-20/<branch>`, each verified to point at the exact tip
+commit. Nothing here can be lost to a branch delete from now on.
+
+These are **refs rather than tags** because the assessing session's
+credentials could push only its own working branch (`git push --tags`
+returned 403), so the refs were created through the GitHub API instead. Tags
+are the better tool — they signal immutability and stay out of the branch
+list. To convert, from a machine with normal push rights:
 
 ```sh
-for b in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin); do
-  git tag "archive/2026-08-20/${b#origin/}" "$b"
+git fetch origin
+for r in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/archive); do
+  n="${r#origin/archive/2026-08-20/}"
+  git tag "archive/2026-08-20/$n" "$r"
 done
 git push origin --tags
+# then drop the archive/* branches, now that tags hold the same commits
+git for-each-ref --format='%(refname:short)' refs/remotes/origin/archive \
+  | sed 's|^origin/||' | xargs -n1 git push origin --delete
 ```
 
-**Phase 1 — de-risk the production deploy.** Confirm in Render which repo
-and branch it builds and whether auto-deploy is on. Merge `c2e92d0` into the
-live branch (full test suite first — the push *is* a release). Then decide
-the deploy gate; do not leave auto-deploy on against a branch also used for
-work in progress.
+The `COD` repo has one branch that the plan only ever adds to, so it needs no
+archive ref.
 
-**Phase 2 — extract the backend.** Create `foxd-tender-api` private, push
-the live history as `main`, drop the vestigial `index.html`. Repoint Render
-and **verify a real deploy including `migrate`** before touching the old
-branch. Keep the old branch until one clean deploy is observed.
+### Phase 1 — de-risk the production deploy
 
-**Phase 3 — rename the frontends.** `tender-tracker-pro` → `foxd-tender-web`,
-`foxd-hub-9c7dc867` → `foxd-tools`. GitHub redirects old URLs, but **Lovable's
-GitHub connection may need reconnecting** — rename one, confirm sync, then
-the other. Add a short `CLAUDE.md` to each naming its counterpart API.
+Confirm in Render which repo and branch it builds and whether auto-deploy is
+on. Merge `c2e92d0` into the live branch (full test suite first — the push
+*is* a release). Then decide the deploy gate; do not leave auto-deploy on
+against a branch also used for work in progress.
 
-**Phase 4 — consolidate loose tools.** Port sliding door, parking, quote
-tracker and variation register into `foxd-tools` as routes. Check the two
-already-ported calculators for parity *before* retiring their branches.
-Extract `A6PBz` to `foxd-tool-inventory`. Move the team wheel into `COD`.
+### Phase 2 — extract the backend
 
-**Phase 5 — retire the monorepo.** Delete the branches whose content now
-lives elsewhere (Phase 0 tags keep the history). Give `Claude` a real `main`
-with a README pointing at the new repos, or archive it. Delete
-`mckjesse/CRM-Backend` and the empty `FOXD`.
+Create `foxd-tender-api` private, push the live history as `main`, drop the
+vestigial `index.html`. Repoint Render and **verify a real deploy including
+`migrate`** before touching the old branch. Keep the old branch until one
+clean deploy is observed. Note the domain move is already half-built: the
+frontend's `.env.production` points at `api.foxd.co` while its dev `.env`
+still points at the raw `onrender.com` host, and the backend has a "prepare
+for api.foxd.co / crm.foxd.co" commit — finish or abandon that deliberately
+rather than leaving it half-applied.
+
+### Phase 3 — rename the frontends
+
+`tender-tracker-pro` → `foxd-tender-web`, `foxd-hub-9c7dc867` →
+`foxd-tools`, `foxd-4992dbd1` → `foxd-website`. Leave `merrigums` alone.
+GitHub redirects old URLs, but **Lovable's GitHub connection may need
+reconnecting** after a rename and all three are Lovable projects — rename
+one, confirm sync, then the next. Two are live public-facing sites, so load
+each one after its rename rather than doing all three then checking. Add a
+short `CLAUDE.md` to each naming its counterpart API.
+
+### Phase 4 — consolidate loose tools
+
+Port the sliding door calculator, parking tracker, quote tracker and
+variation register into `foxd-tools` as routes. Check the two already-ported
+calculators for parity *before* retiring their branches. Extract `7qfn6` to
+`foxd-tool-inventory` with `main`, dropping the vestigial `index.html` and
+`tool-inventory.html`, and carry the FOXD branding over from `A6PBz`. Move
+the team wheel into `COD`.
+
+### Phase 5 — retire the monorepo
+
+Delete the branches whose content now lives elsewhere (the Phase 0 refs keep
+the history). Give `Claude` a real `main` with a README pointing at the new
+repos, or archive it. Delete `mckjesse/CRM-Backend` and the empty `FOXD`.
 
 ## Rules going forward
 
@@ -173,21 +224,39 @@ Each maps to something that went wrong above.
 - **A `CLAUDE.md` in every repo root.** The backend's version is the model —
   it exists because a design conversation was lost, and it works.
 
-## Open decisions
+## Still open
 
-| Decision | Options | Unblocks |
-|---|---|---|
-| Tool inventory architecture | `A6PBz` (Netlify static, further along) vs `7qfn6` (React + Django + Entra ID, better auth) | Phase 4 |
-| `foxd-4992dbd1` | Live project worth a real name, or archive | Phase 3 |
-| `merrigums` | Empty scaffold — archive, or is there a plan? | Phase 3 |
-| The `Claude` repo's ending | Archive outright, or `main` + README index | Phase 5 |
+| Item | Status |
+|---|---|
+| Tool inventory architecture | **Resolved** — build on `7qfn6` |
+| `foxd-4992dbd1` | **Resolved** — the FOXD public site; rename `foxd-website` |
+| `merrigums` | **Resolved** — live site, name already correct |
+| The `Claude` repo's ending | **Open** — archive outright, or keep `main` + README index |
+
+## Two non-git findings
+
+- **Hardcoded Airbnb calendar token.** `merrigums`'s `airbnb-calendar` edge
+  function has the private iCal export URL — token and all — hardcoded in
+  source rather than read from a Supabase secret. That link exposes the
+  property's whole booking calendar to anyone holding it, with no
+  authentication. The repo is private, which contains the blast radius, but
+  the token should move to an environment secret and be rotated in Airbnb.
+- **Contact email mismatch.** On the FOXD site's `/book` page the form
+  submits to `jesse@foxd.co` while the footer advertises
+  `jesse@foxdgroup.com.au`. One is probably wrong on a live lead-capture
+  page.
 
 ## Verification notes
 
-Findings are from branch topology, merge bases, migration sets, committed
-artefacts and deploy configuration across all eight repositories. Two things
-worth re-checking rather than trusting: Render's auto-deploy setting (a
-service setting no file can guarantee, and it has been misremembered in both
-directions), and feature parity of the two calculators already ported into
-`foxd-hub`. No secrets were found committed anywhere — the one `.env` in git
-holds a public API base URL.
+Findings are from branch topology, merge bases, migration sets, line counts,
+data models, auth and deploy configuration across all eight repositories.
+
+Credential hygiene is otherwise sound: no database passwords, no Django
+`SECRET_KEY`, no Supabase `service_role` key. The committed `.env` files hold
+only values that ship to the browser anyway — API base URLs and a Supabase
+*publishable* anon key.
+
+Two things worth re-checking rather than trusting: Render's auto-deploy
+setting (a service setting no file can guarantee, and it has been
+misremembered in both directions), and feature parity of the two calculators
+already ported into `foxd-hub`.
