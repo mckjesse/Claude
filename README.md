@@ -33,10 +33,17 @@ Still here, deliberately:
 - `claude/foxd-tender-backend-NiPeb` — retained as the rollback path for the
   backend extraction, at the exact commit `CRM-backend` was created from.
 
-## Read this next
+## The two documents here
 
-**[`REPO-MAP.md`](REPO-MAP.md)** is the full account: what every repository
-and branch was, what was wrong with the layout, what was done about it, and
-what is still open. It exists because the reasoning behind a cleanup is worth
-more than the cleanup itself, and because the original design conversations
-for this code were lost.
+**[`WORKING-LOCALLY.md`](WORKING-LOCALLY.md)** — start here if you want to
+*do* something. The `~/Developer` layout, how to clone all eight repos
+(including the four private ones), the branch-per-change workflow, and the
+three hazards worth knowing before you push anything: merging to
+`CRM-backend` `main` deploys to production, three repos are also written to
+by Lovable's bot, and `.env` files are deliberately not in git.
+
+**[`REPO-MAP.md`](REPO-MAP.md)** — read this to understand *why*. What every
+repository and branch was, what was wrong with the layout, what was done
+about it, and what is still open. It exists because the reasoning behind a
+cleanup is worth more than the cleanup itself, and because the original
+design conversations for this code were lost.
