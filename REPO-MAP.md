@@ -4,14 +4,14 @@ Assessed 20 August 2026, last updated 21 August. Written because this repo's
 branch layout was actively misleading and the reasoning behind the cleanup
 should outlive the conversation that produced it.
 
-**Done:** Phases 0, 1 and 2 — every branch tip archived, the deploy warning
-corrected on the live branch, CI added, and the backend extracted into
-`mckjesse/CRM-backend` with Render cut over to it. Phase 3 is part-done
-(`CRM-web` renamed).
+**Done:** Phases 0–3, and most of Phase 4. The backend is `CRM-backend` with
+Render cut over and CI gating deploys; the frontends are renamed; the six
+single-file tools are consolidated into `foxd-apps`.
 
-**Next:** finish Phase 3 (two Lovable repos still to rename), then Phase 4.
-No branch has been deleted yet; `claude/foxd-tender-backend-NiPeb` is
-deliberately retained at `c2e92d0` as the rollback path.
+**Next:** decide the tool inventory (the last piece of Phase 4), then Phase 5.
+No branch has been deleted yet — `claude/foxd-tender-backend-NiPeb` stays at
+`c2e92d0` as the rollback path, and everything else is preserved in
+`archive/2026-08-20/*`.
 
 ## The one-line summary
 
@@ -31,8 +31,9 @@ The fix is one repo per deployable thing. Two are out (`CRM-backend`,
 | **`CRM-backend`** | private | 1 (`main`) | **The Tender Pipeline API — now its own repo.** Created 21 Aug 2026 with the full 64-commit history, so every SHA cited in its `docs/DECISIONS.md` still resolves. Render builds production from `main`. CI green on the first run. | ✅ Done |
 | **`CRM-web`** | private | 1 (`main`) | The Lovable React frontend, renamed from `tender-tracker-pro`. Lovable's GitHub sync survived the rename — `lovable-dev[bot]` has pushed since. `.env` → `crm-backend-pza6.onrender.com` (dev/preview), `.env.production` → `api.foxd.co` (the deployed build). | ✅ Done |
 | `Claude` | public | 29 | The old monorepo: 14 unrelated apps one-per-branch, plus 14 `archive/*` refs and the cleanup branch. Still no `main`; default branch is still the Variation Register. **No longer holds anything deployed.** | Phases 4–5 |
-| `foxd-hub-9c7dc867` | private | 1 | Lovable React app already holding `CeilingGridCalculator.tsx` + `TenderScorecard.tsx`. | Rename `foxd-tools` |
-| `foxd-4992dbd1` | private | 1 | **The FOXD public marketing website.** Landing page plus a `/book` capability & scope review funnel with lead-capture form, SEO component, case studies, five-pillar framework. | Rename `foxd-website` |
+| **`foxd-apps`** | public | 1 (`main`) | **The six single-file fit-out tools**, consolidated 21 Aug 2026 — one directory per tool, each a self-contained HTML app, no build step. Netlify publishes the root verbatim. | ✅ Done — consider making private |
+| **`foxd-website`** | private | 1 | The FOXD public marketing site and `/book` lead funnel, renamed from `foxd-4992dbd1`. | ✅ Done |
+| ~~`foxd-hub-9c7dc867`~~ | — | — | **Deleted 21 Aug 2026.** Held React ports of the ceiling-grid and tender-scorecard tools. Those ports are gone; the HTML originals survive on their branches and in `archive/2026-08-20/*`, and are now in `foxd-apps`. GitHub keeps deleted repos restorable for a limited window if the React work is ever wanted back. | Deleted |
 | `merrigums` | private | 1 | **Live site for `merrigums.com.au`** — the Merrijig holiday rental. Long-form single page with gallery lightbox, reviews, JSON-LD `LodgingBusiness` schema, and an Airbnb-synced availability calendar via a Supabase edge function. A separate business from FOXD. | Keep the name |
 | `COD` | public | 1 | Black Ops 7 randomizer. No `main`; only `claude/bo7-game-mode-randomizer-wdccrm`. | Keep — add `main` |
 | `CRM-Backend-snapshot-2026-04` | public | 1 | The former `CRM-Backend`, renamed 21 Aug to free the name. A single-commit orphan (`8f3b821`) sharing no history with anything — 3 migrations against production's 11. Its history exists **nowhere else**, which is why it was renamed rather than deleted. | Delete when ready |
@@ -133,17 +134,38 @@ who moved it*, and only 7qfn6 models that. Its Entra ID auth also matches the
 Microsoft 365 tenant already in use, so there is no separate login to
 maintain. Carry over the FOXD logo and styling from `A6PBz`.
 
-### Single-file tools
-| Branch | Commits | The actual app | Action |
-|---|---|---|---|
-| `claude/variation-register-app-oXKwO` | 5 | Variation Register — and the repo's default branch | Move to hub; stop being default |
-| `claude/ceiling-grid-calculator-poae9` | 8 | Ceiling Grid Calculator (already ported to `foxd-hub`) | Retire after parity check |
-| `claude/tender-scorecard-app-wD4lq` | 7 | `tender-scorecard.html` (already ported to `foxd-hub`) | Retire after parity check |
-| `claude/sliding-door-calculator-BNpIe` | 14 | `sliding-door-calculator.html` — only branch with no stray `index.html` | Port to hub |
-| `claude/parking-cost-tracker-8hfUy` | 9 | `parking.html` | Port to hub |
-| `claude/quote-request-tracker-9sxkl` | 8 | `quote-tracker.html` | Port to hub |
-| `claude/tender-tracking-crm-oX0mN` | 6 | `tender-crm.html` — early sketch of the real CRM | Superseded |
-| `claude/cod-team-randomizer-dvscjb` | 18 | `cod-team-randomizer.html` + `cod-team-wheel.html` | Consolidate into `COD` repo |
+### Single-file tools — migrated to `foxd-apps` 21 Aug 2026
+
+All six are now directories in `mckjesse/foxd-apps`. These branches carry
+nothing unique and are ready to delete.
+
+| Branch | The actual app | Now at |
+|---|---|---|
+| `claude/ceiling-grid-calculator-poae9` | `index.html` | `foxd-apps/ceiling-grid/` |
+| `claude/sliding-door-calculator-BNpIe` | `sliding-door-calculator.html` | `foxd-apps/sliding-door/` |
+| `claude/variation-register-app-oXKwO` | `index.html` — also the old repo's default branch | `foxd-apps/variation-register/` |
+| `claude/quote-request-tracker-9sxkl` | `quote-tracker.html` | `foxd-apps/quote-tracker/` |
+| `claude/parking-cost-tracker-8hfUy` | `parking.html` | `foxd-apps/parking/` |
+| `claude/tender-scorecard-app-wD4lq` | `tender-scorecard.html` | `foxd-apps/tender-scorecard/` |
+
+Two defects were fixed in the move. The `index.html` trap below is gone —
+each tool's real file is now its own `index.html`. And
+`variation-register`'s `logo.png` finally exists: that app had referenced it
+since Feb 2026, but the file only ever entered git history on an unrelated
+branch (`claude/tool-inventory-app-A6PBz`, commit `5908f3b`), so the logo had
+always 404'd. It was copied across from there, which means its provenance is
+the tool inventory's mark rather than one chosen for this app.
+
+Also verified rather than assumed: **none of the six makes a network
+request**; the two calculators persist nothing; the other four use
+`localStorage` only.
+
+### Superseded, nothing to migrate
+
+| Branch | Why |
+|---|---|
+| `claude/tender-tracking-crm-oX0mN` | `tender-crm.html` — an early single-file sketch of what became `CRM-backend` + `CRM-web` |
+| `claude/cod-team-randomizer-dvscjb` | The standalone `COD` repo's `index.html` is 1,591 lines and **already contains both wheels inline**, including the `meow` audio from this branch's final commit. It supersedes this branch's two separate pages (465 + 799 lines). `COD` still needs a `main`, but nothing needs moving into it. |
 
 ### The `index.html` trap
 
@@ -244,14 +266,19 @@ public-facing site — rename one, confirm Lovable still syncs and the site
 still loads, then do the other. Add a short `CLAUDE.md` to each naming its
 counterpart API.
 
-### Phase 4 — consolidate loose tools
+### Phase 4 — consolidate loose tools — **MOSTLY DONE, 21 Aug 2026**
 
-Port the sliding door calculator, parking tracker, quote tracker and
-variation register into `foxd-tools` as routes. Check the two already-ported
-calculators for parity *before* retiring their branches. Extract `7qfn6` to
-`foxd-tool-inventory` with `main`, dropping the vestigial `index.html` and
-`tool-inventory.html`, and carry the FOXD branding over from `A6PBz`. Move
-the team wheel into `COD`.
+- ✅ All six single-file tools are in `mckjesse/foxd-apps`, one directory
+  each, with a landing page, README and `CLAUDE.md`. The parity check the
+  earlier plan called for became moot: `foxd-hub` was deleted, so the HTML
+  originals are the only versions and went across directly.
+- ✅ `COD` needs no migration — see above. It still wants a `main` and its
+  `claude/*` branch deleted.
+- ⬜ **The tool inventory is the open piece.** `7qfn6` is the right base on
+  its data model, but it has **no tests and no documentation**, so extracting
+  it means writing both — a bigger job than the backend was, where 160 tests
+  already existed. Options: extract as one repo, split api/web to mirror the
+  CRM pair, leave it until it is actually wanted, or write tests first.
 
 ### Phase 5 — retire the monorepo
 
@@ -289,7 +316,9 @@ Each maps to something that went wrong above.
 | `merrigums` | **Resolved** — live site, name already correct |
 | The `Claude` repo's ending | **Open** — archive outright, or keep `main` + README index. This file is the obvious content for that README. |
 | Staging environment | **Open, worth thinking about.** `CRM-web`'s dev `.env` points at the *production* API, so Lovable's preview reads and writes live CRM data. Pointing it at localhost would break the preview, which is where the work actually happens. The real fix is a staging backend + database. |
-| When to delete the old branches | **Open** — nothing is deleted yet. `claude/foxd-tender-backend-NiPeb` @ `c2e92d0` is the rollback path if the new repo misbehaves. Retire it once you have a few clean deploys. |
+| When to delete the old branches | **Open** — nothing is deleted yet. `claude/foxd-tender-backend-NiPeb` @ `c2e92d0` is the rollback path if the new repo misbehaves. Retire it once you have a few clean deploys. Twelve of the fourteen branches are now fully superseded and ready to go. |
+| The tool inventory | **Open** — the last piece of Phase 4. See Phase 4 below. |
+| `foxd-apps` visibility | **Open** — it was created public. Low risk: no client names, no rates, no credentials, and the tools hold no data outside the visitor's own browser. The only exposure is the shape of the tender-qualification criteria. Private is still the better default for internal tooling. |
 
 ## Two non-git findings
 
