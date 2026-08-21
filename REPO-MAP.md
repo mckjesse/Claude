@@ -4,13 +4,12 @@ Assessed 20 August 2026. Written because this repo's branch layout is
 actively misleading and the reasoning behind the cleanup should outlive the
 conversation that produced it.
 
-**Changes made so far:** the `archive/2026-08-20/*` refs described under
-Phase 0, and this file. No branch was modified or deleted, no repository was
-renamed, nothing was deployed.
+**Done so far:** Phase 0 (the `archive/2026-08-20/*` refs) and Phase 1 (the
+`c2e92d0` fast-forward onto the live branch, which deployed). No repository
+has been renamed and no branch deleted.
 
-**Outstanding, ready to go:** the `c2e92d0` fast-forward described in item 1
-below. It is validated (160 tests green, no migrations) but unpushed — the
-assessing session was not permitted to write to a branch other than its own.
+**Next:** `claude/chat-history-github-upload-ro7k35` is now identical to the
+live branch and carries nothing unique — it can be deleted. Then Phase 2.
 
 ## The one-line summary
 
@@ -42,16 +41,22 @@ commit. Everything else that is wrong follows from that.
    clone lands on `claude/variation-register-app-oXKwO` — a different app
    entirely.
 
-   This settles a contradiction in the history. The live branch's own
-   `CLAUDE.md` still claims *"Pushing here does NOT deploy... set to manual
-   deploy"*; commit `c2e92d0` corrects it to auto-deploy and is the accurate
-   one. Until `c2e92d0` is merged, the canonical orientation doc tells a
-   reader that pushes are safe when they are in fact releases. **Merging it
-   is the single highest-value change in this whole cleanup.**
-2. **One commit of production truth is stranded.**
-   `claude/chat-history-github-upload-ro7k35` is the live branch **plus
-   exactly one commit** — `c2e92d0`, which corrects `CLAUDE.md` to say that
-   pushing auto-deploys to production. Merge it before deleting anything.
+   This settled a contradiction in the history. The live branch's `CLAUDE.md`
+   used to claim *"Pushing here does NOT deploy... set to manual deploy"*.
+   Commit `c2e92d0` corrects it, and **was merged to the live branch on
+   20 Aug 2026** — so the canonical orientation doc now warns correctly
+   instead of telling readers a push is safe when it is a release.
+2. **~~One commit of production truth is stranded.~~ RESOLVED 20 Aug 2026.**
+   `c2e92d0` was fast-forwarded onto `claude/foxd-tender-backend-NiPeb`
+   (`83fd1c6..c2e92d0`). Validated first: 160 tests green against PostgreSQL
+   16, `makemigrations --check` clean, documentation-only diff.
+   `claude/chat-history-github-upload-ro7k35` now points at the same commit as
+   the live branch and can be deleted.
+
+   **No CI exists in this repo** — zero GitHub Actions workflows — so nothing
+   runs those 160 tests except a person remembering to, while Auto-Deploy is
+   on against the working branch. Either turn auto-deploy off and deploy
+   deliberately, or add a CI gate. Currently it is neither.
 3. **The convincingly-named branch is the stale one.** `CRM-Backend` looks
    like the integration branch and has three "Merge branch
    'claude/foxd-tender-backend-NiPeb' into CRM-Backend" commits. That
@@ -276,7 +281,13 @@ no file can guarantee, and it has been misrecorded in both directions before.
 Still worth verifying: feature parity of the two calculators already ported
 into `foxd-hub`, before their source branches are retired.
 
-The merged state of `c2e92d0` was validated here — full suite run against
-PostgreSQL 16: **160 tests, all pass**; `makemigrations --check --dry-run`
-reports no changes. The fast-forward push itself was blocked by this
-session's permissions, so it remains outstanding.
+`c2e92d0` was validated before pushing — full suite against PostgreSQL 16:
+**160 tests, all pass**; `makemigrations --check --dry-run` reports no
+changes. The fast-forward was then pushed and the live branch verified to
+carry the corrected text.
+
+The resulting **deploy was not verified**: this environment's egress policy
+blocks `api.foxd.co` and `*.onrender.com`, and the Render service posts
+nothing back to GitHub (no deployments, no commit statuses). Confirm it
+landed in Render → Events. The diff is documentation-only, so the expected
+outcome is a rebuild, a no-op `migrate`, and a restart on identical code.
