@@ -4,14 +4,19 @@ Assessed 20 August 2026, last updated 21 August. Written because this repo's
 branch layout was actively misleading and the reasoning behind the cleanup
 should outlive the conversation that produced it.
 
-**Done:** Phases 0–3, and most of Phase 4. The backend is `CRM-backend` with
-Render cut over and CI gating deploys; the frontends are renamed; the six
-single-file tools are consolidated into `foxd-apps`.
+**Scope.** This is a repository-and-branch tidy-up. Nothing in any
+application has been modified — no code, no schema, no deploy settings beyond
+the Render source repointing that the backend extraction required.
 
-**Next:** decide the tool inventory (the last piece of Phase 4), then Phase 5.
-No branch has been deleted yet — `claude/foxd-tender-backend-NiPeb` stays at
-`c2e92d0` as the rollback path, and everything else is preserved in
-`archive/2026-08-20/*`.
+**Done:** Phases 0–4. Every branch tip archived; the deploy warning corrected;
+CI added; the backend extracted to `CRM-backend` with Render cut over; the
+frontends renamed; the six single-file tools consolidated into `foxd-apps`;
+the tool inventory extracted to `foxd-tool-inventory`.
+
+**Remaining, and it is all yours** — this session's credentials can create
+refs but not delete them (HTTP 403), and cannot change a default branch:
+switch `Claude`'s default to `main`, delete the thirteen superseded branches,
+and decide on the leftovers. Listed under Phase 5.
 
 ## The one-line summary
 
@@ -35,7 +40,8 @@ The fix is one repo per deployable thing. Two are out (`CRM-backend`,
 | **`foxd-website`** | private | 1 | The FOXD public marketing site and `/book` lead funnel, renamed from `foxd-4992dbd1`. | ✅ Done |
 | ~~`foxd-hub-9c7dc867`~~ | — | — | **Deleted 21 Aug 2026.** Held React ports of the ceiling-grid and tender-scorecard tools. Those ports are gone; the HTML originals survive on their branches and in `archive/2026-08-20/*`, and are now in `foxd-apps`. GitHub keeps deleted repos restorable for a limited window if the React work is ever wanted back. | Deleted |
 | `merrigums` | private | 1 | **Live site for `merrigums.com.au`** — the Merrijig holiday rental. Long-form single page with gallery lightbox, reviews, JSON-LD `LodgingBusiness` schema, and an Airbnb-synced availability calendar via a Supabase edge function. A separate business from FOXD. | Keep the name |
-| `COD` | public | 1 | Black Ops 7 randomizer. No `main`; only `claude/bo7-game-mode-randomizer-wdccrm`. | Keep — add `main` |
+| **`foxd-tool-inventory`** | public | 1 (`main`) | **Plant and equipment tracking**, extracted 21 Aug from `claude/tool-inventory-app-7qfn6` with full history. Django + DRF + React, Entra ID auth. `Project` / `Tool` / `AllocationHistory`. | ✅ Done — consider making private |
+| `COD` | public | 2 | Black Ops 7 randomizer. **`main` created 21 Aug** from `claude/bo7-game-mode-randomizer-wdccrm` (same commit). Set `main` as default, then delete the old branch. | Nearly done |
 | `CRM-Backend-snapshot-2026-04` | public | 1 | The former `CRM-Backend`, renamed 21 Aug to free the name. A single-commit orphan (`8f3b821`) sharing no history with anything — 3 migrations against production's 11. Its history exists **nowhere else**, which is why it was renamed rather than deleted. | Delete when ready |
 | `FOXD` | public | 0 | Completely empty. A good name attached to nothing. | Repurpose or delete |
 
@@ -280,11 +286,47 @@ counterpart API.
   already existed. Options: extract as one repo, split api/web to mirror the
   CRM pair, leave it until it is actually wanted, or write tests first.
 
-### Phase 5 — retire the monorepo
+### Phase 5 — retire the monorepo — **the remaining work**
 
-Delete the branches whose content now lives elsewhere (the Phase 0 refs keep
-the history). Give `Claude` a real `main` with a README pointing at the new
-repos, or archive it. Delete `mckjesse/CRM-Backend` and the empty `FOXD`.
+`main` now exists on `Claude`, holding this file plus a README that points at
+the new repos. Everything below needs a permission this session does not
+have: branch deletion returns HTTP 403, and the default branch cannot be
+changed via the API here.
+
+**1. Switch `Claude`'s default branch to `main`** (Settings → General). This
+must happen first — GitHub refuses to delete a default branch, and
+`claude/variation-register-app-oXKwO` is currently it.
+
+**2. Delete these thirteen branches** (Branches page → trash icon). Every one
+is verified archived under `archive/2026-08-20/*` at a matching SHA:
+
+```
+claude/chat-history-github-upload-ro7k35    claude/parking-cost-tracker-8hfUy
+CRM-Backend                                 claude/tender-scorecard-app-wD4lq
+Tool-tracker-app                            claude/tender-tracking-crm-oX0mN
+claude/ceiling-grid-calculator-poae9        claude/cod-team-randomizer-dvscjb
+claude/sliding-door-calculator-BNpIe        claude/tool-inventory-app-7qfn6
+claude/quote-request-tracker-9sxkl          claude/tool-inventory-app-A6PBz
+claude/variation-register-app-oXKwO   ← only after step 1
+```
+
+That leaves `main`, `claude/git-repos-cleanup-7a2mga`,
+`claude/foxd-tender-backend-NiPeb` (the backend rollback path) and the
+fourteen `archive/*` refs — 29 branches down to 17.
+
+**3. `COD`** — set `main` as default, then delete
+`claude/bo7-game-mode-randomizer-wdccrm`.
+
+**4. The leftovers, at your discretion**
+
+- `CRM-Backend-snapshot-2026-04` — safe to delete, but its single commit
+  `8f3b821` exists in no other repository, so deleting it is final.
+- `FOXD` — empty, zero commits. Delete or use the name.
+- `foxd-apps` and `foxd-tool-inventory` were created public. Neither holds
+  credentials or customer data, but private is the better default for
+  internal tooling.
+- `claude/foxd-tender-backend-NiPeb` — retire once you have had a few clean
+  deploys from `CRM-backend`.
 
 ## Rules going forward
 
@@ -311,11 +353,10 @@ Each maps to something that went wrong above.
 
 | Item | Status |
 |---|---|
-| Tool inventory architecture | **Resolved** — build on `7qfn6` |
+| Tool inventory architecture | **Resolved and extracted** — `7qfn6` is now `mckjesse/foxd-tool-inventory` |
 | `foxd-4992dbd1` | **Resolved** — the FOXD public site; rename `foxd-website` |
 | `merrigums` | **Resolved** — live site, name already correct |
 | The `Claude` repo's ending | **Open** — archive outright, or keep `main` + README index. This file is the obvious content for that README. |
-| Staging environment | **Open, worth thinking about.** `CRM-web`'s dev `.env` points at the *production* API, so Lovable's preview reads and writes live CRM data. Pointing it at localhost would break the preview, which is where the work actually happens. The real fix is a staging backend + database. |
 | When to delete the old branches | **Open** — nothing is deleted yet. `claude/foxd-tender-backend-NiPeb` @ `c2e92d0` is the rollback path if the new repo misbehaves. Retire it once you have a few clean deploys. Twelve of the fourteen branches are now fully superseded and ready to go. |
 | The tool inventory | **Open** — the last piece of Phase 4. See Phase 4 below. |
 | `foxd-apps` visibility | **Open** — it was created public. Low risk: no client names, no rates, no credentials, and the tools hold no data outside the visitor's own browser. The only exposure is the shape of the tender-qualification criteria. Private is still the better default for internal tooling. |
