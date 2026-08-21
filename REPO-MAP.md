@@ -13,10 +13,19 @@ CI added; the backend extracted to `CRM-backend` with Render cut over; the
 frontends renamed; the six single-file tools consolidated into `foxd-apps`;
 the tool inventory extracted to `foxd-tool-inventory`.
 
-**Remaining, and it is all yours** — this session's credentials can create
-refs but not delete them (HTTP 403), and cannot change a default branch:
-switch `Claude`'s default to `main`, delete the thirteen superseded branches,
-and decide on the leftovers. Listed under Phase 5.
+**Phase 5 done too, 21 Aug.** `main` is `Claude`'s default branch and the
+thirteen superseded branches are deleted — 29 refs down to 17, of which 14
+are the `archive/2026-08-20/*` safety net. The estate is tidy.
+
+**How to work in it now:** see `WORKING-LOCALLY.md` — the `~/Developer`
+layout, the branch-per-change workflow, and the three things that bite
+(merging to `CRM-backend` `main` deploys; three repos are also written to by
+Lovable's bot; `.env` files are deliberately not in git).
+
+**Left at your discretion:** delete `CRM-Backend-snapshot-2026-04` and the
+empty `FOXD`; make `foxd-apps` and `foxd-tool-inventory` private; retire
+`claude/foxd-tender-backend-NiPeb` once you trust `CRM-backend`; and on `COD`,
+set `main` as default and delete its old branch.
 
 ## The one-line summary
 
@@ -35,7 +44,7 @@ The fix is one repo per deployable thing. Two are out (`CRM-backend`,
 |---|---|---|---|---|
 | **`CRM-backend`** | private | 1 (`main`) | **The Tender Pipeline API — now its own repo.** Created 21 Aug 2026 with the full 64-commit history, so every SHA cited in its `docs/DECISIONS.md` still resolves. Render builds production from `main`. CI green on the first run. | ✅ Done |
 | **`CRM-web`** | private | 1 (`main`) | The Lovable React frontend, renamed from `tender-tracker-pro`. Lovable's GitHub sync survived the rename — `lovable-dev[bot]` has pushed since. `.env` → `crm-backend-pza6.onrender.com` (dev/preview), `.env.production` → `api.foxd.co` (the deployed build). | ✅ Done |
-| `Claude` | public | 29 | The old monorepo: 14 unrelated apps one-per-branch, plus 14 `archive/*` refs and the cleanup branch. Still no `main`; default branch is still the Variation Register. **No longer holds anything deployed.** | Phases 4–5 |
+| `Claude` | public | 17 | **This repo — now an archive.** `main` is the default and holds only a README, `REPO-MAP.md` and `WORKING-LOCALLY.md`. The fourteen app branches are gone; 14 `archive/2026-08-20/*` refs preserve every original tip, plus `claude/foxd-tender-backend-NiPeb` as the backend rollback path. Nothing is developed here. | ✅ Retired |
 | **`foxd-apps`** | public | 1 (`main`) | **The six single-file fit-out tools**, consolidated 21 Aug 2026 — one directory per tool, each a self-contained HTML app, no build step. Netlify publishes the root verbatim. | ✅ Done — consider making private |
 | **`foxd-website`** | private | 1 | The FOXD public marketing site and `/book` lead funnel, renamed from `foxd-4992dbd1`. | ✅ Done |
 | ~~`foxd-hub-9c7dc867`~~ | — | — | **Deleted 21 Aug 2026.** Held React ports of the ceiling-grid and tender-scorecard tools. Those ports are gone; the HTML originals survive on their branches and in `archive/2026-08-20/*`, and are now in `foxd-apps`. GitHub keeps deleted repos restorable for a limited window if the React work is ever wanted back. | Deleted |
