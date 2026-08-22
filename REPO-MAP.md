@@ -42,7 +42,7 @@ The fix is one repo per deployable thing. Two are out (`CRM-backend`,
 
 | Repo | Vis. | Branches | What it is | Disposition |
 |---|---|---|---|---|
-| **`CRM-backend`** | private | 1 (`main`) | **The Tender Pipeline API — now its own repo.** Created 21 Aug 2026 with the full 64-commit history, so every SHA cited in its `docs/DECISIONS.md` still resolves. Render builds production from `main`. CI green on the first run. | ✅ Done |
+| **`CRM-backend`** | private | `main` | **The Tender Pipeline API.** Extracted 21 Aug with the full 64-commit history, so every SHA in its `docs/DECISIONS.md` still resolves. Render builds production from `main`; CI gates it. **Since extraction it has grown an `apps/agent/` surface** — API-key auth, throttling, permissions, an approval workflow, an audit service and `create_agent_key`, with its own six test modules — and reached 68 commits, merged via pull request. | ✅ Done, and in active use |
 | **`CRM-web`** | private | 1 (`main`) | The Lovable React frontend, renamed from `tender-tracker-pro`. Lovable's GitHub sync survived the rename — `lovable-dev[bot]` has pushed since. `.env` → `crm-backend-pza6.onrender.com` (dev/preview), `.env.production` → `api.foxd.co` (the deployed build). | ✅ Done |
 | `Claude` | public | 17 | **This repo — now an archive.** `main` is the default and holds only a README, `REPO-MAP.md` and `WORKING-LOCALLY.md`. The fourteen app branches are gone; 14 `archive/2026-08-20/*` refs preserve every original tip, plus `claude/foxd-tender-backend-NiPeb` as the backend rollback path. Nothing is developed here. | ✅ Retired |
 | **`foxd-apps`** | public | 1 (`main`) | **The six single-file fit-out tools**, consolidated 21 Aug 2026 — one directory per tool, each a self-contained HTML app, no build step. Netlify publishes the root verbatim. | ✅ Done — consider making private |
@@ -51,6 +51,8 @@ The fix is one repo per deployable thing. Two are out (`CRM-backend`,
 | `merrigums` | private | 1 | **Live site for `merrigums.com.au`** — the Merrijig holiday rental. Long-form single page with gallery lightbox, reviews, JSON-LD `LodgingBusiness` schema, and an Airbnb-synced availability calendar via a Supabase edge function. A separate business from FOXD. | Keep the name |
 | **`foxd-tool-inventory`** | public | 1 (`main`) | **Plant and equipment tracking**, extracted 21 Aug from `claude/tool-inventory-app-7qfn6` with full history. Django + DRF + React, Entra ID auth. `Project` / `Tool` / `AllocationHistory`. | ✅ Done — consider making private |
 | `COD` | public | 2 | Black Ops 7 randomizer. **`main` created 21 Aug** from `claude/bo7-game-mode-randomizer-wdccrm` (same commit). Set `main` as default, then delete the old branch. | Nearly done |
+| **`CRM-agent`** | private | `main`, `feat/crm-agent-service` | **A specialist sub-agent for the CRM.** Reads and writes it *only* through the backend's controlled `/api/agent/` surface — no database access, no Django access, and it cannot approve its own consequential actions. 22 tools, and six test modules including safety, approvals and safe-writes. Python package `foxd_crm_agent`. | ✅ In git |
+| **`foxd-ea`** — Ava | **not on GitHub** | — | **The Executive Assistant agent**, and the tier above `CRM-agent`. A Claude Code project: `CLAUDE.md`, `SETUP.md`, `context/`, four skills, `scripts/`, `state/`. **Local only — verified absent from GitHub on 22 Aug.** Lives at `C:\Dev\foxd-ea`. | ⚠️ Needs publishing |
 | `CRM-Backend-snapshot-2026-04` | public | 1 | The former `CRM-Backend`, renamed 21 Aug to free the name. A single-commit orphan (`8f3b821`) sharing no history with anything — 3 migrations against production's 11. Its history exists **nowhere else**, which is why it was renamed rather than deleted. | Delete when ready |
 | `FOXD` | public | 0 | Completely empty. A good name attached to nothing. | Repurpose or delete |
 
@@ -337,6 +339,40 @@ fourteen `archive/*` refs — 29 branches down to 17.
 - `claude/foxd-tender-backend-NiPeb` — retire once you have had a few clean
   deploys from `CRM-backend`.
 
+## The agent architecture
+
+Built after the tidy-up, and worth recording because no single repository
+explains it:
+
+```
+foxd-ea (Ava)              the Executive Assistant — Claude Code project
+    │                      NOT IN GIT as at 22 Aug 2026
+    ▼
+CRM-agent                  specialist sub-agent, 22 tools
+    │                      no DB access, no Django access,
+    │                      cannot self-approve consequential actions
+    ▼
+/api/agent/                controlled surface in CRM-backend:
+    │                      API-key auth, throttling, permissions,
+    │                      approval workflow, audit trail
+    ▼
+Django CRM ──► PostgreSQL
+```
+
+The constraint is the design: the agent reaches the CRM only through an
+API built for it, so the blast radius of a mistake is whatever
+`apps/agent/` permits and nothing more. Both halves carry their own tests —
+`apps/agent/tests/` in the backend, `tests/` in `CRM-agent` — covering auth,
+approvals, safe writes and duplicate protection.
+
+**The weak link is `foxd-ea`.** Ava sits at the top of that chain and is the
+only part of it not in version control. Everything below her is backed up and
+tested; she is a folder on one disk.
+
+Also unaccounted for: `C:\Dev\Agents\foxd-crm` is a git repository whose
+remote was never confirmed. Check `.git/config` for a `[remote "origin"]`
+before assuming it is backed up.
+
 ## Rules going forward
 
 Each maps to something that went wrong above.
@@ -366,6 +402,8 @@ Each maps to something that went wrong above.
 | `foxd-4992dbd1` | **Resolved** — the FOXD public site; rename `foxd-website` |
 | `merrigums` | **Resolved** — live site, name already correct |
 | The `Claude` repo's ending | **Open** — archive outright, or keep `main` + README index. This file is the obvious content for that README. |
+| **`foxd-ea` is not in git** | **Open, and the most exposed thing in the estate.** Ava is the top of the agent chain and the only part of it not in version control. Publish her private; write the `.gitignore` first (`.env`, `.venv/`, `state/log/`) so connector credentials do not go up with her. |
+| `Agents/foxd-crm` | **Unknown** — a git repository on disk whose remote was never confirmed. |
 | When to delete the old branches | **Open** — nothing is deleted yet. `claude/foxd-tender-backend-NiPeb` @ `c2e92d0` is the rollback path if the new repo misbehaves. Retire it once you have a few clean deploys. Twelve of the fourteen branches are now fully superseded and ready to go. |
 | The tool inventory | **Open** — the last piece of Phase 4. See Phase 4 below. |
 | `foxd-apps` visibility | **Open** — it was created public. Low risk: no client names, no rates, no credentials, and the tools hold no data outside the visitor's own browser. The only exposure is the shape of the tender-qualification criteria. Private is still the better default for internal tooling. |
