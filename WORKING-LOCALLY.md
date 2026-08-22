@@ -10,7 +10,9 @@ One folder per repository, all under `C:\Dev` (Windows) or `~/Developer`
 (macOS):
 
 ```
-C:\Dev\
+C:\Dev\                   <- also Ava's Claude Code project root
+  .claude\                her skills, agents, settings
+  CLAUDE.md               her orientation
   CRM-backend\            the Tender Pipeline API      private
   CRM-web\                its React frontend           private   <- Lovable
   foxd-website\           the public FOXD site         private   <- Lovable
@@ -20,6 +22,10 @@ C:\Dev\
   COD\                    Black Ops randomiser         public
   Claude\                 this archive + the maps      public
 ```
+
+The repos sit **inside** Ava's project root, which is deliberate — it is what
+puts them in her scope. It also means the two cannot be moved independently:
+see **Ava and Claude Code projects** below.
 
 Not worth cloning: `FOXD` (empty) and `CRM-Backend-snapshot-2026-04` (a dead
 single-commit snapshot kept only because its history exists nowhere else).
@@ -158,6 +164,77 @@ They are meant to differ.
 | `foxd-apps` | Open any `<tool>/index.html` in a browser | Nothing to build; Netlify serves the root |
 | `COD` | Open `index.html` | Nothing to build |
 | `Claude` | Nothing to run | Archive only. Never commit app code here again |
+
+## Ava and Claude Code projects
+
+Ava is the executive agent, and her Claude Code project root is `C:\Dev`
+itself — the same folder the repositories sit in. That has consequences the
+repositories do not.
+
+### She needs to be in a repo
+
+As of 21 Aug 2026 Ava is **local only** — no git remote. While she lived in
+OneDrive that was survivable; outside it, her `CLAUDE.md`, skills, agents and
+settings exist in exactly one place. Put her in a **private** repository.
+
+Write the `.gitignore` *before* the first commit, or credentials go up with
+it:
+
+```
+.env
+.env.*
+.venv/
+node_modules/
+__pycache__/
+*.log
+```
+
+Then check the first commit's file list before publishing. Anything from the
+Microsoft 365 or Todoist connectors is a credential.
+
+### Moving her breaks three things, none of them obvious
+
+**1. Claude Code keys project state by absolute path.** `~/.claude.json`
+(`C:\Users\<you>\.claude.json`) holds an entry per project *directory* —
+conversation history, permission grants, MCP approvals. Move the folder and
+Claude Code sees a brand-new project, so all of that resets.
+
+Her actual configuration is safe: the project's own `.claude\` directory and
+`CLAUDE.md` travel with the files. Only the host-side state is path-keyed. To
+carry it across, close Claude Code, **copy `.claude.json` somewhere safe**,
+then change that project's key from the old path to the new one. If it goes
+wrong, restore the copy — the downside is losing history, not losing Ava.
+
+**2. Python virtual environments do not survive a move.** `pyvenv.cfg`,
+`Scripts\activate` and every shebang have the old absolute path compiled in.
+Delete and rebuild:
+
+```powershell
+Remove-Item -Recurse -Force .venv
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+**3. Skills and scripts hardcode paths.** Find them before they surprise you:
+
+```powershell
+Select-String -Path C:\Dev\*,C:\Dev\.claude\* `
+  -Include *.md,*.json,*.ps1,*.bat,*.py `
+  -Pattern "OneDrive - Foxd Group" -Recurse |
+  Select-Object Path,LineNumber,Line
+```
+
+One distinction matters in what that returns: a path pointing **into**
+OneDrive for actual documents — SWMS templates, insurance certificates, the
+things `project-packs` reads — is still correct and should be left alone.
+OneDrive has not gone anywhere. It is only references to the old **Developer
+folder** that need updating.
+
+### And stop her before moving anything
+
+Close the Claude Code session first. Moving files under a live agent is how
+you get half-written state, and a `.git` directory mid-write is worse.
 
 ## The rules worth keeping
 
