@@ -6,22 +6,31 @@ explains what each repository *is*; this one covers how to work in them.
 
 ## The layout
 
-One folder per repository, all under `~/Developer`:
+One folder per repository, all under `C:\Dev` (Windows) or `~/Developer`
+(macOS):
 
 ```
-~/Developer/
-  CRM-backend/            the Tender Pipeline API      private
-  CRM-web/                its React frontend           private   ← Lovable
-  foxd-website/           the public FOXD site         private   ← Lovable
-  merrigums/              merrigums.com.au             private   ← Lovable
-  foxd-tool-inventory/    plant & equipment tracking   public
-  foxd-apps/              six single-file tools        public
-  COD/                    Black Ops randomiser         public
-  Claude/                 this archive + the maps      public
+C:\Dev\
+  CRM-backend\            the Tender Pipeline API      private
+  CRM-web\                its React frontend           private   <- Lovable
+  foxd-website\           the public FOXD site         private   <- Lovable
+  merrigums\              merrigums.com.au             private   <- Lovable
+  foxd-tool-inventory\    plant & equipment tracking   public
+  foxd-apps\              six single-file tools        public
+  COD\                    Black Ops randomiser         public
+  Claude\                 this archive + the maps      public
 ```
 
 Not worth cloning: `FOXD` (empty) and `CRM-Backend-snapshot-2026-04` (a dead
 single-commit snapshot kept only because its history exists nowhere else).
+
+**Do not keep these in OneDrive, Dropbox or iCloud Drive.** A sync client
+watching a repository syncs the `.git` directory too, which corrupts index
+and lock files mid-operation, fights with `node_modules`, and leaves
+"conflict copy" files inside the working tree. `C:\Dev` is deliberately
+outside the synced user folders. The trade is that an uncommitted change now
+exists in exactly one place, so push more deliberately than you would with a
+sync client as a net.
 
 ## One-time setup
 
@@ -29,13 +38,25 @@ single-commit snapshot kept only because its history exists nowhere else).
 live in a terminal: it installs git, signs you in — which is what makes the
 four private repos clonable — and gives you Pull and Push buttons. Clone each
 repo with **File → Clone repository → GitHub.com**, setting the local path to
-`~/Developer/<repo-name>`.
+`C:\Dev\<repo-name>`.
 
-Or from a terminal:
+Or from a terminal — Windows, with [GitHub CLI](https://cli.github.com)
+installed:
+
+```powershell
+gh auth login                     # GitHub.com -> HTTPS -> login with browser
+
+New-Item -ItemType Directory -Force C:\Dev; Set-Location C:\Dev
+'CRM-backend','CRM-web','foxd-website','merrigums',
+'foxd-tool-inventory','foxd-apps','COD','Claude' |
+  ForEach-Object { gh repo clone "mckjesse/$_" }
+```
+
+macOS:
 
 ```bash
 xcode-select --install                  # git, if you do not have it
-brew install gh && gh auth login        # GitHub.com → HTTPS → login with browser
+brew install gh && gh auth login
 
 mkdir -p ~/Developer && cd ~/Developer
 for r in CRM-backend CRM-web foxd-website merrigums \
@@ -46,6 +67,18 @@ done
 
 `gh auth login` is the load-bearing step. A plain `git clone` fails on the
 four private repositories.
+
+## Moving a checkout later
+
+Git stores no absolute paths, so moving a repository is just moving the
+folder — the remotes live inside `.git` and travel with it. GitHub Desktop,
+however, stores the path: after a move every repo shows as missing, and each
+needs **Locate…** (or **File → Add local repository**) pointed at the new
+location.
+
+If you use right-click → **Remove** instead, untick **"Also move to Recycle
+Bin"** or it deletes the folder. Close GitHub Desktop and any editor before
+moving, so nothing holds a lock on `.git`.
 
 ## The workflow
 
@@ -62,6 +95,10 @@ git push -u origin feat/short-name   # then open a PR on GitHub and merge it
 Then delete the branch. A branch is a temporary home for a change, never a
 permanent home for a project — using them the other way round is what
 produced the fourteen-app repository this file sits in.
+
+Those commands are identical in PowerShell, and GitHub Desktop does the same
+things: **Current branch → New branch**, then Commit, then **Publish
+branch**, then **Preview Pull Request**.
 
 Committing directly to `main` is fine for a typo in a README. It is not fine
 for `CRM-backend`; see below.
@@ -97,8 +134,8 @@ the same file locally and in Lovable, you get a conflict.
 `CRM-backend` and `foxd-tool-inventory` each ship `.env.example`. Copy it to
 `.env` and fill in real values or nothing runs locally:
 
-```bash
-cp .env.example .env
+```powershell
+Copy-Item .env.example .env     # macOS/Linux: cp .env.example .env
 ```
 
 `foxd-tool-inventory` needs one in **both** `backend/` and `frontend/`, and
